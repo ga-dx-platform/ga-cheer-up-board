@@ -61,7 +61,9 @@ function rxnHtml(id, rxn) {
 function renderCard(msg, idx) {
   const cat    = CAT[msg.category] ?? CAT.cheer_up;
   const avatar = msg.avatar_emoji  ?? '🌟';
-  const sender = msg.is_anonymous  ? 'ไม่ระบุชื่อ' : (msg.sender_name ?? 'ไม่ระบุชื่อ');
+  const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
+    ? 'ไม่ระบุชื่อ'
+    : msg.sender_name;
   const r      = ROTS[idx % ROTS.length];
   return `
     <article class="card card-${cat.cls}" style="--r:${r}deg"
@@ -84,7 +86,9 @@ function renderCard(msg, idx) {
 function renderMotw(msg) {
   const cat    = CAT[msg.category] ?? CAT.cheer_up;
   const avatar = msg.avatar_emoji  ?? '🌟';
-  const sender = msg.is_anonymous  ? 'ไม่ระบุชื่อ' : (msg.sender_name ?? 'ไม่ระบุชื่อ');
+  const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
+    ? 'ไม่ระบุชื่อ'
+    : msg.sender_name;
   return `
     <div class="motw-card" role="article" data-id="${msg.id}">
       <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
@@ -221,11 +225,12 @@ function renderGrid(messages) {
   if (filtered.length === 0) {
     board.innerHTML = renderEmpty();
     board.classList.add('board-empty');
-    return;
+  } else {
+    board.innerHTML = filtered.map((msg, i) => renderCard(msg, i)).join('');
+    wireReactions();
   }
 
-  board.innerHTML = filtered.map((msg, i) => renderCard(msg, i)).join('');
-  wireReactions();
+  updateStats();
 }
 
 async function loadBoard() {
@@ -266,7 +271,6 @@ async function loadBoard() {
   allMessages = regular;
   renderGrid(allMessages);
   wireReactions();
-  updateStats();
 }
 
 /* ── Filter pills ────────────────────────────────────────── */
@@ -438,7 +442,7 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   const payload = {
     category:     selectedCategory,
     content,
-    sender_name:  anon || !sender ? 'Anonymous' : sender,
+    sender_name:  anon || !sender ? 'ไม่ระบุชื่อ' : sender,
     is_anonymous: anon,
     avatar_emoji: selectedEmoji,
     reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
@@ -466,7 +470,6 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   document.querySelector('.filter-pill[data-filter="all"]')?.classList.add('active');
   renderGrid(allMessages);
   wireReactions();
-  updateStats();
 
   fireConfetti(selectedCategory);
   closeModal();
@@ -485,7 +488,6 @@ function subscribeRealtime() {
         if (allMessages.find(m => m.id === msg.id)) return; // already optimistically added
         allMessages.unshift(msg);
         renderGrid(allMessages);
-        updateStats();
       }
     )
     .on('postgres_changes',
@@ -511,7 +513,6 @@ function subscribeRealtime() {
           if (msg.is_visible && !msg.is_pinned) {
             allMessages.unshift(msg);
             renderGrid(allMessages);
-            updateStats();
           }
           return;
         }
@@ -519,7 +520,6 @@ function subscribeRealtime() {
         if (!msg.is_visible) {
           allMessages.splice(idx, 1);
           renderGrid(allMessages);
-          updateStats();
           return;
         }
 
