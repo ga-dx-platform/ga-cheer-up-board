@@ -66,7 +66,7 @@ function renderCard(msg, idx) {
     : msg.sender_name;
   const r      = ROTS[idx % ROTS.length];
   return `
-    <article class="card card-${cat.cls}" style="--r:${r}deg"
+    <article class="card" style="--r:${r}deg"
              data-id="${msg.id}" data-category="${msg.category}">
       <div class="card-head">
         <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>

@@ -81,7 +81,7 @@ body {
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
-  will-change: transform;
+  /* no will-change: keeps orbs in the same compositor layer as the backdrop */
 }
 .orb-peach  { width:960px;height:960px;background:radial-gradient(circle,#ff9a70 0%,rgba(255,130,90,0) 65%);filter:blur(48px);opacity:.72;top:-120px;left:-200px;animation:orb1 14s ease-in-out infinite; }
 .orb-blue   { width:880px;height:880px;background:radial-gradient(circle,#60a5fa 0%,rgba(59,130,246,0) 65%);filter:blur(52px);opacity:.68;top:20%;right:-220px;animation:orb2 17s ease-in-out infinite; }
@@ -134,7 +134,9 @@ body {
 .main-wrap {
   max-width:var(--content-max); margin:0 auto;
   padding:2rem 2rem 5rem;
-  position:relative; z-index:1;
+  position:relative;
+  /* no z-index: avoids creating a stacking context that blocks backdrop-filter
+     from sampling the fixed orbs painted behind this layer */
 }
 
 /* ── Message of the Week ─────────────────────────────────── */
@@ -171,7 +173,7 @@ body {
 }
 .motw-card::before {
   content:''; position:absolute; inset:0;
-  background:linear-gradient(135deg,rgba(255,243,192,.38) 0%,rgba(255,228,230,.18) 50%,transparent 100%);
+  /* no background — was painting an opaque golden wash over the glass */
   pointer-events:none; border-radius:inherit;
 }
 .motw-card:hover {
@@ -273,9 +275,7 @@ body {
   box-shadow: 0 40px 80px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.65) !important;
 }
 
-.card-thank_you::before { background:linear-gradient(90deg,#f97316,#fb923c,#fbbf24); }
-.card-idea::before      { background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd); }
-.card-cheer_up::before  { background:linear-gradient(90deg,#10b981,#34d399,#6ee7b7); }
+/* category top-stripe stripped for diagnostic glass pass */
 
 .card-head   { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
 .card-avatar { font-size:1.8rem; filter:drop-shadow(0 2px 5px rgba(0,0,0,.1)); line-height:1; }
