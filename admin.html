@@ -5,18 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — GA Cheer Up Board</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/admin.css" />
 </head>
-<body style="display:flex;align-items:center;justify-content:center;min-height:100dvh;">
-  <div class="orb orb-peach" aria-hidden="true"></div>
-  <div class="orb orb-blue"  aria-hidden="true"></div>
-  <div style="position:relative;z-index:1;text-align:center;background:rgba(255,255,255,.6);backdrop-filter:blur(24px);border:1.5px solid rgba(255,255,255,.7);border-radius:28px;padding:3rem 3.5rem;box-shadow:0 16px 48px rgba(0,0,0,.08);">
-    <div style="font-size:3.5rem;margin-bottom:.75rem;">🔐</div>
-    <h1 style="font-size:1.6rem;font-weight:700;margin-bottom:.4rem;font-family:'Kanit',sans-serif;">Admin Dashboard</h1>
-    <p style="font-size:.9rem;color:#9ca3af;font-family:'Kanit',sans-serif;margin-bottom:1.5rem;">จะพร้อมใช้งานใน Phase 5</p>
-    <a href="index.html" style="display:inline-flex;align-items:center;gap:.4rem;font-family:'Kanit',sans-serif;font-size:.875rem;font-weight:500;color:#f97316;text-decoration:none;border:1.5px solid rgba(249,115,22,.3);padding:.4rem 1rem;border-radius:99px;">← กลับไปที่บอร์ด</a>
+<body>
+
+  <!-- ═══ Ambient orbs ════════════════════════════════════════ -->
+  <div class="orb orb-peach"  aria-hidden="true"></div>
+  <div class="orb orb-blue"   aria-hidden="true"></div>
+  <div class="orb orb-mint"   aria-hidden="true"></div>
+  <div class="orb orb-butter" aria-hidden="true"></div>
+
+  <!-- ═══ LOGIN VIEW ══════════════════════════════════════════ -->
+  <div id="login-view" class="login-wrap">
+    <div class="login-card">
+      <span class="login-logo" aria-hidden="true">🔐</span>
+      <h1 class="login-title">GA Cheer Up Board</h1>
+      <p class="login-sub">ผู้ดูแลระบบ</p>
+
+      <form id="login-form" novalidate>
+        <div class="field-section">
+          <label class="field-label" for="l-email">อีเมล</label>
+          <input type="email" id="l-email" class="form-input"
+                 placeholder="admin@example.com" autocomplete="email" />
+        </div>
+        <div class="field-section">
+          <label class="field-label" for="l-pass">รหัสผ่าน</label>
+          <input type="password" id="l-pass" class="form-input"
+                 placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <p class="form-error a-hidden" id="login-error" role="alert" aria-live="assertive"></p>
+        <button type="submit" class="btn-submit" id="login-btn">
+          <span id="login-label">เข้าสู่ระบบ</span>
+          <span class="spinner a-hidden" id="login-spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </div>
   </div>
+
+  <!-- ═══ DASHBOARD VIEW ══════════════════════════════════════ -->
+  <div id="dashboard-view" class="a-hidden">
+
+    <!-- ─── Sticky header ──────────────────────────────────── -->
+    <header class="admin-header" role="banner">
+      <div class="admin-header-inner">
+        <div class="logo-group">
+          <span class="logo-star" aria-hidden="true">🌟</span>
+          <div class="logo-text">
+            <span class="logo-title">GA Cheer Up Board</span>
+            <span class="logo-sub">Dashboard ผู้ดูแล</span>
+          </div>
+        </div>
+        <div class="admin-header-actions">
+          <a href="index.html" class="btn-ghost">← ดูบอร์ด</a>
+          <button class="btn-signout" id="signout-btn">ออกจากระบบ</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+
+      <!-- ─── Stats bar ────────────────────────────────────── -->
+      <div class="stats-bar" role="region" aria-label="สถิติ">
+        <div class="stat-card">
+          <span class="stat-num" id="stat-total">—</span>
+          <span class="stat-label">ทั้งหมด</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="stat-visible">—</span>
+          <span class="stat-label">มองเห็น</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="stat-hidden">—</span>
+          <span class="stat-label">ซ่อนอยู่</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="stat-pinned">—</span>
+          <span class="stat-label">ปักหมุด (MOTW)</span>
+        </div>
+      </div>
+
+      <!-- ─── Filter pills ─────────────────────────────────── -->
+      <nav class="filter-bar" aria-label="กรองข้อความ">
+        <button class="filter-pill active" data-admin-filter="all">ทั้งหมด</button>
+        <button class="filter-pill" data-admin-filter="visible">👁 มองเห็น</button>
+        <button class="filter-pill" data-admin-filter="hidden">🙈 ซ่อนอยู่</button>
+      </nav>
+
+      <!-- ─── Message list ──────────────────────────────────── -->
+      <div id="admin-list" class="admin-list" role="list" aria-label="รายการข้อความ"></div>
+
+    </main>
+  </div>
+
+  <!-- ═══ Toast ════════════════════════════════════════════════ -->
+  <div id="toast" class="admin-toast a-hidden" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/admin.js"></script>
 </body>
 </html>
