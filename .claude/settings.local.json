@@ -7,7 +7,12 @@
       "Bash(Out-Null)",
       "Bash(Write-Output \"Created directory structure\")",
       "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSize)",
-      "PowerShell(New-Item *)"
+      "PowerShell(New-Item *)",
+      "PowerShell(python3 \"C:\\\\Users\\\\micky\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"social community engagement board team morale playful pastel glassmorphism\" --design-system -p \"GA Cheer Up Board\" -f markdown 2>&1)",
+      "PowerShell(Head 30 *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
