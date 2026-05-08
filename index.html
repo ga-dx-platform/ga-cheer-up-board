@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GA Cheer Up Board 🌟</title>
+
+  <!-- Google Fonts: Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- canvas-confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom design system -->
+  <link rel="stylesheet" href="assets/styles.css" />
+
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit','sans-serif'] } } } }
+  </script>
+</head>
+<body>
+
+  <!-- ═══ Ambient orbs ════════════════════════════════════════ -->
+  <div class="orb orb-peach"  aria-hidden="true"></div>
+  <div class="orb orb-blue"   aria-hidden="true"></div>
+  <div class="orb orb-mint"   aria-hidden="true"></div>
+  <div class="orb orb-butter" aria-hidden="true"></div>
+  <div class="orb orb-rose"   aria-hidden="true"></div>
+
+  <!-- ═══ Sticky Header ═══════════════════════════════════════ -->
+  <header id="site-header" role="banner">
+    <div class="header-inner">
+      <div class="logo-group">
+        <span class="logo-star" aria-hidden="true">🌟</span>
+        <div class="logo-text">
+          <h1 class="logo-title">GA Cheer Up Board</h1>
+          <p class="logo-sub">แชร์ความรู้สึกดีๆ ให้กัน ✨</p>
+        </div>
+      </div>
+      <button class="btn-add" id="openModal" aria-haspopup="dialog">
+        <span aria-hidden="true">✨</span> เพิ่มข้อความ
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ Main content ═════════════════════════════════════════ -->
+  <main class="main-wrap" id="main-content">
+
+    <!-- ─── Message of the Week ─────────────────────────────── -->
+    <section class="motw-section" id="motw-section" aria-label="ข้อความแห่งสัปดาห์">
+      <div class="section-tag">
+        <span class="tag-star" aria-hidden="true">⭐</span>
+        ข้อความแห่งสัปดาห์
+      </div>
+      <div id="motw-container"></div>
+    </section>
+
+    <!-- ─── Filter pills ─────────────────────────────────────── -->
+    <nav class="filter-bar" aria-label="กรองตามหมวดหมู่">
+      <button class="filter-pill active" data-filter="all">ทั้งหมด</button>
+      <button class="filter-pill" data-filter="thank_you">🍑 ขอบคุณ</button>
+      <button class="filter-pill" data-filter="idea">💙 ไอเดีย</button>
+      <button class="filter-pill" data-filter="cheer_up">🌿 เชียร์อัพ</button>
+    </nav>
+
+    <!-- ─── Masonry board — JS renders cards here ───────────── -->
+    <section class="masonry" id="board" aria-label="กระดาน"></section>
+
+  </main>
+
+  <!-- ═══ Submit Modal ════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal"
+       role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+
+      <div class="modal-head">
+        <h2 class="modal-title" id="modal-title">✨ เพิ่มข้อความ</h2>
+        <button class="modal-close" id="closeModal" aria-label="ปิด">✕</button>
+      </div>
+
+      <form id="submit-form" novalidate>
+
+        <!-- 1 · Category ─────────────────────────────── -->
+        <div class="field-section">
+          <p class="field-label">หมวดหมู่ <span class="required">*</span></p>
+          <div class="cat-tabs" role="radiogroup" aria-label="เลือกหมวดหมู่">
+            <button type="button" class="cat-tab cat-tab-thank_you active"
+                    data-cat="thank_you" role="radio" aria-checked="true">💝 ขอบคุณ</button>
+            <button type="button" class="cat-tab cat-tab-idea"
+                    data-cat="idea" role="radio" aria-checked="false">💡 ไอเดีย</button>
+            <button type="button" class="cat-tab cat-tab-cheer_up"
+                    data-cat="cheer_up" role="radio" aria-checked="false">🌈 ให้กำลังใจ</button>
+          </div>
+        </div>
+
+        <!-- 2 · Avatar emoji ─────────────────────────── -->
+        <div class="field-section">
+          <p class="field-label">อีโมจิประจำตัว</p>
+          <div class="emoji-picker" role="group" aria-label="เลือกอีโมจิ">
+            <button type="button" class="emoji-opt selected" data-emoji="🌟" aria-pressed="true">🌟</button>
+            <button type="button" class="emoji-opt" data-emoji="🦋" aria-pressed="false">🦋</button>
+            <button type="button" class="emoji-opt" data-emoji="🌸" aria-pressed="false">🌸</button>
+            <button type="button" class="emoji-opt" data-emoji="🤗" aria-pressed="false">🤗</button>
+            <button type="button" class="emoji-opt" data-emoji="☀️" aria-pressed="false">☀️</button>
+            <button type="button" class="emoji-opt" data-emoji="💪" aria-pressed="false">💪</button>
+            <button type="button" class="emoji-opt" data-emoji="🌈" aria-pressed="false">🌈</button>
+            <button type="button" class="emoji-opt" data-emoji="🎵" aria-pressed="false">🎵</button>
+            <button type="button" class="emoji-opt" data-emoji="🏆" aria-pressed="false">🏆</button>
+            <button type="button" class="emoji-opt" data-emoji="☕" aria-pressed="false">☕</button>
+            <button type="button" class="emoji-opt" data-emoji="🌱" aria-pressed="false">🌱</button>
+            <button type="button" class="emoji-opt" data-emoji="🎀" aria-pressed="false">🎀</button>
+            <button type="button" class="emoji-opt" data-emoji="🦄" aria-pressed="false">🦄</button>
+            <button type="button" class="emoji-opt" data-emoji="🍀" aria-pressed="false">🍀</button>
+            <button type="button" class="emoji-opt" data-emoji="🎉" aria-pressed="false">🎉</button>
+            <button type="button" class="emoji-opt" data-emoji="🌊" aria-pressed="false">🌊</button>
+          </div>
+        </div>
+
+        <!-- 3 · Message ──────────────────────────────── -->
+        <div class="field-section">
+          <label class="field-label" for="f-content">
+            ข้อความ <span class="required">*</span>
+          </label>
+          <textarea id="f-content" class="form-textarea" rows="4" maxlength="500"
+                    placeholder="เขียนสิ่งที่อยากบอก... 💬"></textarea>
+          <div class="char-counter"><span id="char-count">0</span>/500</div>
+        </div>
+
+        <!-- 4 · Sender name ──────────────────────────── -->
+        <div class="field-section" id="sender-section">
+          <label class="field-label" for="f-sender">ชื่อของคุณ</label>
+          <input type="text" id="f-sender" class="form-input" maxlength="60"
+                 placeholder="ชื่อเล่น หรือชื่อจริง" autocomplete="nickname" />
+        </div>
+
+        <!-- 5 · Anonymous checkbox ───────────────────── -->
+        <label class="anon-row">
+          <input type="checkbox" id="f-anon" />
+          <span>โพสต์แบบไม่ระบุชื่อ 🙈</span>
+        </label>
+
+        <!-- 6 · Error ────────────────────────────────── -->
+        <p class="form-error hidden" id="form-error"
+           role="alert" aria-live="assertive"></p>
+
+        <!-- 7 · Submit ───────────────────────────────── -->
+        <button type="submit" class="btn-submit" id="submit-btn">
+          <span id="submit-label">✨ ส่งข้อความ</span>
+          <span class="spinner hidden" id="submit-spinner" aria-hidden="true"></span>
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

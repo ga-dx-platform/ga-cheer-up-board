@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/micky/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"office engagement board social fun glassmorphism pastel lively\" --design-system -p \"GA Cheer Up Board\" -f markdown)",
+      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\")",
+      "Bash(Out-Null)",
+      "Bash(Write-Output \"Created directory structure\")",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSize)",
+      "PowerShell(New-Item *)"
+    ]
+  }
+}
