@@ -135,8 +135,8 @@ function renderError(err) {
   return `
     <div class="empty-state error-state" role="alert">
       <div class="empty-emoji">😕</div>
-      <h3 class="empty-title">โหลดข้อมูลไม่สำเร็จ</h3>
-      <p class="empty-sub">เกิดข้อผิดพลาดบางอย่าง<br>กรุณาลองรีเฟรชหน้าอีกครั้ง</p>
+      <h3 class="empty-title">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า 🔄</h3>
+      <p class="empty-sub">เกิดข้อผิดพลาดบางอย่าง กรุณาลองใหม่อีกครั้ง</p>
       <button class="empty-cta" onclick="location.reload()">🔄 ลองอีกครั้ง</button>
     </div>`;
 }

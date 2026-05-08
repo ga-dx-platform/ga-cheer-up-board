@@ -318,7 +318,7 @@ body {
   background-size:600px 100%;
   animation:shimmer 1.5s ease-in-out infinite;
 }
-.skel-card      { transform:none!important; pointer-events:none; }
+.skel-card      { transform:none!important; pointer-events:none; background:rgba(255,255,255,0.35); }
 .skel-head      { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
 .skel-foot      { display:flex; gap:.3rem; margin-top:.85rem; }
 .skel-avatar    { width:2rem;  height:2rem;  border-radius:50%; flex-shrink:0; }
@@ -351,6 +351,8 @@ body {
   .logo-sub     { display:none; }
   .btn-add      { font-size:.82rem; padding:.48rem 1rem; }
   .cat-tabs     { grid-template-columns:1fr; }
+  /* 44px minimum touch targets for reaction buttons */
+  .rxn-btn      { min-height:44px; padding:.5rem .85rem; font-size:.82rem; }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */
