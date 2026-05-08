@@ -64,12 +64,12 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse 60% 50% at 10%  0%,  rgba(255,195,160,0.55) 0%,transparent 60%),
-    radial-gradient(ellipse 55% 50% at 92%  5%,  rgba(173,216,255,0.50) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 45% at 85% 90%,  rgba(187,247,208,0.50) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 45% at 5%  95%,  rgba(253,230,138,0.45) 0%,transparent 60%),
-    radial-gradient(ellipse 70% 70% at 50% 50%,  rgba(255,240,245,0.60) 0%,transparent 80%),
-    #fdf6f0;
+    radial-gradient(ellipse 60% 50% at 10%  0%,  rgba(255,170,120,0.70) 0%,transparent 60%),
+    radial-gradient(ellipse 55% 50% at 92%  5%,  rgba(130,195,255,0.65) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 45% at 85% 90%,  rgba(140,230,180,0.65) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 45% at 5%  95%,  rgba(250,210,100,0.60) 0%,transparent 60%),
+    radial-gradient(ellipse 70% 70% at 50% 50%,  rgba(220,210,245,0.55) 0%,transparent 80%),
+    #e8eef4;
 }
 @media (hover: hover) {
   body { background-attachment: fixed; }
