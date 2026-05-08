@@ -23,8 +23,8 @@
   <link rel="stylesheet" href="assets/styles.css" />
 
   <script>
-    // Tailwind config: use Kanit as default font
     tailwind.config = {
+      corePlugins: { preflight: false },
       theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } }
     }
   </script>
@@ -57,6 +57,17 @@
 
   <!-- ═══ Main content ═════════════════════════════════════════ -->
   <main class="main-wrap" id="main-content">
+
+    <!-- ─── Stats bar ─────────────────────────────────────────── -->
+    <div class="stats-bar" id="stats-bar" role="status" aria-live="polite">
+      <span class="stat-item">💌 <span id="stat-total">—</span> ข้อความ</span>
+      <span class="stat-sep" aria-hidden="true">·</span>
+      <span class="stat-item">💝 <span id="stat-thank">—</span> ขอบคุณ</span>
+      <span class="stat-sep" aria-hidden="true">·</span>
+      <span class="stat-item">💡 <span id="stat-idea">—</span> ไอเดีย</span>
+      <span class="stat-sep" aria-hidden="true">·</span>
+      <span class="stat-item">🌈 <span id="stat-cheer">—</span> ให้กำลังใจ</span>
+    </div>
 
     <!-- ─── Message of the Week ─────────────────────────────── -->
     <section class="motw-section" id="motw-section" aria-label="ข้อความแห่งสัปดาห์">

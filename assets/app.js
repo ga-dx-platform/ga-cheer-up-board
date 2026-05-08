@@ -45,11 +45,15 @@ function thaiTime(iso) {
    ══════════════════════════════════════════════════════════ */
 function rxnHtml(id, rxn) {
   const r = rxn ?? { thumbs_up: 0, heart: 0, clap: 0 };
+  const btn = (type, emoji, label) => {
+    const cls = reactedSet.has(`${id}:${type}`) ? ' reacted' : '';
+    return `<button class="rxn-btn${cls}" data-id="${id}" data-type="${type}" aria-label="${label}">${emoji} <span class="rxn-count">${r[type] ?? 0}</span></button>`;
+  };
   return `
     <div class="reactions">
-      <button class="rxn-btn" data-id="${id}" data-type="thumbs_up" aria-label="ถูกใจ">👍 <span class="rxn-count">${r.thumbs_up ?? 0}</span></button>
-      <button class="rxn-btn" data-id="${id}" data-type="heart"     aria-label="รัก">❤️ <span class="rxn-count">${r.heart ?? 0}</span></button>
-      <button class="rxn-btn" data-id="${id}" data-type="clap"      aria-label="ปรบมือ">👏 <span class="rxn-count">${r.clap ?? 0}</span></button>
+      ${btn('thumbs_up', '👍', 'ถูกใจ')}
+      ${btn('heart',     '❤️', 'รัก')}
+      ${btn('clap',      '👏', 'ปรบมือ')}
     </div>`;
 }
 
@@ -146,6 +150,8 @@ function renderError(err) {
    ══════════════════════════════════════════════════════════ */
 let allMessages  = [];
 let activeFilter = 'all';
+let pinnedMsg    = null;
+const reactedSet = new Set(); // key: `${msgId}:${type}`
 
 function wireReactions() {
   document.querySelectorAll('.rxn-btn').forEach(btn => {
@@ -156,11 +162,14 @@ function wireReactions() {
       const countEl   = btn.querySelector('.rxn-count');
       const current   = parseInt(countEl?.textContent || '0', 10);
 
+      const key = `${btn.dataset.id}:${btn.dataset.type}`;
+
       btn.classList.add('popped');
       btn.addEventListener('animationend', () => btn.classList.remove('popped'), { once: true });
       btn.classList.toggle('reacted');
 
       if (!isReacted) {
+        reactedSet.add(key);
         if (countEl) countEl.textContent = current + 1;
         const { error } = await sb.rpc('increment_reaction', {
           message_id:    btn.dataset.id,
@@ -170,12 +179,27 @@ function wireReactions() {
           console.warn('[Reaction]', error);
           if (countEl) countEl.textContent = current;
           btn.classList.remove('reacted');
+          reactedSet.delete(key);
         }
       } else {
+        reactedSet.delete(key);
         if (countEl) countEl.textContent = Math.max(0, current - 1);
       }
     });
   });
+}
+
+function updateStats() {
+  const msgs  = pinnedMsg ? [pinnedMsg, ...allMessages] : allMessages;
+  const total = msgs.length;
+  const thank = msgs.filter(m => m.category === 'thank_you').length;
+  const idea  = msgs.filter(m => m.category === 'idea').length;
+  const cheer = msgs.filter(m => m.category === 'cheer_up').length;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('stat-total', total);
+  set('stat-thank', thank);
+  set('stat-idea',  idea);
+  set('stat-cheer', cheer);
 }
 
 function updateCardReactions(id, rxn) {
@@ -231,6 +255,7 @@ async function loadBoard() {
   const pinned  = rows.find(m => m.is_pinned);
   const regular = rows.filter(m => !m.is_pinned);
 
+  pinnedMsg = pinned ?? null;
   if (pinned) {
     motwSec.style.display = '';
     motwEl.innerHTML = renderMotw(pinned);
@@ -241,6 +266,7 @@ async function loadBoard() {
   allMessages = regular;
   renderGrid(allMessages);
   wireReactions();
+  updateStats();
 }
 
 /* ── Filter pills ────────────────────────────────────────── */
@@ -371,9 +397,14 @@ function resetForm() {
 }
 
 /* ── Confetti ────────────────────────────────────────────── */
-function fireConfetti() {
+function fireConfetti(category) {
   if (typeof confetti !== 'function') return;
-  const colors = ['#f97316','#ec4899','#8b5cf6','#fbbf24','#34d399','#60a5fa'];
+  const palettes = {
+    thank_you: ['#FFB8A0', '#FF8A70', '#FFD97A'],
+    idea:      ['#9DC0FF', '#5B8DEF', '#B8A0FF'],
+    cheer_up:  ['#8AD9B0', '#4BBE82', '#D4F4E2'],
+  };
+  const colors = palettes[category] ?? palettes.thank_you;
   const end    = Date.now() + 2400;
   (function frame() {
     confetti({ particleCount: 4, angle: 60,  spread: 70, origin: { x: 0 }, colors });
@@ -414,14 +445,11 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
     is_visible:   true,
     is_pinned:    false,
   };
-  console.log('Inserting payload:', JSON.stringify(payload));
-
   const { data, error } = await sb
     .from('cheer_up_messages')
     .insert(payload)
     .select()
     .single();
-  console.log('Supabase response error:', JSON.stringify(error));
 
   setSubmitting(false);
 
@@ -438,8 +466,9 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   document.querySelector('.filter-pill[data-filter="all"]')?.classList.add('active');
   renderGrid(allMessages);
   wireReactions();
+  updateStats();
 
-  fireConfetti();
+  fireConfetti(selectedCategory);
   closeModal();
   resetForm();
 });
@@ -456,6 +485,7 @@ function subscribeRealtime() {
         if (allMessages.find(m => m.id === msg.id)) return; // already optimistically added
         allMessages.unshift(msg);
         renderGrid(allMessages);
+        updateStats();
       }
     )
     .on('postgres_changes',
@@ -481,6 +511,7 @@ function subscribeRealtime() {
           if (msg.is_visible && !msg.is_pinned) {
             allMessages.unshift(msg);
             renderGrid(allMessages);
+            updateStats();
           }
           return;
         }
@@ -488,6 +519,7 @@ function subscribeRealtime() {
         if (!msg.is_visible) {
           allMessages.splice(idx, 1);
           renderGrid(allMessages);
+          updateStats();
           return;
         }
 

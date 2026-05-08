@@ -171,6 +171,19 @@ body {
 @keyframes rxn-pop { 0%{transform:scale(1)} 35%{transform:scale(1.45)} 65%{transform:scale(0.88)} 100%{transform:scale(1.12)} }
 .rxn-btn.reacted { background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.35); color:#c2410c; }
 
+/* ── Stats bar ───────────────────────────────────────────── */
+.stats-bar {
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
+  gap:.35rem 1rem; margin:0 auto 1.75rem;
+  padding:.48rem 1.5rem;
+  background:rgba(255,255,255,.52); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border:1.5px solid rgba(255,255,255,.65); border-radius:99px;
+  box-shadow:var(--glass-shadow); width:fit-content;
+}
+.stat-item { font-size:.78rem; font-weight:500; color:#6b6b80; white-space:nowrap; }
+.stat-item span { font-weight:700; color:#2d2d3e; }
+.stat-sep  { color:#d1d5db; font-size:.78rem; user-select:none; }
+
 /* ── Filter bar ──────────────────────────────────────────── */
 .filter-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.75rem; }
 
@@ -186,7 +199,7 @@ body {
 
 /* ── Masonry grid ────────────────────────────────────────── */
 .masonry { column-count:4; column-gap:var(--gap); }
-.masonry > .card { break-inside:avoid; display:inline-block; width:100%; margin-bottom:var(--gap); }
+.masonry > .card { break-inside:avoid; margin-bottom:var(--gap); }
 
 @media(max-width:1200px){.masonry{column-count:3}}
 @media(max-width:820px) {.masonry{column-count:2}}
