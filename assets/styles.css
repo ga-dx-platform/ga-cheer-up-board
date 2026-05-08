@@ -35,17 +35,17 @@ button, a, label { touch-action: manipulation; }
   --glass-border:      rgba(255,255,255,0.72);
   --glass-inset:       inset 0 1px 0 rgba(255,255,255,0.90);
   --glass-shadow:
-    0 2px 4px  rgba(0,0,0,0.04),
-    0 8px 24px rgba(0,0,0,0.08),
-    0 32px 64px rgba(0,0,0,0.07);
-  --glass-shadow-lift:
     0 4px 8px   rgba(0,0,0,0.06),
-    0 20px 50px rgba(0,0,0,0.14),
-    0 60px 100px rgba(0,0,0,0.10);
+    0 16px 48px rgba(0,0,0,0.12),
+    0 48px 96px rgba(0,0,0,0.10);
+  --glass-shadow-lift:
+    0 8px 16px   rgba(0,0,0,0.08),
+    0 28px 70px rgba(0,0,0,0.18),
+    0 72px 130px rgba(0,0,0,0.14);
 
-  --cat-thank: linear-gradient(145deg, rgba(255,210,180,0.32) 0%, rgba(255,255,255,0.10) 100%);
-  --cat-idea:  linear-gradient(145deg, rgba(195,220,255,0.32) 0%, rgba(255,255,255,0.10) 100%);
-  --cat-cheer: linear-gradient(145deg, rgba(195,248,210,0.32) 0%, rgba(255,255,255,0.10) 100%);
+  --cat-thank: linear-gradient(145deg, rgba(255,200,165,0.22) 0%, rgba(255,255,255,0.06) 100%);
+  --cat-idea:  linear-gradient(145deg, rgba(185,215,255,0.22) 0%, rgba(255,255,255,0.06) 100%);
+  --cat-cheer: linear-gradient(145deg, rgba(180,245,205,0.22) 0%, rgba(255,255,255,0.06) 100%);
 
   --font:        'Kanit','Noto Sans Thai',sans-serif;
   --header-h:    70px;
@@ -83,11 +83,11 @@ body {
   z-index: 0;
   will-change: transform;
 }
-.orb-peach  { width:600px;height:600px;background:radial-gradient(circle,#ffb49a 0%,rgba(255,146,112,0) 70%);filter:blur(72px);opacity:.60;top:-160px;left:-120px;animation:orb1 14s ease-in-out infinite; }
-.orb-blue   { width:500px;height:500px;background:radial-gradient(circle,#93c5fd 0%,rgba(96,165,250,0) 70%);filter:blur(80px);opacity:.58;top:35%;right:-140px;animation:orb2 17s ease-in-out infinite; }
-.orb-mint   { width:440px;height:440px;background:radial-gradient(circle,#86efac 0%,rgba(74,222,128,0) 70%);filter:blur(70px);opacity:.55;bottom:8%;left:3%;animation:orb3 12s ease-in-out infinite; }
-.orb-butter { width:360px;height:360px;background:radial-gradient(circle,#fde68a 0%,rgba(251,191,36,0) 70%);filter:blur(60px);opacity:.55;bottom:28%;right:18%;animation:orb4 16s ease-in-out infinite; }
-.orb-rose   { width:300px;height:300px;background:radial-gradient(circle,#fda4af 0%,rgba(251,113,133,0) 70%);filter:blur(64px);opacity:.48;top:55%;left:38%;animation:orb5 19s ease-in-out infinite; }
+.orb-peach  { width:960px;height:960px;background:radial-gradient(circle,#ff9a70 0%,rgba(255,130,90,0) 65%);filter:blur(48px);opacity:.72;top:-120px;left:-200px;animation:orb1 14s ease-in-out infinite; }
+.orb-blue   { width:880px;height:880px;background:radial-gradient(circle,#60a5fa 0%,rgba(59,130,246,0) 65%);filter:blur(52px);opacity:.68;top:20%;right:-220px;animation:orb2 17s ease-in-out infinite; }
+.orb-mint   { width:800px;height:800px;background:radial-gradient(circle,#4ade80 0%,rgba(34,197,94,0) 65%);filter:blur(48px);opacity:.65;bottom:-60px;left:-100px;animation:orb3 12s ease-in-out infinite; }
+.orb-butter { width:700px;height:700px;background:radial-gradient(circle,#fbbf24 0%,rgba(251,191,36,0) 65%);filter:blur(44px);opacity:.65;bottom:15%;right:-80px;animation:orb4 16s ease-in-out infinite; }
+.orb-rose   { width:600px;height:600px;background:radial-gradient(circle,#fb7185 0%,rgba(251,113,133,0) 65%);filter:blur(46px);opacity:.60;top:40%;left:30%;animation:orb5 19s ease-in-out infinite; }
 
 @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(70px,90px) scale(1.09)} 66%{transform:translate(-45px,45px) scale(0.94)} }
 @keyframes orb2 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-90px,-65px) scale(1.06)} 70%{transform:translate(35px,85px) scale(0.91)} }
@@ -253,7 +253,8 @@ body {
 .card {
   position:relative; border-radius:20px;
   padding:1.2rem 1.3rem 1rem;
-  backdrop-filter:blur(28px) saturate(190%) brightness(1.05); -webkit-backdrop-filter:blur(28px) saturate(190%) brightness(1.05);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter:blur(28px) saturate(200%) brightness(1.06); -webkit-backdrop-filter:blur(28px) saturate(200%) brightness(1.06);
   border:1px solid rgba(255,255,255,0.72);
   box-shadow: var(--glass-inset), var(--glass-shadow);
   transform:rotate(var(--r,0deg));
