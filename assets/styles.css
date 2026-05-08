@@ -153,16 +153,18 @@ body {
 
 .motw-card {
   position:relative;
-  background: rgba(255,255,255,0.24);
-  backdrop-filter:blur(36px) saturate(200%) brightness(1.06); -webkit-backdrop-filter:blur(36px) saturate(200%) brightness(1.06);
-  border:1px solid rgba(255,255,255,0.78); border-radius:24px;
+  background: rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-top: 1px solid rgba(255,255,255,0.70) !important;
+  border-left: 1px solid rgba(255,255,255,0.30) !important;
+  border-radius:24px;
   padding:1.75rem 2.25rem;
   box-shadow:
-    var(--glass-inset),
     0 0 0 5px rgba(253,230,138,0.12),
-    0 4px 8px  rgba(0,0,0,0.04),
-    0 16px 48px rgba(0,0,0,0.11),
-    0 48px 96px rgba(0,0,0,0.08);
+    0 24px 60px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.5) !important;
   display:flex; align-items:flex-start; gap:1.5rem;
   overflow:hidden;
   transition:transform .35s var(--ease-out),box-shadow .35s ease;
@@ -253,27 +255,26 @@ body {
 .card {
   position:relative; border-radius:20px;
   padding:1.2rem 1.3rem 1rem;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter:blur(28px) saturate(200%) brightness(1.06); -webkit-backdrop-filter:blur(28px) saturate(200%) brightness(1.06);
-  border:1px solid rgba(255,255,255,0.72);
-  box-shadow: var(--glass-inset), var(--glass-shadow);
+  background: rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-top: 1px solid rgba(255,255,255,0.70) !important;
+  border-left: 1px solid rgba(255,255,255,0.30) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5) !important;
   transform:rotate(var(--r,0deg));
-  transition:transform .32s var(--spring),box-shadow .32s ease,border-color .25s ease;
+  transition:transform .32s var(--spring),box-shadow .32s ease;
   overflow:hidden;
 }
 .card::before { content:''; position:absolute; top:0;left:0;right:0; height:3.5px; border-radius:20px 20px 0 0; }
-.card::after  { content:''; position:absolute; top:3.5px;left:0;right:0; height:36px; background:linear-gradient(to bottom,rgba(255,255,255,.55),transparent); pointer-events:none; border-radius:20px 20px 0 0; }
+.card::after  { content:''; position:absolute; top:3.5px;left:0;right:0; height:36px; background:linear-gradient(to bottom,rgba(255,255,255,.28),transparent); pointer-events:none; border-radius:20px 20px 0 0; }
 .card:hover   {
   transform:translateY(-12px) rotate(0deg) scale(1.018);
-  box-shadow: var(--glass-inset), var(--glass-shadow-lift);
-  border-color: rgba(255,255,255,0.88);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.65) !important;
 }
 
-.card-thank_you { background:var(--cat-thank); }
 .card-thank_you::before { background:linear-gradient(90deg,#f97316,#fb923c,#fbbf24); }
-.card-idea      { background:var(--cat-idea); }
 .card-idea::before      { background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd); }
-.card-cheer_up  { background:var(--cat-cheer); }
 .card-cheer_up::before  { background:linear-gradient(90deg,#10b981,#34d399,#6ee7b7); }
 
 .card-head   { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
