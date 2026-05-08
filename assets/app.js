@@ -404,20 +404,24 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
 
   setSubmitting(true);
 
+  const payload = {
+    category:     selectedCategory,
+    content,
+    sender_name:  anon || !sender ? 'Anonymous' : sender,
+    is_anonymous: anon,
+    avatar_emoji: selectedEmoji,
+    reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
+    is_visible:   true,
+    is_pinned:    false,
+  };
+  console.log('Inserting payload:', JSON.stringify(payload));
+
   const { data, error } = await sb
     .from('cheer_up_messages')
-    .insert({
-      category:     selectedCategory,
-      content,
-      sender_name:  anon || !sender ? 'Anonymous' : sender,
-      is_anonymous: anon,
-      avatar_emoji: selectedEmoji,
-      reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
-      is_visible:   true,
-      is_pinned:    false,
-    })
+    .insert(payload)
     .select()
     .single();
+  console.log('Supabase response error:', JSON.stringify(error));
 
   setSubmitting(false);
 
