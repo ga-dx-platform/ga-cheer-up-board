@@ -6,6 +6,22 @@
 /* ── Reset ───────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Touch & interaction baseline ───────────────────────── */
+button, a, label { touch-action: manipulation; }
+
+/* ── Focus-visible rings (keyboard a11y) ─────────────────── */
+:focus-visible {
+  outline: 2.5px solid rgba(249,115,22,.65);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.btn-add:focus-visible,
+.btn-submit:focus-visible,
+.empty-cta:focus-visible  { outline-color: rgba(255,255,255,.85); }
+.filter-pill.active:focus-visible { outline-color: rgba(255,255,255,.75); }
+.form-textarea:focus-visible,
+.form-input:focus-visible  { outline: none; }
+
 /* ── Design tokens ───────────────────────────────────────── */
 :root {
   --peach-200: #ffbfa0;  --peach-300: #ff9a73;  --peach-400: #f97316;
@@ -47,7 +63,9 @@ body {
     radial-gradient(ellipse 60% 45% at 5%  95%,  rgba(253,230,138,0.45) 0%,transparent 60%),
     radial-gradient(ellipse 70% 70% at 50% 50%,  rgba(255,240,245,0.60) 0%,transparent 80%),
     #fdf6f0;
-  background-attachment: fixed;
+}
+@media (hover: hover) {
+  body { background-attachment: fixed; }
 }
 
 /* ── Floating ambient orbs ───────────────────────────────── */
@@ -90,7 +108,7 @@ body {
 @keyframes logo-spin { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.1)} 100%{transform:rotate(360deg) scale(1)} }
 .logo-text  { line-height:1.15; }
 .logo-title { font-size:1.3rem; font-weight:700; background:linear-gradient(130deg,#f97316 0%,#ec4899 55%,#8b5cf6 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:-.01em; }
-.logo-sub   { font-size:.68rem; font-weight:300; color:#a3a3b3; letter-spacing:.03em; }
+.logo-sub   { font-size:.68rem; font-weight:300; color:#8b8b9e; letter-spacing:.03em; }
 
 .btn-add {
   display:flex; align-items:center; gap:.375rem;
@@ -151,7 +169,7 @@ body {
 .motw-badge { display:inline-block; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:.2rem .7rem; border-radius:99px; margin-bottom:.6rem; }
 .motw-message { font-size:1.05rem; font-weight:400; line-height:1.8; color:#2d2d3e; margin-bottom:1rem; }
 .motw-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
-.motw-sender { font-size:.82rem; font-weight:500; color:#8b8b9e; }
+.motw-sender { font-size:.82rem; font-weight:500; color:#6b7280; }
 
 /* ── Reaction buttons ────────────────────────────────────── */
 .reactions { display:flex; gap:.3rem; flex-wrap:wrap; }
@@ -238,8 +256,8 @@ body {
 .card-msg  { font-size:.875rem; font-weight:400; line-height:1.75; color:#2d2d3e; margin-bottom:1rem; word-break:break-word; }
 .card-foot { display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap; }
 .card-meta { display:flex; flex-direction:column; gap:.06rem; min-width:0; }
-.card-sender { font-size:.73rem; font-weight:500; color:#9ca3af; }
-.card-time   { font-size:.66rem; font-weight:300; color:#c4c4d0; }
+.card-sender { font-size:.73rem; font-weight:500; color:#6b7280; }
+.card-time   { font-size:.66rem; font-weight:300; color:#9ca3af; }
 
 /* ── Modal ───────────────────────────────────────────────── */
 .modal-overlay {
@@ -364,8 +382,12 @@ body {
   .logo-sub     { display:none; }
   .btn-add      { font-size:.82rem; padding:.48rem 1rem; }
   .cat-tabs     { grid-template-columns:1fr; }
-  /* 44px minimum touch targets for reaction buttons */
+  /* 44px minimum touch targets */
   .rxn-btn      { min-height:44px; padding:.5rem .85rem; font-size:.82rem; }
+  .emoji-opt    { min-width:44px; min-height:44px; width:auto; border-radius:14px; }
+  .modal-close  { width:44px; height:44px; }
+  .form-input,
+  .form-textarea { min-height:44px; }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */
