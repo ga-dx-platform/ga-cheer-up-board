@@ -43,9 +43,9 @@ button, a, label { touch-action: manipulation; }
     0 28px 70px rgba(0,0,0,0.18),
     0 72px 130px rgba(0,0,0,0.14);
 
-  --cat-thank: linear-gradient(145deg, rgba(255,200,165,0.22) 0%, rgba(255,255,255,0.06) 100%);
-  --cat-idea:  linear-gradient(145deg, rgba(185,215,255,0.22) 0%, rgba(255,255,255,0.06) 100%);
-  --cat-cheer: linear-gradient(145deg, rgba(180,245,205,0.22) 0%, rgba(255,255,255,0.06) 100%);
+  --cat-peach: rgba(249,115,22,0.50);
+  --cat-blue:  rgba(59,130,246,0.50);
+  --cat-mint:  rgba(16,185,129,0.50);
 
   --font:        'Kanit','Noto Sans Thai',sans-serif;
   --header-h:    70px;
@@ -268,22 +268,33 @@ body {
   transition:transform .32s var(--spring),box-shadow .32s ease;
   overflow:hidden;
 }
-.card::before { content:''; position:absolute; top:0;left:0;right:0; height:3.5px; border-radius:20px 20px 0 0; }
-.card::after  { content:''; position:absolute; top:3.5px;left:0;right:0; height:36px; background:linear-gradient(to bottom,rgba(255,255,255,.28),transparent); pointer-events:none; border-radius:20px 20px 0 0; }
+.card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; border-radius:20px 20px 0 0; }
 .card:hover   {
   transform:translateY(-12px) rotate(0deg) scale(1.018);
   box-shadow: 0 40px 80px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.65) !important;
 }
 
-/* category top-stripe stripped for diagnostic glass pass */
+/* ── Category indicator: left-border accent + top stripe + badge only ── */
+.card[data-category="thank_you"] {
+  border-left-color: var(--cat-peach) !important;
+}
+.card[data-category="idea"] {
+  border-left-color: var(--cat-blue) !important;
+}
+.card[data-category="cheer_up"] {
+  border-left-color: var(--cat-mint) !important;
+}
+.card[data-category="thank_you"]::before { background: linear-gradient(90deg,#f97316,#fb923c,#fbbf24); }
+.card[data-category="idea"]::before      { background: linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd); }
+.card[data-category="cheer_up"]::before  { background: linear-gradient(90deg,#10b981,#34d399,#6ee7b7); }
 
 .card-head   { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
 .card-avatar { font-size:1.8rem; filter:drop-shadow(0 2px 5px rgba(0,0,0,.1)); line-height:1; }
-.card-badge  { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:.18rem .6rem; border-radius:99px; }
+.card-badge  { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:.22rem .7rem; border-radius:99px; }
 
-.badge-thank_you { background:rgba(249,115,22,.14); color:#b45309; border:1px solid rgba(249,115,22,.22); }
-.badge-idea      { background:rgba(59,130,246,.14);  color:#1d4ed8; border:1px solid rgba(59,130,246,.22); }
-.badge-cheer_up  { background:rgba(16,185,129,.14);  color:#065f46; border:1px solid rgba(16,185,129,.22); }
+.badge-thank_you { background:rgba(249,115,22,0.18); color:#c2410c; border:1px solid rgba(249,115,22,0.32); }
+.badge-idea      { background:rgba(59,130,246,0.18);  color:#1e40af; border:1px solid rgba(59,130,246,0.32); }
+.badge-cheer_up  { background:rgba(16,185,129,0.18);  color:#065f46; border:1px solid rgba(16,185,129,0.32); }
 
 .card-msg  { font-size:.875rem; font-weight:400; line-height:1.75; color:#2d2d3e; margin-bottom:1rem; word-break:break-word; }
 .card-foot { display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap; }
