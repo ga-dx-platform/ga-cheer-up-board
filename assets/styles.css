@@ -473,7 +473,7 @@ body {
   position: relative;
   border: 4px solid transparent !important;
   background:
-    rgba(255, 252, 240, 0.72) padding-box,
+    rgba(255, 253, 245, 0.92) padding-box,
     conic-gradient(
       from var(--gold-angle),
       #d97706                    0%,
