@@ -471,35 +471,41 @@ body {
 .card.is-popular {
   padding: 1.5rem;
   position: relative;
-  border: 3px solid transparent !important;
+  border: 4px solid transparent !important;
   background:
-    rgba(255, 255, 255, 0.60) padding-box,
+    rgba(255, 252, 240, 0.72) padding-box,
     conic-gradient(
       from var(--gold-angle),
-      rgba(251, 191,  36, 0.35)   0%,
-      rgba(251, 191,  36, 0.35)  60%,
-      rgba(251, 191,  36, 1.00)  72%,
-      rgba(255, 255, 255, 1.00)  76%,
-      rgba(253, 224,  71, 1.00)  80%,
-      rgba(251, 191,  36, 1.00)  84%,
-      rgba(251, 191,  36, 0.35)  96%,
-      rgba(251, 191,  36, 0.35) 100%
+      #d97706                    0%,
+      #fbbf24                   30%,
+      #d97706                   60%,
+      #fde047                   68%,
+      #ffffff                   74%,
+      #ffe066                   78%,
+      #ffffff                   82%,
+      #fde047                   86%,
+      #d97706                   92%,
+      #fbbf24                  100%
     ) border-box !important;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.95),
-    0 0 28px rgba(251, 191, 36, 0.30),
-    0 12px 36px rgba(251, 191, 36, 0.18),
-    0 32px 72px rgba(0,0,0,0.08) !important;
-  animation: gold-border-run 2s linear infinite !important;
+    0 0 0   4px  rgba(251, 191, 36, 0.18),
+    0 0 22px     rgba(251, 191, 36, 0.55),
+    0 0 55px     rgba(251, 191, 36, 0.28),
+    0 16px 40px  rgba(251, 191, 36, 0.20),
+    0 32px 72px  rgba(0,0,0,0.09) !important;
+  animation: gold-border-run 1.8s linear infinite !important;
 }
 .card.is-popular .card-msg { font-size:1.05rem; }
 .card.is-popular:hover {
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,1),
-    0 0 40px rgba(251, 191, 36, 0.50),
-    0 20px 50px rgba(251, 191, 36, 0.25),
+    0 0 0   4px  rgba(251, 191, 36, 0.30),
+    0 0 35px     rgba(251, 191, 36, 0.75),
+    0 0 80px     rgba(251, 191, 36, 0.40),
+    0 20px 55px  rgba(251, 191, 36, 0.30),
     0 48px 100px rgba(0,0,0,0.12) !important;
-  animation-duration: 1.2s !important;
+  animation-duration: 0.9s !important;
 }
 
 @keyframes gold-border-run {
