@@ -436,6 +436,24 @@ body {
   .form-textarea { min-height:44px; }
 }
 
+/* ── Card organic float ──────────────────────────────────── */
+@keyframes float-card {
+  0%,100% { transform:translateY(0px)   rotate(var(--r,0deg)); }
+  50%     { transform:translateY(-7px)  rotate(var(--r,0deg)); }
+}
+
+/* Base float — 6 s, starts immediately (negative delay = mid-cycle on load) */
+.card { animation:float-card 6s ease-in-out infinite; }
+
+/* Stagger siblings so no two cards bob in perfect sync */
+.card:nth-child(2n) { animation-duration:7.5s; animation-delay:-1.0s; }
+.card:nth-child(3n) { animation-duration:8.2s; animation-delay:-2.5s; }
+.card:nth-child(5n) { animation-duration:6.8s; animation-delay:-3.8s; }
+.card:nth-child(7n) { animation-duration:9.1s; animation-delay:-0.7s; }
+
+/* Pause float on hover so the lift/scale effect takes over cleanly */
+.card:hover { animation:none !important; }
+
 /* ── Reduced motion ──────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation:none!important; transition-duration:.01ms!important; }
