@@ -454,6 +454,48 @@ body {
 /* Pause float on hover so the lift/scale effect takes over cleanly */
 .card:hover { animation:none !important; }
 
+/* ── Popular card ────────────────────────────────────────── */
+.card.is-popular {
+  padding: 1.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 4px 8px   rgba(0,0,0,0.05),
+    0 12px 36px rgba(249,115,22,0.08),
+    0 40px 84px rgba(0,0,0,0.08) !important;
+}
+.card.is-popular .card-msg { font-size:1.05rem; }
+/* Higher specificity restores normal hover shadow so the warm glow doesn't bleed through */
+.card.is-popular:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 8px 16px   rgba(0,0,0,0.08),
+    0 28px 70px  rgba(0,0,0,0.16),
+    0 72px 130px rgba(0,0,0,0.12) !important;
+}
+
+/* ── "New" badge ─────────────────────────────────────────── */
+/* Ordered after is-popular so padding-top wins for cards that carry both classes */
+.card.is-new { padding-top:2.2rem; }
+
+.badge-new {
+  position:absolute; top:.65rem; right:.7rem; z-index:2;
+  font-size:.6rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  color:#c2410c;
+  background:rgba(255,235,210,0.72);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(249,115,22,0.35);
+  border-radius:99px;
+  padding:.18rem .55rem;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.90), 0 0 10px rgba(249,115,22,.18);
+  animation:new-pulse 2.4s ease-in-out infinite;
+  pointer-events:none;
+}
+
+@keyframes new-pulse {
+  0%,100% { box-shadow:inset 0 1px 0 rgba(255,255,255,.90), 0 0 10px rgba(249,115,22,.18); }
+  50%     { box-shadow:inset 0 1px 0 rgba(255,255,255,.90), 0 0 20px rgba(249,115,22,.38), 0 2px 12px rgba(249,115,22,.22); }
+}
+
 /* ── Reduced motion ──────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation:none!important; transition-duration:.01ms!important; }

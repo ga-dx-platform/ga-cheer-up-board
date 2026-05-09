@@ -65,9 +65,25 @@ function renderCard(msg, idx) {
     ? 'ไม่ระบุชื่อ'
     : msg.sender_name;
   const r      = ROTS[idx % ROTS.length];
+
+  const rxn       = msg.reactions ?? {};
+  const totalRxn  = (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0);
+  const isNew     = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
+  const isPopular = totalRxn >= 5;
+
+  const classes = ['card',
+    isPopular ? 'is-popular' : '',
+    isNew     ? 'is-new'     : '',
+  ].filter(Boolean).join(' ');
+
+  const newBadge = isNew
+    ? `<span class="badge-new" aria-label="ข้อความใหม่">✨ NEW</span>`
+    : '';
+
   return `
-    <article class="card" style="--r:${r}deg"
+    <article class="${classes}" style="--r:${r}deg"
              data-id="${msg.id}" data-category="${msg.category}">
+      ${newBadge}
       <div class="card-head">
         <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
