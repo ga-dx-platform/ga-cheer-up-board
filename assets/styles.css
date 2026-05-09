@@ -63,7 +63,7 @@ body {
   color: #2d2d3e;
   min-height: 100dvh;
   overflow-x: hidden;
-  background: #eef2f6; /* ลบ radial-gradient ออกให้หมด เหลือสีพื้นสะอาดๆ */
+  background: #e8eef4;
 }
 @media (hover: hover) {
   body { background-attachment: fixed; }
@@ -77,11 +77,11 @@ body {
   z-index: 0;
   /* no will-change: keeps orbs in the same compositor layer as the backdrop */
 }
-.orb-peach  { width:800px;height:800px;background:linear-gradient(135deg, #ff9a70 0%, #ff6b3d 100%); filter:blur(60px); opacity:0.8; top:-100px;left:-150px; animation:orb1 14s ease-in-out infinite; }
-.orb-blue   { width:700px;height:700px;background:linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); filter:blur(60px); opacity:0.75; top:20%;right:-100px; animation:orb2 17s ease-in-out infinite; }
-.orb-mint   { width:750px;height:750px;background:linear-gradient(135deg, #4ade80 0%, #10b981 100%); filter:blur(60px); opacity:0.7; bottom:-50px;left:-50px; animation:orb3 12s ease-in-out infinite; }
-.orb-butter { width:600px;height:600px;background:linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); filter:blur(60px); opacity:0.75; bottom:15%;right:-50px; animation:orb4 16s ease-in-out infinite; }
-.orb-rose   { width:500px;height:500px;background:linear-gradient(135deg, #fb7185 0%, #e11d48 100%); filter:blur(60px); opacity:0.7; top:40%;left:30%; animation:orb5 19s ease-in-out infinite; }
+.orb-peach  { width:800px;height:800px;background:radial-gradient(ellipse at center, #ff9a70 0%, #ff6b3d 60%, transparent 100%); filter:blur(60px); opacity:0.8; top:-100px;left:-150px; animation:orb1 14s ease-in-out infinite; }
+.orb-blue   { width:700px;height:700px;background:radial-gradient(ellipse at center, #60a5fa 0%, #3b82f6 60%, transparent 100%); filter:blur(60px); opacity:0.75; top:20%;right:-100px; animation:orb2 17s ease-in-out infinite; }
+.orb-mint   { width:750px;height:750px;background:radial-gradient(ellipse at center, #4ade80 0%, #10b981 60%, transparent 100%); filter:blur(60px); opacity:0.7; bottom:-50px;left:-50px; animation:orb3 12s ease-in-out infinite; }
+.orb-butter { width:600px;height:600px;background:radial-gradient(ellipse at center, #fbbf24 0%, #f59e0b 60%, transparent 100%); filter:blur(60px); opacity:0.75; bottom:15%;right:-50px; animation:orb4 16s ease-in-out infinite; }
+.orb-rose   { width:650px;height:650px;background:radial-gradient(ellipse at center, #fb7185 0%, #e11d48 60%, transparent 100%); filter:blur(60px); opacity:0.7; top:40%;left:30%; animation:orb5 19s ease-in-out infinite; }
 
 @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(70px,90px) scale(1.09)} 66%{transform:translate(-45px,45px) scale(0.94)} }
 @keyframes orb2 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-90px,-65px) scale(1.06)} 70%{transform:translate(35px,85px) scale(0.91)} }
@@ -149,18 +149,15 @@ body {
 
 .motw-card {
   position:relative;
-  background: rgba(255,255,255,0.08) !important;
-  backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
-  -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
-  border: 1px solid rgba(255,255,255,0.10) !important;
-  border-top: 1px solid rgba(255,255,255,0.70) !important;
-  border-left: 1px solid rgba(255,255,255,0.30) !important;
+  background: rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-top: 1px solid rgba(255,255,255,0.8) !important;
+  border-left: 1px solid rgba(255,255,255,0.4) !important;
   border-radius:24px;
   padding:1.75rem 2.25rem;
-  box-shadow:
-    0 0 0 5px rgba(253,230,138,0.12),
-    0 24px 60px rgba(0,0,0,0.08),
-    inset 0 1px 0 rgba(255,255,255,0.5) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.4) !important;
   display:flex; align-items:flex-start; gap:1.5rem;
   overflow:hidden;
   transition:transform .35s var(--ease-out),box-shadow .35s ease;
@@ -173,8 +170,7 @@ body {
 .motw-card:hover {
   transform:translateY(-6px);
   box-shadow:
-    var(--glass-inset),
-    0 0 0 5px rgba(253,230,138,0.20),
+    inset 0 1px 0 rgba(255,255,255,0.6),
     0 8px 16px  rgba(0,0,0,0.06),
     0 24px 64px rgba(0,0,0,0.14),
     0 72px 120px rgba(0,0,0,0.10);
@@ -251,36 +247,33 @@ body {
 .card {
   position:relative; border-radius:20px;
   padding:1.2rem 1.3rem 1rem;
-  background: rgba(255,255,255,0.08) !important;
-  backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
-  -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
-  border: 1px solid rgba(255,255,255,0.10) !important;
-  border-top: 1px solid rgba(255,255,255,0.70) !important;
-  border-left: 1px solid rgba(255,255,255,0.30) !important;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+  background: rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-top: 1px solid rgba(255,255,255,0.8) !important;
+  border-left: 1px solid rgba(255,255,255,0.4) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.4) !important;
   transform:rotate(var(--r,0deg));
   transition:transform .32s var(--spring),box-shadow .32s ease;
   overflow:hidden;
 }
-.card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; border-radius:20px 20px 0 0; }
+.card::before { display:none; }
 .card:hover   {
   transform:translateY(-12px) rotate(0deg) scale(1.018);
   box-shadow: 0 40px 80px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.65) !important;
 }
 
-/* ── Category indicator: left-border accent + top stripe + badge only ── */
+/* ── Category indicator: 3px colored border-left + badge only ── */
 .card[data-category="thank_you"] {
-  border-left-color: var(--cat-peach) !important;
+  border-left: 3px solid var(--cat-peach) !important;
 }
 .card[data-category="idea"] {
-  border-left-color: var(--cat-blue) !important;
+  border-left: 3px solid var(--cat-blue) !important;
 }
 .card[data-category="cheer_up"] {
-  border-left-color: var(--cat-mint) !important;
+  border-left: 3px solid var(--cat-mint) !important;
 }
-.card[data-category="thank_you"]::before { background: linear-gradient(90deg,#f97316,#fb923c,#fbbf24); }
-.card[data-category="idea"]::before      { background: linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd); }
-.card[data-category="cheer_up"]::before  { background: linear-gradient(90deg,#10b981,#34d399,#6ee7b7); }
 
 .card-head   { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
 .card-avatar { font-size:1.8rem; filter:drop-shadow(0 2px 5px rgba(0,0,0,.1)); line-height:1; }
@@ -435,64 +428,4 @@ body {
 /* ── Reduced motion ──────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation:none!important; transition-duration:.01ms!important; }
-}
-/* ========================================================= */
-/* 🚀 OVERRIDE CLAUDE'S COLORS: FORCE APPLE VISION PRO GLASS */
-/* ========================================================= */
-
-/* บังคับให้การ์ดในบอร์ด และการ์ดปักหมุด เป็นกระจกใสพรีเมียม */
-#board > div, 
-#motw-container > div {
-    background: rgba(255, 255, 255, 0.25) !important; /* เพิ่มความขาวขุ่นนิดๆ ให้ดูเป็นแผ่นกระจก */
-    backdrop-filter: blur(32px) saturate(140%) brightness(1.05) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(140%) brightness(1.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.9) !important; /* ขอบแสงตกกระทบชัดๆ */
-    border-left: 1px solid rgba(255, 255, 255, 0.6) !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 
-                inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
-}
-
-/* ลบแถบสีด้านบนของการ์ดทิ้ง */
-#board > div::before, 
-#motw-container > div::before,
-#board > div::after, 
-#motw-container > div::after {
-    display: none !important;
-}
-/* ========================================================= */
-/* 🚀 FINAL BOSS: ABSOLUTE APPLE VISION PRO GLASS OVERRIDE */
-/* ========================================================= */
-
-/* 1. บังคับการ์ดทุกใบให้เป็นแผ่นกระจกสีขาวใส (ทับแสงนีออนทุกสี) */
-.card,
-.motw-card,
-#board > div, 
-#motw-container > div {
-    background: rgba(255, 255, 255, 0.25) !important; /* สีขาวโปร่งแสง 25% */
-    backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
-    -webkit-backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.9) !important; /* ขอบบนสว่างวาบแบบกระจก */
-    border-left: 1px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.05), 
-                inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
-}
-
-/* 2. ปิดสวิตช์พวกแสงสี แถบสี หรือเงาเรืองแสงที่ Claude แอบฝังไว้ */
-.card::before, .card::after,
-.motw-card::before, .motw-card::after {
-    display: none !important;
-    background: none !important;
-    box-shadow: none !important;
-}
-
-/* 3. ล้างบางสีประจำหมวดหมู่ที่พยายามจะย้อมสีการ์ดทั้งใบ */
-.card[data-category="thank_you"],
-.card[data-category="idea"],
-.card[data-category="cheer_up"],
-.card[data-category] {
-    background-color: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
 }
