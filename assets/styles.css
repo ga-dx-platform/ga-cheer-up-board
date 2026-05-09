@@ -269,12 +269,13 @@ body {
     0 12px 32px rgba(0,0,0,0.09),
     0 40px 80px rgba(0,0,0,0.07) !important;
   transform:rotate(var(--r,0deg));
-  transition:transform .32s var(--spring),box-shadow .32s ease;
+  transition: translate .28s ease-out, scale .28s ease-out, box-shadow .28s ease;
   overflow:hidden;
 }
 .card::before { display:none; }
-.card:hover   {
-  transform:translateY(-12px) rotate(0deg) scale(1.018);
+.card:hover {
+  translate: 0 -10px;
+  scale: 1.018;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,1),
     0 8px 16px  rgba(0,0,0,0.08),
@@ -458,8 +459,8 @@ body {
 .card:nth-child(5n) { animation-duration:6.8s; animation-delay:-3.8s; }
 .card:nth-child(7n) { animation-duration:9.1s; animation-delay:-0.7s; }
 
-/* Pause float on hover so the lift/scale effect takes over cleanly */
-.card:hover { animation:none !important; }
+/* Freeze float mid-frame on hover — no snap, translate/scale lift takes over */
+.card:hover { animation-play-state: paused !important; }
 
 /* ── Popular card — orbiting gold glow ───────────────────── */
 /*
