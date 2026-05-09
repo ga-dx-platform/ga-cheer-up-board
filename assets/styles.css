@@ -440,20 +440,20 @@ body {
 /* 🚀 OVERRIDE CLAUDE'S COLORS: FORCE APPLE VISION PRO GLASS */
 /* ========================================================= */
 
-/* บังคับให้การ์ดในบอร์ด และการ์ดปักหมุด เป็นกระจกใสทั้งหมด */
+/* บังคับให้การ์ดในบอร์ด และการ์ดปักหมุด เป็นกระจกใสพรีเมียม */
 #board > div, 
 #motw-container > div {
-    background: rgba(255, 255, 255, 0.05) !important; /* ใสทะลุ 95% */
-    backdrop-filter: blur(48px) saturate(200%) brightness(1.1) !important;
-    -webkit-backdrop-filter: blur(48px) saturate(200%) brightness(1.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important; /* ขอบกระจกบางๆ */
-    border-top: 1px solid rgba(255, 255, 255, 0.8) !important; /* แสงตกกระทบขอบบน */
-    border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1), 
-                inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.25) !important; /* เพิ่มความขาวขุ่นนิดๆ ให้ดูเป็นแผ่นกระจก */
+    backdrop-filter: blur(32px) saturate(140%) brightness(1.05) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(140%) brightness(1.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.9) !important; /* ขอบแสงตกกระทบชัดๆ */
+    border-left: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
 }
 
-/* ลบแถบสีด้านบนของการ์ด (ถ้า Claude แอบใส่ไว้) */
+/* ลบแถบสีด้านบนของการ์ดทิ้ง */
 #board > div::before, 
 #motw-container > div::before,
 #board > div::after, 
