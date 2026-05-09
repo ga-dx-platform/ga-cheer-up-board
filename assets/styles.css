@@ -460,3 +460,39 @@ body {
 #motw-container > div::after {
     display: none !important;
 }
+/* ========================================================= */
+/* 🚀 FINAL BOSS: ABSOLUTE APPLE VISION PRO GLASS OVERRIDE */
+/* ========================================================= */
+
+/* 1. บังคับการ์ดทุกใบให้เป็นแผ่นกระจกสีขาวใส (ทับแสงนีออนทุกสี) */
+.card,
+.motw-card,
+#board > div, 
+#motw-container > div {
+    background: rgba(255, 255, 255, 0.25) !important; /* สีขาวโปร่งแสง 25% */
+    backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(120%) brightness(1.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.9) !important; /* ขอบบนสว่างวาบแบบกระจก */
+    border-left: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.05), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+/* 2. ปิดสวิตช์พวกแสงสี แถบสี หรือเงาเรืองแสงที่ Claude แอบฝังไว้ */
+.card::before, .card::after,
+.motw-card::before, .motw-card::after {
+    display: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+/* 3. ล้างบางสีประจำหมวดหมู่ที่พยายามจะย้อมสีการ์ดทั้งใบ */
+.card[data-category="thank_you"],
+.card[data-category="idea"],
+.card[data-category="cheer_up"],
+.card[data-category] {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
