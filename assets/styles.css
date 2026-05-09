@@ -500,103 +500,99 @@ body {
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation:none!important; transition-duration:.01ms!important; }
 }
-/* ========================================================= */
-/* 🔥 UPGRADE UX: VISUAL HIERARCHY สำหรับการ์ดยอดฮิต (POPULAR) */
-/* ========================================================= */
+/* ══════════════════════════════════════════════════════════
+   POPULAR CARD — Animated Golden Aura Border
+   ══════════════════════════════════════════════════════════ */
 
-/* 1. อัปเกรดการ์ด "ยอดฮิต" ให้เปล่งประกายออร่าสีทอง (แต่ยังคงความใสแบบกระจกไว้) */
+/* Settle all border/stacking conflicts from prior iterations */
 .card.is-popular {
-    border-top: 1px solid rgba(251, 191, 36, 0.9) !important; /* ขอบกระจกบนสีทองสว่าง */
-    border-left: 1px solid rgba(251, 191, 36, 0.5) !important; /* ขอบกระจกซ้ายสีทอง */
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.05), 
-                inset 0 1px 0 rgba(251, 191, 36, 0.6),
-                0 0 35px rgba(251, 191, 36, 0.15) !important; /* ออร่าเรืองแสงสีทองฟุ้งๆ รอบการ์ด */
+  border: none !important;
+  position: relative !important;
+  overflow: hidden !important;
+  z-index: 1 !important;
 }
 
-/* 2. เสกป้าย "🔥 ฮอตฮิต" แปะมุมขวาล่างของการ์ด (ทับโค้ดแฮ็กเดิมที่ลบ ::after ทิ้ง) */
+/* ── "Hot" badge ─────────────────────────────────────────── */
 .card.is-popular::after {
-    content: '🔥 ฮอตฮิต' !important;
-    display: inline-flex !important;
-    align-items: center;
-    position: absolute;
-    bottom: 16px;
-    right: 15px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #d97706 !important;
-    background: rgba(254, 243, 199, 0.85) !important; /* พื้นหลังป้ายสีทองอ่อนๆ */
-    padding: 3px 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(251, 191, 36, 0.5) !important;
-    backdrop-filter: blur(8px);
-    z-index: 10;
-    animation: hot-pulse 2s ease-in-out infinite !important;
+  content: '🔥 ฮอตฮิต';
+  display: inline-flex;
+  align-items: center;
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #d97706;
+  background: rgba(254, 243, 199, 0.88);
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  pointer-events: none;
+  animation: hot-pulse 2s ease-in-out infinite;
 }
 
-/* 3. แอนิเมชันให้ป้ายฮิตขยับหายใจเบาๆ ดึงดูดสายตา */
 @keyframes hot-pulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
-    50%      { transform: scale(1.05); box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.2); }
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0   0 rgba(251,191,36,0.40); }
+  50%      { transform: scale(1.05); box-shadow: 0 0 8px 2px rgba(251,191,36,0.22); }
 }
 
-/* 4. ลดความห้าวของป้าย NEW ลงนิดนึง (กรณีที่มันโผล่มาเยอะเกินไปจะได้ไม่รก) */
-.is-new [class*="new"], .is-new [class*="New"] { 
-    opacity: 0.75 !important;
-    transform: scale(0.9) !important;
-}
-/* ========================================================= */
-/* 🔥 GOLD AURA BORDER RUN: สีทองวิ่งรอบขอบแบบออร่า 🔥 */
-/* ========================================================= */
-
-/* 1. เตรียมพื้นที่สำหรับการ์ดยอดนิยม (Popular) และปิดขอบเดิม */
-.card.is-popular {
-    border: none !important; /* ปิดขอบ static เดิม */
-    position: relative !important;
-    overflow: hidden !important; /* ซ่อนเลเยอร์แสงนอกขอบการ์ด */
-    z-index: 1 !important;
-}
-
-/* 2. สร้างเลเยอร์แสงสีทอง "ออร่า" วิ่งอยู่ข้างหลัง */
+/* ── Animated aura — conic-gradient + CSS mask technique ─────
+   How it works:
+   · ::before fills the card exactly (inset: 0).
+   · padding: 3px defines the visible ring width via the mask.
+   · The mask makes content-box transparent and the full box
+     opaque, then XOR-excludes the overlap → only the padding
+     strip (the "border channel") remains visible.
+   · Rotating the element rotates the conic sweep around the ring.
+   · overflow: hidden on the card clips any blur that would spill
+     outward, so the glow stays contained and clean.
+   · display: block !important overrides .card::before{display:none}.
+   ─────────────────────────────────────────────────────────── */
 .card.is-popular::before {
-    content: '' !important;
-    position: absolute;
-    /* ขยายขนาดให้เกินตัวการ์ดเล็กน้อยเพื่อให้แสงพุ่งออกมา */
-    inset: -6px !important;
-    z-index: -1 !important; /* วางหลังเนื้อหากราด */
-    border-radius: inherit;
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  z-index: 0;
+  pointer-events: none !important;
 
-    /* สีไล่ระดับที่เป็นแหล่งกำเนิดแสง */
-    background: conic-gradient(
-        transparent,
-        rgba(251, 191, 36, 0) 30deg,
-        rgba(251, 191, 36, 0.8) 60deg,  /* แสงจ้าจุดเริ่มต้น */
-        rgba(251, 191, 36, 1) 90deg,     /* แสงจ้าหลัก */
-        rgba(251, 191, 36, 0.8) 120deg, /* แสงจ้าจุดสิ้นสุด */
-        rgba(251, 191, 36, 0) 150deg,
-        transparent
-    ) !important;
+  padding: 3px !important;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent          0deg,
+    transparent         50deg,
+    rgba(251,191,36, 0) 75deg,
+    rgba(251,191,36,.9) 100deg,
+    rgba(253,224,71, 1) 115deg,
+    rgba(251,191,36,.9) 130deg,
+    rgba(251,191,36, 0) 155deg,
+    transparent        180deg,
+    transparent        360deg
+  ) !important;
 
-    /* เทคนิคพิเศษ: การมาสก์ (Mask) เพื่อให้เห็นแค่ช่วงขอบ */
-    padding: 3px !important; /* กำหนดความหนาของเส้นแสงวิ่ง */
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
-    -webkit-mask-composite: xor !important;
-    mask-composite: exclude !important; /* ลบส่วนกลางออก เหลือแค่กรอบ */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
 
-    /* สร้างเอฟเฟกต์ฟุ้ง (Aura Blur) */
-    filter: blur(5px) drop-shadow(0 0 10px rgba(251, 191, 36, 0.6)) !important;
-    animation: gold-run 3s linear infinite !important;
-    opacity: 0.9 !important;
+  filter: blur(5px) !important;
+  animation: gold-aura-spin 4s linear infinite !important;
 }
 
-/* 3. แอนิเมชันสั่งให้แสง Conic Gradient วิ่งหมุนรอบการ์ด */
-@keyframes gold-run {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes gold-aura-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* 4. เมื่อ Hover ให้แสง intensifies (เข้มขึ้น/ช้าลงนิดนึง) */
+/* Hover: slow to a dramatic crawl and amplify the glow */
 .card.is-popular:hover::before {
-    animation-duration: 6s !important; /* หมุนช้าลงเพื่อให้น่าค้นหา */
-    filter: blur(8px) drop-shadow(0 0 15px rgba(251, 191, 36, 0.8)) !important;
-    opacity: 1 !important;
+  animation-duration: 8s !important;
+  filter: blur(7px) brightness(1.3) !important;
 }
