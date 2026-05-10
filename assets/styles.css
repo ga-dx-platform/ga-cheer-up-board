@@ -102,8 +102,8 @@ body {
   position: sticky;
   top: 1.5rem;
   z-index: 200;
-  width: fit-content;
-  max-width: 90%;
+  width: 90%;
+  max-width: 900px;
   margin: 1.5rem auto 2rem;
   border-radius: 99px;
   background: rgba(255,255,255,0.40);
@@ -116,7 +116,7 @@ body {
     inset 0 1px 0 rgba(255,255,255,1);
 }
 .header-inner {
-  padding: 0.6rem 0.8rem 0.6rem 1.5rem;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
 .logo-group { display:flex; align-items:center; gap:.75rem; }
@@ -226,17 +226,17 @@ body {
 /* ── Stats bar ───────────────────────────────────────────── */
 .stats-bar {
   display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
-  gap:.35rem 1rem; margin:0 auto 1.75rem;
-  padding:.48rem 1.5rem;
-  background:rgba(255,255,255,0.28);
-  backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border:1px solid rgba(255,255,255,0.72); border-radius:99px;
-  box-shadow: var(--glass-inset), var(--glass-shadow);
+  gap:.35rem 1rem; margin:1rem auto 2.5rem;
+  padding:.5rem 0;
+  background:transparent;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+  border:none;
+  box-shadow:none;
   width:fit-content;
 }
-.stat-item { font-size:.78rem; font-weight:500; color:#6b6b80; white-space:nowrap; }
-.stat-item span { font-weight:700; color:#2d2d3e; }
-.stat-sep  { color:#d1d5db; font-size:.78rem; user-select:none; }
+.stat-item { font-size:.78rem; font-weight:500; color:#4b5563; white-space:nowrap; }
+.stat-item span { font-weight:700; color:#1f2937; }
+.stat-sep  { color:#9ca3af; font-size:.78rem; user-select:none; }
 
 /* ── Filter bar ──────────────────────────────────────────── */
 .filter-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.75rem; }
