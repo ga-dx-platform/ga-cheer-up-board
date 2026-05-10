@@ -173,6 +173,41 @@ let activeFilter = 'all';
 let pinnedMsg    = null;
 const reactedSet = new Set(); // key: `${msgId}:${type}`
 
+const RXN_EMOJI = { thumbs_up: '👍', heart: '❤️', clap: '👏' };
+
+function spawnParticles(btn, type) {
+  const rect  = btn.getBoundingClientRect();
+  const emoji = RXN_EMOJI[type] ?? '✨';
+  const count = Math.floor(Math.random() * 3) + 3; // 3–5
+
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('span');
+    el.className   = 'rxn-particle';
+    el.textContent = emoji;
+
+    const offsetX    = (Math.random() - 0.5) * 36;
+    const swayStart  = (Math.random() - 0.5) * 10;
+    const swayMid    = (Math.random() - 0.5) * 20;
+    const swayEnd    = (Math.random() - 0.5) * 16;
+    const rise       = -(80 + Math.random() * 40);
+    const duration   = 0.8 + Math.random() * 0.7; // 0.8 s – 1.5 s
+    const delay      = i * 0.06;
+
+    el.style.cssText = `
+      left: ${rect.left + rect.width / 2 + offsetX}px;
+      top:  ${rect.top}px;
+      --sway-start: ${swayStart}px;
+      --sway-mid:   ${swayMid}px;
+      --sway-end:   ${swayEnd}px;
+      --rise:       ${rise}px;
+      animation: float-up ${duration.toFixed(2)}s ${delay.toFixed(2)}s cubic-bezier(0.22,1,0.36,1) forwards;
+    `;
+
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }
+}
+
 function wireReactions() {
   document.querySelectorAll('.rxn-btn').forEach(btn => {
     if (btn.dataset.bound) return;
@@ -189,6 +224,7 @@ function wireReactions() {
       btn.classList.toggle('reacted');
 
       if (!isReacted) {
+        spawnParticles(btn, btn.dataset.type);
         reactedSet.add(key);
         if (countEl) countEl.textContent = current + 1;
         const { error } = await sb.rpc('increment_reaction', {
