@@ -657,3 +657,52 @@ body {
   .focus-overlay { padding: 1.25rem; align-items: flex-end; }
   .focus-overlay .card { transform: scale(1) !important; max-width: 100%; }
 }
+
+/* ── Live card preview (inside modal) ────────────────────── */
+#live-preview-wrap {
+  margin-bottom: 1.35rem;
+  padding-bottom: 1.35rem;
+  border-bottom: 1px solid rgba(255,255,255,0.55);
+}
+
+.preview-label {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: .6rem;
+}
+
+/* Freeze all motion — preview is always still */
+#live-preview-wrap .card {
+  animation: none !important;
+  transform: none !important;
+  translate: 0 0 !important;
+  scale: 1 !important;
+  cursor: default;
+  will-change: auto;
+  transition: none !important;
+}
+#live-preview-wrap .card:hover {
+  translate: 0 0 !important;
+  scale: 1 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 4px 6px  rgba(0,0,0,0.04),
+    0 12px 32px rgba(0,0,0,0.09),
+    0 40px 80px rgba(0,0,0,0.07) !important;
+}
+#live-preview-wrap .reactions {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* Placeholder italic text when message field is empty */
+.preview-msg-placeholder {
+  color: #c4c4d0 !important;
+  font-style: italic;
+}

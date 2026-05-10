@@ -401,6 +401,7 @@ document.querySelectorAll('.cat-tab').forEach(tab => {
     tab.classList.add('active');
     tab.setAttribute('aria-checked', 'true');
     selectedCategory = tab.dataset.cat;
+    updateLivePreview();
   });
 });
 
@@ -413,6 +414,7 @@ document.querySelectorAll('.emoji-opt').forEach(btn => {
     btn.classList.add('selected');
     btn.setAttribute('aria-pressed', 'true');
     selectedEmoji = btn.dataset.emoji;
+    updateLivePreview();
   });
 });
 
@@ -422,12 +424,17 @@ contentEl?.addEventListener('input', () => {
   if (charCount) charCount.textContent = len;
   charWrap?.classList.toggle('warn', len >= 450 && len <= 500);
   charWrap?.classList.toggle('over', len > 500);
+  updateLivePreview();
 });
 
 /* ── Anon toggle ─────────────────────────────────────────── */
 anonCheck?.addEventListener('change', () => {
   if (senderSec) senderSec.style.display = anonCheck.checked ? 'none' : '';
+  updateLivePreview();
 });
+
+/* ── Sender name (live preview) ──────────────────────────── */
+document.getElementById('f-sender')?.addEventListener('input', updateLivePreview);
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function showFormError(msg) {
@@ -474,6 +481,46 @@ function resetForm() {
 
   clearFormError();
   setSubmitting(false);
+  updateLivePreview();
+}
+
+/* ── Live preview ────────────────────────────────────────── */
+function updateLivePreview() {
+  const previewCard   = document.getElementById('preview-card');
+  const previewAvatar = document.getElementById('preview-avatar');
+  const previewBadge  = document.getElementById('preview-badge');
+  const previewMsg    = document.getElementById('preview-msg');
+  const previewSender = document.getElementById('preview-sender');
+  if (!previewCard) return;
+
+  const cat    = CAT[selectedCategory] ?? CAT.cheer_up;
+  const msg    = contentEl?.value.trim()                            ?? '';
+  const sender = document.getElementById('f-sender')?.value.trim() ?? '';
+  const anon   = anonCheck?.checked ?? false;
+
+  // data-category drives the border-left colour via existing CSS selectors
+  previewCard.dataset.category = selectedCategory;
+
+  if (previewAvatar) previewAvatar.textContent = selectedEmoji;
+
+  if (previewBadge) {
+    previewBadge.textContent = `${cat.emoji} ${cat.label}`;
+    previewBadge.className   = `card-badge badge-${cat.cls}`;
+  }
+
+  if (previewMsg) {
+    if (msg) {
+      previewMsg.textContent = msg;
+      previewMsg.classList.remove('preview-msg-placeholder');
+    } else {
+      previewMsg.textContent = 'ข้อความของคุณจะแสดงที่นี่...';
+      previewMsg.classList.add('preview-msg-placeholder');
+    }
+  }
+
+  if (previewSender) {
+    previewSender.textContent = `— ${(anon || !sender) ? 'ไม่ระบุชื่อ' : sender}`;
+  }
 }
 
 /* ── Confetti ────────────────────────────────────────────── */

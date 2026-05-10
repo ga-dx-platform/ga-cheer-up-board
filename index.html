@@ -99,6 +99,29 @@
         <h2 class="modal-title" id="modal-title">✨ เพิ่มข้อความ</h2>
         <button class="modal-close" id="closeModal" aria-label="ปิด">✕</button>
       </div>
+      <!-- ── Live card preview ──────────────────────────── -->
+      <div id="live-preview-wrap" aria-hidden="true">
+        <p class="preview-label"><span>👀</span> ตัวอย่างการ์ดของคุณ</p>
+        <article class="card" id="preview-card" style="--r:0deg" data-category="thank_you">
+          <div class="card-head">
+            <span class="card-avatar" id="preview-avatar">🌟</span>
+            <span class="card-badge badge-thank_you" id="preview-badge">💝 ขอบคุณ</span>
+          </div>
+          <p class="card-msg preview-msg-placeholder" id="preview-msg">ข้อความของคุณจะแสดงที่นี่...</p>
+          <div class="card-foot">
+            <div class="card-meta">
+              <span class="card-sender" id="preview-sender">— ไม่ระบุชื่อ</span>
+              <span class="card-time">เพิ่งโพสต์</span>
+            </div>
+            <div class="reactions">
+              <button class="rxn-btn" tabindex="-1">👍 <span class="rxn-count">0</span></button>
+              <button class="rxn-btn" tabindex="-1">❤️ <span class="rxn-count">0</span></button>
+              <button class="rxn-btn" tabindex="-1">👏 <span class="rxn-count">0</span></button>
+            </div>
+          </div>
+        </article>
+      </div>
+
       <form id="submit-form" novalidate>
 
         <!-- 1 · Category ─────────────────────────────── -->
