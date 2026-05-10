@@ -607,6 +607,54 @@ function subscribeRealtime() {
 }
 
 /* ══════════════════════════════════════════════════════════
+   FOCUS / READING MODE
+   ══════════════════════════════════════════════════════════ */
+const focusOverlay = document.getElementById('focus-overlay');
+
+function openFocusMode(cardEl) {
+  if (!focusOverlay) return;
+
+  // Clear any previous clone before inserting the new one
+  focusOverlay.innerHTML = '';
+
+  const clone = cardEl.cloneNode(true);
+  // Strip play-state override set by card:hover rule so CSS can fully control it
+  clone.style.animationPlayState = '';
+
+  focusOverlay.appendChild(clone);
+  focusOverlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFocusMode() {
+  if (!focusOverlay || focusOverlay.classList.contains('hidden')) return;
+  focusOverlay.classList.add('hidden');
+  // Wait for the CSS fade-out transition before wiping the DOM
+  focusOverlay.addEventListener('transitionend', () => {
+    focusOverlay.innerHTML = '';
+    document.body.style.overflow = '';
+  }, { once: true });
+}
+
+// Backdrop click — close only when clicking the overlay itself, not the card
+focusOverlay?.addEventListener('click', e => {
+  if (!e.target.closest('.card')) closeFocusMode();
+});
+
+// Escape key — close focus mode (existing modal Escape handler stays untouched)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeFocusMode();
+});
+
+// Delegated click on the board — open focus mode for card clicks,
+// but let reaction buttons continue to work normally
+document.getElementById('board')?.addEventListener('click', e => {
+  if (e.target.closest('.rxn-btn') || e.target.closest('.reactions')) return;
+  const card = e.target.closest('.card');
+  if (card) openFocusMode(card);
+});
+
+/* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
 loadBoard().then(subscribeRealtime);
