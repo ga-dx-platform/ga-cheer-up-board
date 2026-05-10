@@ -82,7 +82,8 @@ body {
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
-  /* no will-change: keeps orbs in the same compositor layer as the backdrop */
+  will-change: transform;
+  backface-visibility: hidden;
 }
 .orb-peach  { width:800px;height:800px;background:radial-gradient(ellipse at center, #ff9a70 0%, #ff6b3d 60%, transparent 100%); filter:blur(60px); opacity:0.50; top:-100px;left:-150px; animation:orb1 14s ease-in-out infinite; }
 .orb-blue   { width:700px;height:700px;background:radial-gradient(ellipse at center, #60a5fa 0%, #3b82f6 60%, transparent 100%); filter:blur(60px); opacity:0.45; top:20%;right:-100px; animation:orb2 17s ease-in-out infinite; }
@@ -271,6 +272,8 @@ body {
   transform:rotate(var(--r,0deg));
   transition: translate .28s ease-out, scale .28s ease-out, box-shadow .28s ease;
   overflow:hidden;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 .card::before { display:none; }
 .card:hover {

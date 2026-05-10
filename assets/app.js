@@ -230,6 +230,8 @@ function updateCardReactions(id, rxn) {
   });
 }
 
+let _renderGen = 0;
+
 function renderGrid(messages) {
   const board    = document.getElementById('board');
   const filtered = activeFilter === 'all'
@@ -237,16 +239,38 @@ function renderGrid(messages) {
     : messages.filter(m => m.category === activeFilter);
 
   board.classList.remove('board-empty');
+  updateStats();
 
   if (filtered.length === 0) {
     board.innerHTML = renderEmpty();
     board.classList.add('board-empty');
-  } else {
-    board.innerHTML = filtered.map((msg, i) => renderCard(msg, i)).join('');
-    wireReactions();
+    return;
   }
 
-  updateStats();
+  board.innerHTML = '';
+  const BATCH = 5;
+  let offset = 0;
+  const gen = ++_renderGen;
+
+  function renderBatch() {
+    if (gen !== _renderGen) return;
+    const slice = filtered.slice(offset, offset + BATCH);
+    const frag  = document.createDocumentFragment();
+    slice.forEach((msg, i) => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderCard(msg, offset + i).trim();
+      frag.appendChild(tmp.firstElementChild);
+    });
+    board.appendChild(frag);
+    offset += BATCH;
+    if (offset < filtered.length) {
+      requestAnimationFrame(renderBatch);
+    } else {
+      wireReactions();
+    }
+  }
+
+  requestAnimationFrame(renderBatch);
 }
 
 async function loadBoard() {
