@@ -713,3 +713,28 @@ body {
   color: #c4c4d0 !important;
   font-style: italic;
 }
+/* ========================================================= */
+/* 💎 UX POLISH: จัดระเบียบ Alignment และ Spacing */
+/* ========================================================= */
+
+/* 1. จัดกลางปุ่มกรองข้อความ (Filter Bar) ให้สมดุลกับ Header */
+.filter-bar {
+    justify-content: center !important; /* บังคับให้อยู่ตรงกลาง */
+    margin-top: 1rem !important;
+    margin-bottom: 2rem !important;
+}
+
+/* 2. ดันข้อความปักหมุด (MOTW) ให้มีพื้นที่หายใจด้านล่างเพิ่มขึ้น */
+.motw-section {
+    margin-bottom: 3.5rem !important; /* เพิ่มระยะห่างจากบอร์ดหลัก */
+}
+
+/* 3. ทำให้ข้อความสถิติอ่านง่ายขึ้นเมื่อไม่มีพื้นหลัง (เพิ่มเงาบางๆ) */
+.stats-bar {
+    margin-bottom: 2rem !important;
+}
+.stat-item, .stat-sep {
+    color: #374151 !important; /* ปรับสีให้เข้มขึ้นนิดนึง */
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important; /* ใส่เงาสีขาวดันตัวอักษรให้ลอยขึ้นมา */
+    font-weight: 600 !important;
+}
