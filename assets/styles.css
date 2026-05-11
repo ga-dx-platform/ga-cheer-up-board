@@ -138,59 +138,34 @@ body {
 /* ── Floating Glass Pill Header ──────────────────────────── */
 #site-header {
   position: sticky;
-  top: 1.5rem;
+  top: 0;
+  left: 0;
   z-index: 200;
-  width: 90%;
-  max-width: 900px;
-  margin: 1.5rem auto 2rem;
-  border-radius: 99px;
-  background: rgba(255,255,255,0.42);
+  width: 100%;
+  /* no max-width, no margin, no border-radius — full-width bar */
+  background: rgba(255,255,255,0.58);
   backdrop-filter: blur(48px) saturate(200%);
   -webkit-backdrop-filter: blur(48px) saturate(200%);
-  /* iridescent shimmer border via gradient overlay */
   border: none;
-  outline: none;
+  border-bottom: 1px solid rgba(255,255,255,0.72);
   box-shadow:
-    0 8px 32px rgba(0,0,0,0.08),
-    0 2px  8px rgba(0,0,0,0.04),
-    inset 0 1px 0 rgba(255,255,255,1);
-  /* conic gradient border via pseudo-element */
+    0 1px 0   rgba(255,255,255,0.90) inset,
+    0 4px 24px rgba(0,0,0,0.07);
   --shimmer-angle: 0deg;
-  transition: transform .35s var(--ease-out), box-shadow .35s ease, padding .3s var(--ease-out);
+  transition: box-shadow .3s ease, background .3s ease;
 }
-#site-header::before {
-  content: '';
-  position: absolute;
-  inset: -1.5px;
-  border-radius: 99px;
-  z-index: -1;
-  background: conic-gradient(
-    from var(--shimmer-angle),
-    #f97316 0%,
-    #ec4899 20%,
-    #8b5cf6 40%,
-    #3b82f6 55%,
-    #10b981 70%,
-    #fbbf24 85%,
-    #f97316 100%
-  );
-  opacity: 0.55;
-  animation: shimmer-spin 5s linear infinite;
-}
-@keyframes shimmer-spin {
-  to { --shimmer-angle: 360deg; }
-}
-/* Scroll-shrink state */
+/* no pill ::before shimmer on full-width bar — hide it */
+#site-header::before { display: none; }
+/* Scroll-darken (no top/size change — bar is already edge-to-edge) */
 #site-header.header-scrolled {
-  top: .6rem;
+  background: rgba(255,255,255,0.72);
   box-shadow:
-    0 4px 20px rgba(0,0,0,0.10),
-    0 1px  4px rgba(0,0,0,0.06),
-    inset 0 1px 0 rgba(255,255,255,.9);
+    0 1px 0   rgba(255,255,255,1) inset,
+    0 6px 28px rgba(0,0,0,0.10);
 }
 #site-header.header-scrolled .header-inner {
-  padding-top: .5rem;
-  padding-bottom: .5rem;
+  padding-top: .55rem;
+  padding-bottom: .55rem;
 }
 #site-header.header-scrolled .logo-svg {
   width: 30px; height: 30px;
@@ -201,7 +176,9 @@ body {
 }
 
 .header-inner {
-  padding: 0.75rem 0.85rem 0.75rem 1.25rem;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0.7rem clamp(1rem, 4vw, 2.5rem);
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   transition: padding .3s var(--ease-out);
 }
@@ -268,7 +245,7 @@ body {
 /* ── Main wrapper ────────────────────────────────────────── */
 .main-wrap {
   max-width:var(--content-max); margin:0 auto;
-  padding:var(--space-md) clamp(1rem, 4vw, 2.5rem) 5rem;
+  padding:.75rem clamp(1rem, 4vw, 2.5rem) 5rem;
   position:relative;
   /* no z-index: avoids creating a stacking context that blocks backdrop-filter
      from sampling the fixed orbs painted behind this layer */
@@ -288,27 +265,27 @@ body {
 /* ── Hero + Stats unified block ──────────────────────────── */
 .hero-section {
   text-align: center;
-  padding: var(--space-md) 0 var(--space-md);
+  padding: .75rem 0 .5rem;
 }
 .hero-title {
-  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-size: clamp(2rem, 5vw, 3.2rem);
   font-weight: 700;
   color: #1e293b;
-  letter-spacing: -.02em;
-  line-height: 1.2;
-  margin-bottom: .3rem;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  margin-bottom: .35rem;
 }
 .hero-subtitle {
   font-size: var(--fs-base);
   font-weight: 400;
   color: #6b7280;
   line-height: 1.5;
-  margin-bottom: .6rem;
+  margin-bottom: .4rem;
 }
-/* Stats glued directly under subtitle inside .hero-section */
+/* Stats glued directly under subtitle */
 .hero-section .stats-bar {
   margin: 0 auto;
-  padding: .3rem 0 0;
+  padding: .2rem 0 0;
   justify-content: center;
 }
 
@@ -319,8 +296,8 @@ body {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: .65rem;
-  margin-bottom: var(--space-md);
-  padding: .65rem .85rem;
+  margin-bottom: .65rem;
+  padding: .6rem .85rem;
   border-radius: 18px;
   background: rgba(255,255,255,0.38);
   backdrop-filter: blur(28px) saturate(180%);
@@ -415,7 +392,7 @@ body {
 .digest-body[aria-expanded="true"] > div {
   padding: 1.25rem 1rem;
 }
-.digest-section { margin-bottom: var(--space-lg); }
+.digest-section { margin-bottom: 1rem; }
 .digest-section.hidden { display: none; }
 
 /* ── Daily Nudge Banner ──────────────────────────────────── */
@@ -472,7 +449,7 @@ body {
 }
 
 /* ── Message of the Week ─────────────────────────────────── */
-.motw-section { margin-bottom:var(--space-md); }
+.motw-section { margin-bottom:1rem; }
 
 .section-tag {
   display:inline-flex; align-items:center; gap:.35rem;
@@ -914,7 +891,7 @@ mark.search-match {
 .motw-skeleton  { pointer-events:none; }
 
 /* ── Weekly Digest Card ──────────────────────────────────── */
-.digest-section { margin-bottom: var(--space-lg); }
+.digest-section { margin-bottom: 1rem; }
 .digest-section.hidden { display: none; }
 
 /* solo = no top-card: stats fill full width */
@@ -969,7 +946,7 @@ mark.search-match {
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media(max-width:640px) {
-  #site-header  { top:.75rem; max-width:94%; margin-top:.75rem; margin-bottom:1.25rem; }
+  #site-header  { top:0; width:100%; }
   .header-inner { padding:.5rem .65rem .5rem 1.1rem; }
   .main-wrap    { padding:var(--space-sm) .875rem 4rem; }
   .motw-card    { flex-direction:column; gap:.75rem; padding:1.25rem; }
