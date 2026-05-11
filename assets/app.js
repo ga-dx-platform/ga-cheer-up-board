@@ -40,6 +40,25 @@ function thaiTime(iso) {
   return new Date(iso).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
 }
 
+function compressImage(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX_W = 1200;
+      let { width, height } = img;
+      if (width > MAX_W) { height = Math.round(height * MAX_W / width); width = MAX_W; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(resolve, 'image/jpeg', 0.7);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 /* ══════════════════════════════════════════════════════════
    RENDER HELPERS
    ══════════════════════════════════════════════════════════ */
@@ -109,6 +128,7 @@ function renderCard(msg, idx, query = '') {
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
       </div>
       ${recipient ? `<div class="card-recipient" aria-label="ส่งถึง ${esc(recipient)}">${highlightText(recipient, query)}</div>` : ''}
+      ${msg.image_url ? `<div class="card-image"><img src="${esc(msg.image_url)}" alt="" loading="lazy" /></div>` : ''}
       <p class="card-msg">${highlightText(msg.content, query)}</p>
       <div class="card-foot">
         <div class="card-meta">
@@ -676,8 +696,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
    ══════════════════════════════════════════════════════════ */
 
 /* ── Form state ──────────────────────────────────────────── */
-let selectedCategory = 'thank_you';
-let selectedEmoji    = '🌟';
+let selectedCategory   = 'thank_you';
+let selectedEmoji      = '🌟';
+let selectedImageBlob  = null;
+let selectedImageObjUrl = null;
 
 const contentEl = document.getElementById('f-content');
 const charCount = document.getElementById('char-count');
@@ -725,6 +747,46 @@ anonCheck?.addEventListener('change', () => {
   if (senderSec) senderSec.style.display = anonCheck.checked ? 'none' : '';
   updateLivePreview();
 });
+
+/* ── Image upload ────────────────────────────────────────── */
+function clearSelectedImage() {
+  selectedImageBlob = null;
+  if (selectedImageObjUrl) { URL.revokeObjectURL(selectedImageObjUrl); selectedImageObjUrl = null; }
+  const fileInput = document.getElementById('f-image');
+  if (fileInput) fileInput.value = '';
+  const btn = document.getElementById('img-upload-btn');
+  if (btn) { btn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" aria-hidden="true"><rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M7 5V4a2 2 0 0 1 6 0v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> 📷 เพิ่มรูปภาพ`; btn.classList.remove('has-image'); }
+  document.getElementById('img-remove-btn')?.remove();
+  updateLivePreview();
+}
+
+(function initImageUpload() {
+  const uploadBtn = document.getElementById('img-upload-btn');
+  const fileInput = document.getElementById('f-image');
+  if (!uploadBtn || !fileInput) return;
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const blob = await compressImage(file);
+    if (!blob) return;
+    selectedImageBlob = blob;
+    if (selectedImageObjUrl) URL.revokeObjectURL(selectedImageObjUrl);
+    selectedImageObjUrl = URL.createObjectURL(blob);
+    uploadBtn.textContent = '✅ เปลี่ยนรูป';
+    uploadBtn.classList.add('has-image');
+    if (!document.getElementById('img-remove-btn')) {
+      const rmBtn = document.createElement('button');
+      rmBtn.type = 'button'; rmBtn.id = 'img-remove-btn'; rmBtn.className = 'img-remove-btn';
+      rmBtn.textContent = '✕'; rmBtn.setAttribute('aria-label', 'ลบรูป');
+      rmBtn.addEventListener('click', clearSelectedImage);
+      uploadBtn.parentElement.appendChild(rmBtn);
+    }
+    updateLivePreview();
+  });
+})();
 
 /* ── Sender name & recipient (live preview) ──────────────── */
 document.getElementById('f-sender')?.addEventListener('input', updateLivePreview);
@@ -775,6 +837,7 @@ function resetForm() {
   if (anonCheck) anonCheck.checked = false;
   if (senderSec) senderSec.style.display = '';
 
+  clearSelectedImage();
   clearFormError();
   setSubmitting(false);
   updateLivePreview();
@@ -829,6 +892,21 @@ function updateLivePreview() {
 
   if (previewSender) {
     previewSender.textContent = `— ${(anon || !sender) ? 'ไม่ระบุชื่อ' : sender}`;
+  }
+
+  // Image preview inside live card
+  let previewImgWrap = previewCard.querySelector('.card-image.preview-img');
+  if (selectedImageObjUrl) {
+    if (!previewImgWrap) {
+      previewImgWrap = document.createElement('div');
+      previewImgWrap.className = 'card-image preview-img';
+      previewImgWrap.innerHTML = `<img alt="" />`;
+      const msgEl = previewCard.querySelector('.card-msg');
+      if (msgEl) msgEl.before(previewImgWrap);
+    }
+    previewImgWrap.querySelector('img').src = selectedImageObjUrl;
+  } else {
+    previewImgWrap?.remove();
   }
 }
 
@@ -915,8 +993,22 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
 
   setSubmitting(true);
 
-  // recipient_name is omitted entirely when blank so Supabase doesn't complain
-  // if the column hasn't been added yet (SQL migration: ADD COLUMN recipient_name TEXT)
+  // Upload image to storage first (if one was selected)
+  let imageUrl = null;
+  if (selectedImageBlob) {
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const { data: uploadData, error: uploadErr } = await sb.storage
+      .from('message-images')
+      .upload(fileName, selectedImageBlob, { contentType: 'image/jpeg', upsert: false });
+    if (uploadErr) {
+      setSubmitting(false);
+      showFormError('อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองอีกครั้ง 🙏');
+      return;
+    }
+    const { data: urlData } = sb.storage.from('message-images').getPublicUrl(uploadData.path);
+    imageUrl = urlData.publicUrl;
+  }
+
   const payload = {
     category:     selectedCategory,
     content,
@@ -926,7 +1018,8 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
     reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
     is_visible:   true,
     is_pinned:    false,
-    ...(recipient ? { recipient_name: recipient } : {}),
+    ...(recipient  ? { recipient_name: recipient }   : {}),
+    ...(imageUrl   ? { image_url: imageUrl }          : {}),
   };
   const { data, error } = await sb
     .from('cheer_up_messages')
@@ -1006,6 +1099,73 @@ function subscribeRealtime() {
 }
 
 /* ══════════════════════════════════════════════════════════
+   COMMENTS
+   ══════════════════════════════════════════════════════════ */
+let _commentChannel = null;
+
+function renderComment(c) {
+  return `
+    <div class="focus-comment">
+      <div class="focus-comment-meta">
+        <span class="focus-comment-sender">${esc(c.sender_name ?? 'ไม่ระบุชื่อ')}</span>
+        <span class="focus-comment-time">${thaiTime(c.created_at)}</span>
+      </div>
+      <p class="focus-comment-text">${esc(c.comment_text)}</p>
+    </div>`;
+}
+
+async function fetchAndSubscribeComments(msgId, threadEl) {
+  const { data, error } = await sb
+    .from('comments')
+    .select('*')
+    .eq('message_id', msgId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    threadEl.innerHTML = `<p class="focus-comments-empty">โหลดความคิดเห็นไม่สำเร็จ</p>`;
+    return;
+  }
+
+  const comments = data ?? [];
+  threadEl.innerHTML = '';
+  if (comments.length === 0) {
+    threadEl.innerHTML = `<p class="focus-comments-empty">ยังไม่มีความคิดเห็น<br>เป็นคนแรกที่แสดงความคิดเห็นเลย 💬</p>`;
+  } else {
+    comments.forEach(c => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderComment(c).trim();
+      threadEl.appendChild(tmp.firstElementChild);
+    });
+    threadEl.scrollTop = threadEl.scrollHeight;
+  }
+
+  if (_commentChannel) { sb.removeChannel(_commentChannel); _commentChannel = null; }
+
+  _commentChannel = sb.channel(`comments:${msgId}`)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'comments',
+      filter: `message_id=eq.${msgId}`,
+    }, ({ new: comment }) => {
+      const emptyEl = threadEl.querySelector('.focus-comments-empty');
+      if (emptyEl) emptyEl.remove();
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderComment(comment).trim();
+      threadEl.appendChild(tmp.firstElementChild);
+      threadEl.scrollTop = threadEl.scrollHeight;
+    })
+    .subscribe();
+}
+
+async function postComment(msgId, senderName, text) {
+  const { error } = await sb.from('comments').insert({
+    message_id:   msgId,
+    sender_name:  senderName || 'ไม่ระบุชื่อ',
+    comment_text: text,
+  });
+  if (error) console.error('[Comment]', error);
+}
+
+/* ══════════════════════════════════════════════════════════
    FOCUS / READING MODE
    ══════════════════════════════════════════════════════════ */
 const focusOverlay = document.getElementById('focus-overlay');
@@ -1015,47 +1175,123 @@ let _focusLastEl = null;
 function openFocusMode(cardEl) {
   if (!focusOverlay) return;
 
+  const msgId = cardEl.dataset.id;
+  const msg   = allMessages.find(m => m.id === msgId)
+             ?? (pinnedMsg?.id === msgId ? pinnedMsg : null);
+  if (!msg) return;
+
   _focusLastEl = document.activeElement;
   focusOverlay.innerHTML = '';
+  focusOverlay.classList.add('split-mode');
 
-  const clone = cardEl.cloneNode(true);
-  clone.style.animationPlayState = '';
-  clone.style.cursor = 'default';
-  clone.querySelectorAll('[data-bound]').forEach(el => delete el.dataset.bound);
+  const cat    = CAT[msg.category] ?? CAT.cheer_up;
+  const avatar = msg.avatar_emoji  ?? '🌟';
+  const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
+    ? 'ไม่ระบุชื่อ' : msg.sender_name;
 
-  // Close button
-  const closeBtn = document.createElement('button');
-  closeBtn.className   = 'focus-close-btn';
-  closeBtn.textContent = '✕';
-  closeBtn.setAttribute('aria-label', 'ปิด');
-  closeBtn.addEventListener('click', closeFocusMode);
+  // ── Left pane: image + message ────────────────────────
+  const leftPane = document.createElement('div');
+  leftPane.className = 'focus-split-left';
+  leftPane.innerHTML = `
+    ${msg.image_url
+      ? `<div class="focus-image-wrap"><img class="focus-image" src="${esc(msg.image_url)}" alt="รูปภาพประกอบ" loading="lazy" /></div>`
+      : ''}
+    <div>
+      <div class="focus-msg-head">
+        <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>
+        <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
+      </div>
+      ${msg.recipient_name ? `<div class="card-recipient" aria-label="ส่งถึง ${esc(msg.recipient_name)}">${esc(msg.recipient_name)}</div>` : ''}
+      <p class="focus-msg-text">"${esc(msg.content)}"</p>
+      <div class="focus-msg-footer">
+        <div class="card-meta">
+          <span class="card-sender">— ${esc(sender)}</span>
+          <span class="card-time">${thaiTime(msg.created_at)}</span>
+        </div>
+        ${rxnHtml(msg.id, msg.reactions)}
+      </div>
+    </div>`;
 
-  // Wrapper keeps button + card as one aligned column
-  const wrapper = document.createElement('div');
-  wrapper.className = 'focus-wrapper';
-  wrapper.appendChild(closeBtn);
-  wrapper.appendChild(clone);
+  // ── Right pane: comments ──────────────────────────────
+  const rightPane = document.createElement('div');
+  rightPane.className = 'focus-split-right';
+  rightPane.innerHTML = `
+    <div class="focus-comments-header">
+      <span class="focus-comments-title">💬 ความคิดเห็น</span>
+      <button class="focus-close-btn" aria-label="ปิด">✕ ปิด</button>
+    </div>
+    <div class="focus-comments-thread" id="focus-comments-thread">
+      <div style="display:flex;justify-content:center;padding:2rem 0">
+        <span class="spinner" style="border-top-color:#f97316;border-color:rgba(249,115,22,.2)"></span>
+      </div>
+    </div>
+    <div class="focus-comment-input-wrap">
+      <input class="focus-comment-name" type="text" placeholder="ชื่อของคุณ (ไม่บังคับ)" maxlength="60" />
+      <div class="focus-comment-row">
+        <textarea class="focus-comment-textarea" placeholder="เขียนความคิดเห็น..." rows="2" maxlength="300"></textarea>
+        <button class="focus-comment-submit" aria-label="ส่งความคิดเห็น">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" aria-hidden="true">
+            <path d="M17 10L3 3.5L6.5 10L3 16.5L17 10Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>`;
 
-  focusOverlay.appendChild(wrapper);
+  // ── Assemble split wrapper ────────────────────────────
+  const split = document.createElement('div');
+  split.className = 'focus-split';
+  split.appendChild(leftPane);
+  split.appendChild(rightPane);
+
+  focusOverlay.appendChild(split);
   focusOverlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
   wireReactions();
-  setTimeout(() => closeBtn.focus(), 80);
+
+  // Close button
+  rightPane.querySelector('.focus-close-btn').addEventListener('click', closeFocusMode);
+
+  // Comments: fetch + realtime
+  const threadEl = rightPane.querySelector('#focus-comments-thread');
+  fetchAndSubscribeComments(msg.id, threadEl);
+
+  // Comment submit
+  const nameInput   = rightPane.querySelector('.focus-comment-name');
+  const textarea    = rightPane.querySelector('.focus-comment-textarea');
+  const submitBtn   = rightPane.querySelector('.focus-comment-submit');
+
+  async function handleCommentSubmit() {
+    const text = textarea.value.trim();
+    if (!text) return;
+    submitBtn.disabled = true;
+    await postComment(msg.id, nameInput.value.trim(), text);
+    textarea.value = '';
+    submitBtn.disabled = false;
+    textarea.focus();
+  }
+
+  submitBtn.addEventListener('click', handleCommentSubmit);
+  textarea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCommentSubmit(); }
+  });
+
+  setTimeout(() => textarea.focus(), 80);
 }
 
 function closeFocusMode() {
   if (!focusOverlay || focusOverlay.classList.contains('hidden')) return;
+  if (_commentChannel) { sb.removeChannel(_commentChannel); _commentChannel = null; }
   document.body.style.overflow = '';
   focusOverlay.classList.add('hidden');
+  focusOverlay.classList.remove('split-mode');
   _focusLastEl?.focus();
-  // Clear after CSS fade completes (transition is 0.28s → 300ms safe)
   setTimeout(() => { focusOverlay.innerHTML = ''; }, 300);
 }
 
-// Backdrop click — close only when clicking the dark background, not the wrapper content
+// Backdrop click — close only when clicking the dark background, not the split dialog
 focusOverlay?.addEventListener('click', e => {
-  if (!e.target.closest('.focus-wrapper')) closeFocusMode();
+  if (!e.target.closest('.focus-split') && !e.target.closest('.focus-wrapper')) closeFocusMode();
 });
 
 // Escape key — close focus mode

@@ -20,7 +20,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
 
   <!-- Custom design system -->
-  <link rel="stylesheet" href="assets/styles.css?v=10" />
+  <link rel="stylesheet" href="assets/styles.css?v=11" />
 
   <script>
     tailwind.config = {
@@ -261,6 +261,23 @@
           <textarea id="f-content" class="form-textarea" rows="4" maxlength="500"
                     placeholder="เขียนสิ่งที่อยากบอก... 💬"></textarea>
           <div class="char-counter" aria-live="polite" aria-atomic="true"><span id="char-count">0</span>/500</div>
+        </div>
+
+        <!-- 4.5 · Image (optional) ─────────────────────── -->
+        <div class="field-section">
+          <p class="field-label">รูปภาพ <span class="field-optional">(ไม่บังคับ)</span></p>
+          <div class="img-upload-row">
+            <button type="button" id="img-upload-btn" class="img-upload-btn" aria-label="เลือกรูปภาพ">
+              <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" aria-hidden="true" focusable="false">
+                <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M7 5V4a2 2 0 0 1 6 0v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+              📷 เพิ่มรูปภาพ
+            </button>
+            <input type="file" id="f-image" accept="image/*" style="display:none"
+                   tabindex="-1" aria-hidden="true" />
+          </div>
         </div>
 
         <!-- 4 · Sender name ──────────────────────────── -->
