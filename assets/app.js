@@ -1218,7 +1218,7 @@ function openFocusMode(cardEl) {
   rightPane.innerHTML = `
     <div class="focus-comments-header">
       <span class="focus-comments-title">💬 ความคิดเห็น</span>
-      <button class="focus-close-btn" aria-label="ปิด">✕ ปิด</button>
+      <button class="focus-close-btn" aria-label="ปิด">✕</button>
     </div>
     <div class="focus-comments-thread" id="focus-comments-thread">
       <div style="display:flex;justify-content:center;padding:2rem 0">
