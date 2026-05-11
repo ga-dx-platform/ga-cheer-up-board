@@ -494,11 +494,15 @@ function renderGrid(messages) {
   updateStats();
 
   if (filtered.length === 0) {
+    // Unobserve before wipe to prevent IntersectionObserver memory leak
+    board.querySelectorAll('.card[data-observed]').forEach(c => _cardObserver.unobserve(c));
     board.innerHTML = q ? renderEmptySearch(q) : renderEmpty(activeFilter);
     board.classList.add('board-empty');
     return;
   }
 
+  // Unobserve all cards before wiping DOM
+  board.querySelectorAll('.card[data-observed]').forEach(c => _cardObserver.unobserve(c));
   board.innerHTML = '';
   const BATCH = 5;
   let offset = 0;
@@ -1056,7 +1060,32 @@ function subscribeRealtime() {
         if (!msg.is_visible) return;
         if (allMessages.find(m => m.id === msg.id)) return; // already optimistically added
         allMessages.unshift(msg);
-        renderGrid(allMessages);
+        updateStats();
+
+        const board = document.getElementById('board');
+        const q = searchQuery.trim().toLowerCase();
+        const passesFilter = activeFilter === 'all' || msg.category === activeFilter;
+        const passesSearch = !q ||
+          msg.content?.toLowerCase().includes(q) ||
+          msg.sender_name?.toLowerCase().includes(q) ||
+          msg.recipient_name?.toLowerCase().includes(q);
+
+        if (!passesFilter || !passesSearch) return;
+
+        // Surgical prepend — avoids wiping the entire grid
+        const emptyEl = board.querySelector('.empty-state');
+        if (emptyEl) {
+          renderGrid(allMessages); // was empty, need full render
+          return;
+        }
+        const tmp = document.createElement('div');
+        tmp.innerHTML = renderCard(msg, 0, q).trim();
+        const newCard = tmp.firstElementChild;
+        if (newCard) {
+          board.prepend(newCard);
+          wireReactions();
+          _cardObserver.observe(newCard);
+        }
       }
     )
     .on('postgres_changes',
