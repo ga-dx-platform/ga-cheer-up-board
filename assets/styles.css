@@ -1133,7 +1133,16 @@ mark.search-match {
 
 /* Card sitting inside the overlay — fills the wrapper */
 .focus-overlay .card {
-  animation: none !important;
+  animation: none !important;        /* stop float by default */
+}
+/* Restore gold-orbit for tier cards — only kills float, keeps the glow */
+.focus-overlay .card.is-popular {
+  animation: gold-orbit 3s linear infinite !important;
+}
+.focus-overlay .card.is-popular:hover {
+  animation: gold-orbit 1.1s linear infinite !important;
+}
+.focus-overlay .card {
   transform: none !important;
   translate: 0 0 !important;
   scale: 1 !important;
@@ -1187,12 +1196,7 @@ mark.search-match {
   transition: background .2s ease, transform .2s var(--spring), box-shadow .2s ease;
   white-space: nowrap;
 }
-.focus-close-btn::before {
-  content: '✕';
-  margin-right: .4rem;
-  font-size: .8em;
-  opacity: .8;
-}
+/* no ::before — the ✕ text is set directly in JS (textContent) */
 .focus-close-btn:hover {
   background: rgba(255,255,255,0.38);
   box-shadow: 0 4px 18px rgba(0,0,0,0.22);
