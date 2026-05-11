@@ -1020,9 +1020,7 @@ function openFocusMode(cardEl) {
 
   const clone = cardEl.cloneNode(true);
   clone.style.animationPlayState = '';
-  // Remove expand ::after hint — not needed inside overlay
   clone.style.cursor = 'default';
-  // Re-bind data attributes on all reaction buttons so wireReactions can use them
   clone.querySelectorAll('[data-bound]').forEach(el => delete el.dataset.bound);
 
   // Close button
@@ -1032,31 +1030,32 @@ function openFocusMode(cardEl) {
   closeBtn.setAttribute('aria-label', 'ปิด');
   closeBtn.addEventListener('click', closeFocusMode);
 
-  focusOverlay.appendChild(closeBtn);
-  focusOverlay.appendChild(clone);
+  // Wrapper keeps button + card as one aligned column
+  const wrapper = document.createElement('div');
+  wrapper.className = 'focus-wrapper';
+  wrapper.appendChild(closeBtn);
+  wrapper.appendChild(clone);
+
+  focusOverlay.appendChild(wrapper);
   focusOverlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  // Wire reactions on the cloned card
   wireReactions();
-
-  // Focus the close button for keyboard users
   setTimeout(() => closeBtn.focus(), 80);
 }
 
 function closeFocusMode() {
   if (!focusOverlay || focusOverlay.classList.contains('hidden')) return;
+  document.body.style.overflow = '';
   focusOverlay.classList.add('hidden');
-  focusOverlay.addEventListener('transitionend', () => {
-    focusOverlay.innerHTML = '';
-    document.body.style.overflow = '';
-  }, { once: true });
   _focusLastEl?.focus();
+  // Clear after CSS fade completes (transition is 0.28s → 300ms safe)
+  setTimeout(() => { focusOverlay.innerHTML = ''; }, 300);
 }
 
-// Backdrop click — close only when clicking outside the card and close button
+// Backdrop click — close only when clicking the dark background, not the wrapper content
 focusOverlay?.addEventListener('click', e => {
-  if (!e.target.closest('.card') && !e.target.closest('.focus-close-btn')) closeFocusMode();
+  if (!e.target.closest('.focus-wrapper')) closeFocusMode();
 });
 
 // Escape key — close focus mode
