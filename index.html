@@ -67,6 +67,7 @@
       <span class="stat-item">💡 <span id="stat-idea">—</span> ไอเดีย</span>
       <span class="stat-sep" aria-hidden="true">·</span>
       <span class="stat-item">🌈 <span id="stat-cheer">—</span> ให้กำลังใจ</span>
+      <p class="stat-tagline" id="stat-tagline"></p>
     </div>
 
     <!-- ─── Message of the Week ─────────────────────────────── -->
@@ -81,10 +82,10 @@
 
     <!-- ─── Filter pills ─────────────────────────────────────── -->
     <nav class="filter-bar" aria-label="กรองตามหมวดหมู่">
-      <button class="filter-pill active" data-filter="all">ทั้งหมด</button>
-      <button class="filter-pill" data-filter="thank_you">🍑 ขอบคุณ</button>
-      <button class="filter-pill" data-filter="idea">💙 ไอเดีย</button>
-      <button class="filter-pill" data-filter="cheer_up">🌿 เชียร์อัพ</button>
+      <button class="filter-pill active" data-filter="all" aria-pressed="true">ทั้งหมด</button>
+      <button class="filter-pill" data-filter="thank_you" aria-pressed="false">🍑 ขอบคุณ</button>
+      <button class="filter-pill" data-filter="idea" aria-pressed="false">💙 ไอเดีย</button>
+      <button class="filter-pill" data-filter="cheer_up" aria-pressed="false">🌿 เชียร์อัพ</button>
     </nav>
 
     <!-- ─── Masonry board — JS renders cards here ───────────── -->
@@ -167,7 +168,7 @@
           </label>
           <textarea id="f-content" class="form-textarea" rows="4" maxlength="500"
                     placeholder="เขียนสิ่งที่อยากบอก... 💬"></textarea>
-          <div class="char-counter"><span id="char-count">0</span>/500</div>
+          <div class="char-counter" aria-live="polite" aria-atomic="true"><span id="char-count">0</span>/500</div>
         </div>
 
         <!-- 4 · Sender name ──────────────────────────── -->
@@ -197,7 +198,7 @@
   </div>
 
   <!-- Hidden admin access -->
-  <a href="admin.html" title="Admin" style="
+  <a href="admin.html" title="Admin" aria-label="Admin panel" style="
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -214,7 +215,8 @@
   " onmouseover="this.style.opacity='0.7';this.style.transform='scale(1.15)'"
      onmouseout="this.style.opacity='0.25';this.style.transform='scale(1)'">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true" focusable="false">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
                1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33
