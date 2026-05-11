@@ -1121,18 +1121,34 @@ mark.search-match {
   pointer-events: none;
 }
 
-/* Card sitting inside the overlay */
+/* Inner wrapper: card + close button as one aligned column */
+.focus-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 650px;
+  width: 90%;
+  gap: .5rem;
+}
+
+/* Card sitting inside the overlay — fills the wrapper */
 .focus-overlay .card {
   animation: none !important;
-  transform: scale(1.15) !important;
+  transform: none !important;
   translate: 0 0 !important;
   scale: 1 !important;
   cursor: default;
-  max-width: 440px;
   width: 100%;
+  max-width: 100%;
   flex-shrink: 0;
   will-change: auto;
   transition: box-shadow .28s ease !important;
+  /* Larger text for reading comfort */
+  font-size: var(--fs-md);
+}
+.focus-overlay .card .card-msg {
+  font-size: var(--fs-md);
+  line-height: 1.75;
 }
 .focus-overlay .card:hover {
   translate: 0 0 !important;
@@ -1153,24 +1169,39 @@ mark.search-match {
 /* No expand hint inside the overlay */
 .focus-overlay .card::after { display: none !important; }
 
-/* Close button */
+/* Close button — glass pill, sits above the card inside .focus-wrapper */
 .focus-close-btn {
-  position: absolute; top: 1.25rem; right: 1.25rem;
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.65);
-  background: rgba(255,255,255,0.30);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  color: #fff; font-size: 1rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .2s ease, transform .2s var(--spring);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  padding: .35rem .9rem;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  color: rgba(255,255,255,0.90);
+  font-size: var(--fs-sm);
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  transition: background .2s ease, transform .2s var(--spring), box-shadow .2s ease;
+  white-space: nowrap;
 }
-.focus-close-btn:hover { background: rgba(255,255,255,0.52); transform: scale(1.12) rotate(90deg); }
+.focus-close-btn::before {
+  content: '✕';
+  margin-right: .4rem;
+  font-size: .8em;
+  opacity: .8;
+}
+.focus-close-btn:hover {
+  background: rgba(255,255,255,0.38);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+  transform: translateY(-1px);
+}
 
 @media (max-width: 520px) {
-  .focus-overlay { padding: 1.25rem; align-items: flex-end; }
-  .focus-overlay .card { transform: scale(1) !important; max-width: 100%; }
-  .focus-close-btn { top: .75rem; right: .75rem; }
+  .focus-overlay { padding: 1rem; align-items: flex-end; }
+  .focus-wrapper { width: 100%; }
 }
 
 /* ── Live card preview (inside modal) ────────────────────── */
