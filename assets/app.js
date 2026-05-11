@@ -600,6 +600,21 @@ document.querySelectorAll('.filter-pill').forEach(pill => {
   });
 })();
 
+/* ── Digest Accordion Toggle ─────────────────────────────── */
+(function initDigestAccordion() {
+  const btn  = document.getElementById('digest-toggle');
+  const body = document.getElementById('digest-body');
+  if (!btn || !body) return;
+
+  btn.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+    body.setAttribute('aria-expanded', String(!open));
+  });
+
+  // Also open via keyboard Enter/Space (button already handles these natively)
+})();
+
 /* ══════════════════════════════════════════════════════════
    FOCUS TRAP UTILITY
    ══════════════════════════════════════════════════════════ */
