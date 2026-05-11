@@ -1085,6 +1085,23 @@ document.getElementById('board')?.addEventListener('click', e => {
 })();
 
 /* ══════════════════════════════════════════════════════════
+   HEADER SCROLL SHRINK
+   ══════════════════════════════════════════════════════════ */
+(function initHeaderScroll() {
+  const header = document.getElementById('site-header');
+  if (!header) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      header.classList.toggle('header-scrolled', window.scrollY > 60);
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
+/* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
 loadBoard().then(subscribeRealtime);
