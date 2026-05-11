@@ -151,13 +151,17 @@ function renderDigest(messages) {
   const idea   = weekly.filter(m => m.category === 'idea').length;
   const cheer  = weekly.filter(m => m.category === 'cheer_up').length;
 
-  // Top card by total reactions this week
-  const topCard = weekly.reduce((best, m) => {
-    const rxn = m.reactions ?? {};
-    const t   = (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0);
-    const bt  = (best?.reactions?.thumbs_up ?? 0) + (best?.reactions?.heart ?? 0) + (best?.reactions?.clap ?? 0);
-    return t > bt ? m : best;
-  }, null);
+  // Top card: only qualify cards that have at least 1 reaction
+  const withRxn = weekly
+    .map(m => {
+      const rxn = m.reactions ?? {};
+      return { m, t: (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0) };
+    })
+    .filter(({ t }) => t > 0);
+
+  const topCard = withRxn.length > 0
+    ? withRxn.reduce((best, cur) => cur.t > best.t ? cur : best, withRxn[0]).m
+    : null;
 
   const topSender = topCard
     ? (topCard.is_anonymous || !topCard.sender_name ? 'ไม่ระบุชื่อ' : topCard.sender_name)
@@ -178,15 +182,21 @@ function renderDigest(messages) {
       <span class="digest-bar-count">${b.count}</span>
     </div>`).join('');
 
-  const topHtml = topCard ? `
+  const content80 = topCard?.content
+    ? (topCard.content.slice(0, 80) + (topCard.content.length > 80 ? '…' : ''))
+    : null;
+
+  const topHtml = (topCard && content80) ? `
     <div class="digest-top">
       <span class="digest-top-label">⭐ ข้อความยอดนิยม</span>
-      <p class="digest-top-msg">"${esc(topCard.content.slice(0, 80))}${topCard.content.length > 80 ? '…' : ''}"</p>
+      <p class="digest-top-msg">"${esc(content80)}"</p>
       <span class="digest-top-sender">— ${esc(topSender)}</span>
     </div>` : '';
 
+  const cardClass = topHtml ? 'digest-card' : 'digest-card digest-card--solo';
+
   return `
-    <div class="digest-card">
+    <div class="${cardClass}">
       <div class="digest-stats">
         <div class="digest-total">
           <span class="digest-total-num">${weekly.length}</span>
@@ -886,16 +896,18 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
 
   setSubmitting(true);
 
+  // recipient_name is omitted entirely when blank so Supabase doesn't complain
+  // if the column hasn't been added yet (SQL migration: ADD COLUMN recipient_name TEXT)
   const payload = {
-    category:       selectedCategory,
+    category:     selectedCategory,
     content,
-    sender_name:    anon || !sender ? 'ไม่ระบุชื่อ' : sender,
-    recipient_name: recipient || null,
-    is_anonymous:   anon,
-    avatar_emoji:   selectedEmoji,
-    reactions:      { thumbs_up: 0, heart: 0, clap: 0 },
-    is_visible:     true,
-    is_pinned:      false,
+    sender_name:  anon || !sender ? 'ไม่ระบุชื่อ' : sender,
+    is_anonymous: anon,
+    avatar_emoji: selectedEmoji,
+    reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
+    is_visible:   true,
+    is_pinned:    false,
+    ...(recipient ? { recipient_name: recipient } : {}),
   };
   const { data, error } = await sb
     .from('cheer_up_messages')

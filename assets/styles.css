@@ -638,6 +638,9 @@ mark.search-match {
 .digest-section { margin-bottom: 2.5rem; }
 .digest-section.hidden { display: none; }
 
+/* solo = no top-card: stats fill full width */
+.digest-card--solo .digest-stats { min-width: unset; flex: 0 0 auto; max-width: 360px; }
+
 .digest-card {
   display: flex; gap: 1.5rem; flex-wrap: wrap;
   background: rgba(255,255,255,0.55);
