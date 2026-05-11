@@ -128,6 +128,10 @@ function renderMotw(msg) {
     : msg.sender_name;
   return `
     <div class="motw-card" role="article" data-id="${msg.id}">
+      <div class="motw-card-label">
+        <span class="tag-star" aria-hidden="true">⭐</span>
+        ข้อความแห่งสัปดาห์
+      </div>
       <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
       <div class="motw-body">
         <span class="motw-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
