@@ -523,7 +523,7 @@ body {
   font-family:var(--font); font-size:.75rem; font-weight:500; color:#6b6b80;
   cursor:pointer;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 4px rgba(0,0,0,0.06);
-  transition:transform .2s var(--spring),background .15s ease,box-shadow .15s ease;
+  transition: transform .2s var(--spring), background .15s ease;
   user-select:none;
 }
 .rxn-btn:hover { background:rgba(255,255,255,0.72); transform:scale(1.12) translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,1), 0 4px 14px rgba(0,0,0,.10); color:#3d3d4e; }
@@ -649,22 +649,60 @@ mark.search-match {
   border: 1px solid rgba(255,255,255,0.25) !important;
   border-top: 1px solid rgba(255,255,255,0.85) !important;
   border-left: 1px solid rgba(255,255,255,0.55) !important;
+  /* Base shadow — static, never animates */
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.90),
     0 4px 6px  rgba(0,0,0,0.04),
     0 12px 32px rgba(0,0,0,0.09),
-    0 40px 80px rgba(0,0,0,0.07) !important;
-  transition: translate .28s ease-out, scale .28s ease-out, box-shadow .28s ease;
+    0 40px 80px rgba(0,0,0,0.07);
+  /*
+   * GPU-only transitions — translate/scale are compositor-thread properties.
+   * box-shadow is intentionally ABSENT: shadow changes trigger full repaints.
+   * The hover depth shadow is faded in via ::before opacity instead.
+   */
+  transition: translate .28s cubic-bezier(0.2,0.8,0.2,1),
+              scale    .28s cubic-bezier(0.2,0.8,0.2,1);
   overflow:hidden;
-  isolation: isolate;        /* own stacking context: stops backdrop-filter bleed */
-  contain: paint layout;     /* browser can skip layout/paint outside this box */
+  isolation: isolate;
+  /*
+   * 'paint' removed from contain — contain:paint clips ::before box-shadows to the
+   * card boundary, breaking the opacity shadow trick. content-visibility:auto already
+   * handles the off-screen skip behaviour that contain:paint provided.
+   */
+  contain: layout style;
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
   content-visibility: auto;
   contain-intrinsic-size: 0 320px;
 }
-.card::before { display:none; }
+
+/*
+ * HOVER SHADOW LAYER — the "opacity shadow trick":
+ * The expanded drop-shadow is pre-painted here at rest (opacity:0).
+ * On hover we flip opacity to 1. Because opacity is GPU-composited,
+ * zero repaints occur — the compositor fades between two already-painted
+ * textures. The browser never recalculates a box-shadow value mid-frame.
+ * Note: ::before must remain display:block so ::after stays free for the
+ * expand affordance hint.
+ */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 10px 24px  rgba(0,0,0,0.10),
+    0 36px 80px  rgba(0,0,0,0.18),
+    0 80px 140px rgba(0,0,0,0.14);
+  opacity: 0;
+  transition: opacity .28s ease;
+}
+.card:hover::before { opacity: 1; }
+/* Tier cards own their hover glow on the element itself; skip the generic depth layer */
+.card.is-popular::before { display: none; }
 
 /* Expand affordance — appears top-right on hover */
 .card::after {
@@ -682,11 +720,7 @@ mark.search-match {
 .card:hover {
   translate: 0 -10px;
   scale: 1.018;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    0 8px 16px  rgba(0,0,0,0.08),
-    0 28px 70px rgba(0,0,0,0.16),
-    0 72px 130px rgba(0,0,0,0.12) !important;
+  /* No box-shadow here — depth handled by ::before opacity, zero repaints */
 }
 
 /* ── Category indicator: 3px colored border-left + badge only ── */
@@ -1137,22 +1171,20 @@ mark.search-match {
   max-width: 100%;
   flex-shrink: 0;
   will-change: auto;
-  transition: box-shadow .28s ease !important;
-  /* Larger text for reading comfort */
+  /* No box-shadow transition — was triggering repaints in the overlay too */
+  transition: none !important;
   font-size: var(--fs-md);
 }
 .focus-overlay .card .card-msg {
   font-size: var(--fs-md);
   line-height: 1.75;
 }
+/* Focus overlay cards are static — disable the hover depth layer and lift */
+.focus-overlay .card::before { display: none !important; }
 .focus-overlay .card:hover {
   translate: 0 0 !important;
   scale: 1 !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.90),
-    0 4px 6px  rgba(0,0,0,0.04),
-    0 12px 32px rgba(0,0,0,0.09),
-    0 40px 80px rgba(0,0,0,0.07) !important;
+  /* No box-shadow change — static card in the overlay never needs depth shift */
 }
 
 /* Reactions are fully interactive in focus mode */
