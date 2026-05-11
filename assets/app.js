@@ -906,7 +906,7 @@ function updateLivePreview() {
     if (!previewImgWrap) {
       previewImgWrap = document.createElement('div');
       previewImgWrap.className = 'card-image preview-img';
-      previewImgWrap.innerHTML = `<img alt="" />`;
+      previewImgWrap.innerHTML = `<img alt="" loading="lazy" decoding="async" />`;
       const msgEl = previewCard.querySelector('.card-msg');
       if (msgEl) msgEl.before(previewImgWrap);
     }
