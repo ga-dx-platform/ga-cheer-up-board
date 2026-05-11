@@ -58,30 +58,42 @@ function rxnHtml(id, rxn) {
 }
 
 /* Exported for Phase 3 optimistic prepend */
-function renderCard(msg, idx) {
-  const cat    = CAT[msg.category] ?? CAT.cheer_up;
-  const avatar = msg.avatar_emoji  ?? '🌟';
-  const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
+function renderCard(msg, idx, query = '') {
+  const cat       = CAT[msg.category] ?? CAT.cheer_up;
+  const avatar    = msg.avatar_emoji  ?? '🌟';
+  const sender    = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
     ? 'ไม่ระบุชื่อ'
     : msg.sender_name;
-  const r      = ROTS[idx % ROTS.length];
+  const recipient = msg.recipient_name?.trim() || '';
+  const r         = ROTS[idx % ROTS.length];
 
-  const rxn       = msg.reactions ?? {};
-  const totalRxn  = (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0);
-  const isNew     = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
-  const isPopular = totalRxn >= 5;
+  const rxn      = msg.reactions ?? {};
+  const totalRxn = (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0);
+  const isNew    = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
+
+  // Tier system: 🌟 bronze (5+) · 💎 silver (10+) · 👑 gold (20+)
+  const tier = totalRxn >= 20 ? 'gold'
+             : totalRxn >= 10 ? 'silver'
+             : totalRxn >= 5  ? 'bronze'
+             : null;
 
   const classes = ['card',
-    isPopular ? 'is-popular' : '',
-    isNew     ? 'is-new'     : '',
+    tier   ? `is-popular tier-${tier}` : '',
+    isNew  ? 'is-new'                  : '',
   ].filter(Boolean).join(' ');
+
+  const TIER_BADGE = {
+    bronze: { icon: '🌟', label: 'ฮอตฮิต'   },
+    silver: { icon: '💎', label: 'ซุปเปอร์ฮิต' },
+    gold:   { icon: '👑', label: 'ตำนาน!'    },
+  };
 
   const newBadge = isNew
     ? `<span class="badge-new" aria-label="ข้อความใหม่">✨ NEW</span>`
     : '';
 
-  const popularBadge = isPopular
-    ? `<span class="sr-only">ข้อความฮอตฮิต</span>`
+  const popularBadge = tier
+    ? `<span class="sr-only">${TIER_BADGE[tier].label}</span>`
     : '';
 
   const preview = esc(msg.content).slice(0, 60);
@@ -96,10 +108,11 @@ function renderCard(msg, idx) {
         <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
       </div>
-      <p class="card-msg">${esc(msg.content)}</p>
+      ${recipient ? `<div class="card-recipient" aria-label="ส่งถึง ${esc(recipient)}">${highlightText(recipient, query)}</div>` : ''}
+      <p class="card-msg">${highlightText(msg.content, query)}</p>
       <div class="card-foot">
         <div class="card-meta">
-          <span class="card-sender">— ${esc(sender)}</span>
+          <span class="card-sender">— ${highlightText(sender, query)}</span>
           <span class="card-time">${thaiTime(msg.created_at)}</span>
         </div>
         ${rxnHtml(msg.id, msg.reactions)}
@@ -124,6 +137,64 @@ function renderMotw(msg) {
           ${rxnHtml(msg.id, msg.reactions)}
         </div>
       </div>
+    </div>`;
+}
+
+function renderDigest(messages) {
+  const ONE_WEEK = 7 * 86_400_000;
+  const now      = Date.now();
+  const weekly   = messages.filter(m => (now - new Date(m.created_at).getTime()) <= ONE_WEEK);
+
+  if (weekly.length === 0) return null;
+
+  const thank  = weekly.filter(m => m.category === 'thank_you').length;
+  const idea   = weekly.filter(m => m.category === 'idea').length;
+  const cheer  = weekly.filter(m => m.category === 'cheer_up').length;
+
+  // Top card by total reactions this week
+  const topCard = weekly.reduce((best, m) => {
+    const rxn = m.reactions ?? {};
+    const t   = (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0);
+    const bt  = (best?.reactions?.thumbs_up ?? 0) + (best?.reactions?.heart ?? 0) + (best?.reactions?.clap ?? 0);
+    return t > bt ? m : best;
+  }, null);
+
+  const topSender = topCard
+    ? (topCard.is_anonymous || !topCard.sender_name ? 'ไม่ระบุชื่อ' : topCard.sender_name)
+    : null;
+
+  const bars = [
+    { label: '💝 ขอบคุณ', count: thank, max: weekly.length, color: 'rgba(249,115,22,0.55)' },
+    { label: '💡 ไอเดีย',  count: idea,  max: weekly.length, color: 'rgba(59,130,246,0.55)'  },
+    { label: '🌈 เชียร์',  count: cheer, max: weekly.length, color: 'rgba(16,185,129,0.55)'  },
+  ];
+
+  const barsHtml = bars.map(b => `
+    <div class="digest-bar-row">
+      <span class="digest-bar-label">${b.label}</span>
+      <div class="digest-bar-track">
+        <div class="digest-bar-fill" style="width:${b.max ? Math.round(b.count/b.max*100) : 0}%;background:${b.color}"></div>
+      </div>
+      <span class="digest-bar-count">${b.count}</span>
+    </div>`).join('');
+
+  const topHtml = topCard ? `
+    <div class="digest-top">
+      <span class="digest-top-label">⭐ ข้อความยอดนิยม</span>
+      <p class="digest-top-msg">"${esc(topCard.content.slice(0, 80))}${topCard.content.length > 80 ? '…' : ''}"</p>
+      <span class="digest-top-sender">— ${esc(topSender)}</span>
+    </div>` : '';
+
+  return `
+    <div class="digest-card">
+      <div class="digest-stats">
+        <div class="digest-total">
+          <span class="digest-total-num">${weekly.length}</span>
+          <span class="digest-total-label">ข้อความสัปดาห์นี้</span>
+        </div>
+        <div class="digest-bars">${barsHtml}</div>
+      </div>
+      ${topHtml}
     </div>`;
 }
 
@@ -190,6 +261,16 @@ function renderEmpty(filter = 'all') {
     </div>`;
 }
 
+function renderEmptySearch(q) {
+  return `
+    <div class="empty-state" role="status" aria-live="polite">
+      <div class="empty-emoji">🔍</div>
+      <h3 class="empty-title">ไม่พบข้อความที่ค้นหา</h3>
+      <p class="empty-sub">ไม่มีข้อความที่ตรงกับ "<strong>${esc(q)}</strong>" ลองค้นหาด้วยคำอื่นดูนะ</p>
+      <button class="empty-cta" onclick="document.getElementById('search-clear').click()">✕ ล้างการค้นหา</button>
+    </div>`;
+}
+
 function renderError(err) {
   console.error('[Board]', err);
   return `
@@ -206,6 +287,7 @@ function renderError(err) {
    ══════════════════════════════════════════════════════════ */
 let allMessages  = [];
 let activeFilter = 'all';
+let searchQuery  = '';
 let pinnedMsg    = null;
 const reactedSet = new Set(); // key: `${msgId}:${type}`
 
@@ -351,17 +433,34 @@ function updateCardReactions(id, rxn) {
 
 let _renderGen = 0;
 
+function highlightText(text, query) {
+  if (!query) return esc(text);
+  const escaped = esc(text);
+  const safeQ   = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return escaped.replace(new RegExp(safeQ, 'gi'), m => `<mark class="search-match">${m}</mark>`);
+}
+
 function renderGrid(messages) {
-  const board    = document.getElementById('board');
-  const filtered = activeFilter === 'all'
+  const board = document.getElementById('board');
+  const q     = searchQuery.trim().toLowerCase();
+
+  let filtered = activeFilter === 'all'
     ? messages
     : messages.filter(m => m.category === activeFilter);
+
+  if (q) {
+    filtered = filtered.filter(m =>
+      m.content?.toLowerCase().includes(q) ||
+      m.sender_name?.toLowerCase().includes(q) ||
+      m.recipient_name?.toLowerCase().includes(q)
+    );
+  }
 
   board.classList.remove('board-empty');
   updateStats();
 
   if (filtered.length === 0) {
-    board.innerHTML = renderEmpty(activeFilter);
+    board.innerHTML = q ? renderEmptySearch(q) : renderEmpty(activeFilter);
     board.classList.add('board-empty');
     return;
   }
@@ -377,7 +476,7 @@ function renderGrid(messages) {
     const frag  = document.createDocumentFragment();
     slice.forEach((msg, i) => {
       const tmp = document.createElement('div');
-      tmp.innerHTML = renderCard(msg, offset + i).trim();
+      tmp.innerHTML = renderCard(msg, offset + i, q).trim();
       frag.appendChild(tmp.firstElementChild);
     });
     board.appendChild(frag);
@@ -429,6 +528,18 @@ async function loadBoard() {
   }
 
   allMessages = regular;
+
+  // Weekly Digest
+  const digestSec = document.getElementById('digest-section');
+  const digestEl  = document.getElementById('digest-container');
+  const digestHtml = renderDigest([...(pinned ? [pinned] : []), ...regular]);
+  if (digestHtml && digestSec && digestEl) {
+    digestEl.innerHTML = digestHtml;
+    digestSec.classList.remove('hidden');
+  } else if (digestSec) {
+    digestSec.classList.add('hidden');
+  }
+
   renderGrid(allMessages);
   wireReactions();
   observeCards();
@@ -448,6 +559,36 @@ function setActiveFilter(filter) {
 document.querySelectorAll('.filter-pill').forEach(pill => {
   pill.addEventListener('click', () => setActiveFilter(pill.dataset.filter));
 });
+
+/* ── Search ──────────────────────────────────────────────── */
+(function initSearch() {
+  const input    = document.getElementById('search-input');
+  const clearBtn = document.getElementById('search-clear');
+  if (!input) return;
+
+  let _debounce = null;
+
+  function applySearch(val) {
+    searchQuery = val;
+    clearBtn?.classList.toggle('hidden', !val);
+    renderGrid(allMessages);
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(_debounce);
+    _debounce = setTimeout(() => applySearch(input.value), 180);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { input.value = ''; applySearch(''); input.blur(); }
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    input.value = '';
+    applySearch('');
+    input.focus();
+  });
+})();
 
 /* ══════════════════════════════════════════════════════════
    FOCUS TRAP UTILITY
@@ -556,8 +697,9 @@ anonCheck?.addEventListener('change', () => {
   updateLivePreview();
 });
 
-/* ── Sender name (live preview) ──────────────────────────── */
+/* ── Sender name & recipient (live preview) ──────────────── */
 document.getElementById('f-sender')?.addEventListener('input', updateLivePreview);
+document.getElementById('f-recipient')?.addEventListener('input', updateLivePreview);
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function showFormError(msg) {
@@ -597,8 +739,10 @@ function resetForm() {
   if (charCount) charCount.textContent = '0';
   charWrap?.classList.remove('warn', 'over');
 
-  const senderEl = document.getElementById('f-sender');
-  if (senderEl) senderEl.value = '';
+  const senderEl    = document.getElementById('f-sender');
+  const recipientEl = document.getElementById('f-recipient');
+  if (senderEl)    senderEl.value    = '';
+  if (recipientEl) recipientEl.value = '';
   if (anonCheck) anonCheck.checked = false;
   if (senderSec) senderSec.style.display = '';
 
@@ -609,19 +753,19 @@ function resetForm() {
 
 /* ── Live preview ────────────────────────────────────────── */
 function updateLivePreview() {
-  const previewCard   = document.getElementById('preview-card');
-  const previewAvatar = document.getElementById('preview-avatar');
-  const previewBadge  = document.getElementById('preview-badge');
-  const previewMsg    = document.getElementById('preview-msg');
-  const previewSender = document.getElementById('preview-sender');
+  const previewCard      = document.getElementById('preview-card');
+  const previewAvatar    = document.getElementById('preview-avatar');
+  const previewBadge     = document.getElementById('preview-badge');
+  const previewMsg       = document.getElementById('preview-msg');
+  const previewSender    = document.getElementById('preview-sender');
   if (!previewCard) return;
 
-  const cat    = CAT[selectedCategory] ?? CAT.cheer_up;
-  const msg    = contentEl?.value.trim()                            ?? '';
-  const sender = document.getElementById('f-sender')?.value.trim() ?? '';
-  const anon   = anonCheck?.checked ?? false;
+  const cat       = CAT[selectedCategory] ?? CAT.cheer_up;
+  const msg       = contentEl?.value.trim()                               ?? '';
+  const sender    = document.getElementById('f-sender')?.value.trim()    ?? '';
+  const recipient = document.getElementById('f-recipient')?.value.trim() ?? '';
+  const anon      = anonCheck?.checked ?? false;
 
-  // data-category drives the border-left colour via existing CSS selectors
   previewCard.dataset.category = selectedCategory;
 
   if (previewAvatar) previewAvatar.textContent = selectedEmoji;
@@ -629,6 +773,19 @@ function updateLivePreview() {
   if (previewBadge) {
     previewBadge.textContent = `${cat.emoji} ${cat.label}`;
     previewBadge.className   = `card-badge badge-${cat.cls}`;
+  }
+
+  // Recipient badge in preview
+  let previewRecipient = previewCard.querySelector('.card-recipient');
+  if (recipient) {
+    if (!previewRecipient) {
+      previewRecipient = document.createElement('div');
+      previewRecipient.className = 'card-recipient';
+      previewBadge?.closest('.card-head')?.after(previewRecipient);
+    }
+    previewRecipient.textContent = recipient;
+  } else {
+    previewRecipient?.remove();
   }
 
   if (previewMsg) {
@@ -711,9 +868,10 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   e.preventDefault();
   clearFormError();
 
-  const content = contentEl?.value.trim() ?? '';
-  const sender  = document.getElementById('f-sender')?.value.trim() ?? '';
-  const anon    = anonCheck?.checked ?? false;
+  const content   = contentEl?.value.trim() ?? '';
+  const sender    = document.getElementById('f-sender')?.value.trim()    ?? '';
+  const recipient = document.getElementById('f-recipient')?.value.trim() ?? '';
+  const anon      = anonCheck?.checked ?? false;
 
   if (!content) {
     showFormError('✍️ กรุณาเขียนข้อความก่อนนะ');
@@ -729,14 +887,15 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   setSubmitting(true);
 
   const payload = {
-    category:     selectedCategory,
+    category:       selectedCategory,
     content,
-    sender_name:  anon || !sender ? 'ไม่ระบุชื่อ' : sender,
-    is_anonymous: anon,
-    avatar_emoji: selectedEmoji,
-    reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
-    is_visible:   true,
-    is_pinned:    false,
+    sender_name:    anon || !sender ? 'ไม่ระบุชื่อ' : sender,
+    recipient_name: recipient || null,
+    is_anonymous:   anon,
+    avatar_emoji:   selectedEmoji,
+    reactions:      { thumbs_up: 0, heart: 0, clap: 0 },
+    is_visible:     true,
+    is_pinned:      false,
   };
   const { data, error } = await sb
     .from('cheer_up_messages')
@@ -881,6 +1040,37 @@ document.getElementById('board')?.addEventListener('click', e => {
   const card = e.target.closest('.card');
   if (card) openFocusMode(card);
 });
+
+/* ══════════════════════════════════════════════════════════
+   DAILY NUDGE
+   ══════════════════════════════════════════════════════════ */
+(function initNudge() {
+  const banner     = document.getElementById('nudge-banner');
+  const dismissBtn = document.getElementById('nudge-dismiss');
+  const ctaBtn     = document.getElementById('nudge-cta-btn');
+  if (!banner) return;
+
+  const NUDGE_KEY = 'cheer-nudge-dismissed';
+  const today     = new Date().toDateString();
+
+  // Show nudge if user hasn't dismissed today and hasn't posted today
+  const lastDismissed = localStorage.getItem(NUDGE_KEY);
+  if (lastDismissed === today) return;
+
+  // Delay slightly so board loads first
+  setTimeout(() => banner.classList.remove('hidden'), 1200);
+
+  dismissBtn?.addEventListener('click', () => {
+    banner.classList.add('hidden');
+    localStorage.setItem(NUDGE_KEY, today);
+  });
+
+  ctaBtn?.addEventListener('click', () => {
+    banner.classList.add('hidden');
+    localStorage.setItem(NUDGE_KEY, today);
+    document.getElementById('openModal')?.click();
+  });
+})();
 
 /* ══════════════════════════════════════════════════════════
    BOOT

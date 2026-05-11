@@ -58,6 +58,19 @@
   <!-- ═══ Main content ═════════════════════════════════════════ -->
   <main class="main-wrap" id="main-content">
 
+    <!-- ─── Daily Nudge Banner ──────────────────────────────── -->
+    <div class="nudge-banner hidden" id="nudge-banner" role="complementary" aria-label="ส่งกำลังใจวันนี้">
+      <div class="nudge-inner">
+        <span class="nudge-emoji" aria-hidden="true">💬</span>
+        <div class="nudge-text">
+          <strong class="nudge-title">วันนี้ยังไม่ได้ส่งกำลังใจเลยนะ!</strong>
+          <span class="nudge-sub">บอกเพื่อนร่วมทีมว่าคุณซาบซึ้งใจแค่ไหน ✨</span>
+        </div>
+        <button class="nudge-cta" id="nudge-cta-btn" aria-label="เพิ่มข้อความตอนนี้เลย">✨ เพิ่มเลย</button>
+        <button class="nudge-dismiss" id="nudge-dismiss" aria-label="ปิดแจ้งเตือน">✕</button>
+      </div>
+    </div>
+
     <!-- ─── Stats bar ─────────────────────────────────────────── -->
     <div class="stats-bar" id="stats-bar" role="status" aria-live="polite">
       <span class="stat-item">💌 <span id="stat-total">—</span> ข้อความ</span>
@@ -79,6 +92,29 @@
       <!-- JS renders pinned card here, or hides the section -->
       <div id="motw-container"></div>
     </section>
+
+    <!-- ─── Weekly Digest ──────────────────────────────────── -->
+    <section class="digest-section hidden" id="digest-section" aria-label="สรุปประจำสัปดาห์">
+      <div class="section-tag">
+        <span class="tag-star" aria-hidden="true">📊</span>
+        สรุปสัปดาห์ที่ผ่านมา
+      </div>
+      <div id="digest-container"></div>
+    </section>
+
+    <!-- ─── Search bar ──────────────────────────────────────── -->
+    <div class="search-wrap" role="search" aria-label="ค้นหาข้อความ">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input
+        type="search"
+        id="search-input"
+        class="search-input"
+        placeholder="ค้นหาข้อความ หรือชื่อผู้ส่ง..."
+        autocomplete="off"
+        aria-label="ค้นหาข้อความหรือชื่อผู้ส่ง"
+      />
+      <button class="search-clear hidden" id="search-clear" aria-label="ล้างการค้นหา">✕</button>
+    </div>
 
     <!-- ─── Filter pills ─────────────────────────────────────── -->
     <nav class="filter-bar" aria-label="กรองตามหมวดหมู่">
@@ -161,7 +197,19 @@
           </div>
         </div>
 
-        <!-- 3 · Message ──────────────────────────────── -->
+        <!-- 3 · Recipient (optional) ────────────────── -->
+        <div class="field-section">
+          <label class="field-label" for="f-recipient">
+            ส่งถึง <span class="field-optional">(ไม่บังคับ)</span>
+          </label>
+          <div class="recipient-wrap">
+            <span class="recipient-at" aria-hidden="true">👤</span>
+            <input type="text" id="f-recipient" class="form-input recipient-input" maxlength="60"
+                   placeholder="ชื่อเพื่อนร่วมทีม..." autocomplete="off" />
+          </div>
+        </div>
+
+        <!-- 4 · Message ──────────────────────────────── -->
         <div class="field-section">
           <label class="field-label" for="f-content">
             ข้อความ <span class="required">*</span>

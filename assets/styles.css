@@ -155,6 +155,59 @@ body {
      from sampling the fixed orbs painted behind this layer */
 }
 
+/* ── Daily Nudge Banner ──────────────────────────────────── */
+.nudge-banner {
+  margin-bottom: 1.5rem;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(32px) saturate(180%); -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1.5px solid rgba(249,115,22,0.28);
+  box-shadow: var(--glass-inset), 0 4px 20px rgba(249,115,22,0.10);
+  animation: nudge-slide-in .45s var(--spring);
+  overflow: hidden;
+}
+.nudge-banner.hidden { display: none; }
+
+@keyframes nudge-slide-in {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nudge-inner {
+  display: flex; align-items: center; gap: .85rem;
+  padding: .85rem 1.1rem;
+  flex-wrap: wrap;
+}
+.nudge-emoji { font-size: 1.65rem; flex-shrink: 0; animation: float-avatar 3.5s ease-in-out infinite; }
+.nudge-text  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.nudge-title { font-size: .85rem; font-weight: 700; color: #c2410c; }
+.nudge-sub   { font-size: .78rem; font-weight: 400; color: #6b7280; }
+
+.nudge-cta {
+  flex-shrink: 0;
+  padding: .42rem 1.05rem; border-radius: 99px; border: none;
+  background: linear-gradient(135deg, #f97316, #ec4899);
+  color: #fff; font-family: var(--font); font-size: .82rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(249,115,22,.32);
+  transition: transform .22s var(--spring), box-shadow .22s ease;
+}
+.nudge-cta:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 6px 18px rgba(249,115,22,.42); }
+
+.nudge-dismiss {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.1); background: rgba(0,0,0,.05);
+  color: #9ca3af; font-size: .72rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s ease, transform .15s var(--spring);
+}
+.nudge-dismiss:hover { background: rgba(0,0,0,.12); transform: scale(1.12) rotate(90deg); }
+
+@media (max-width: 520px) {
+  .nudge-inner { gap: .55rem; }
+  .nudge-cta   { width: 100%; text-align: center; justify-content: center; }
+}
+
 /* ── Message of the Week ─────────────────────────────────── */
 .motw-section { margin-bottom:2.5rem; }
 
@@ -262,6 +315,57 @@ body {
 }
 .stats-bar.milestone-pop { animation: milestone-pop .5s var(--spring); }
 
+/* ── Search bar ──────────────────────────────────────────── */
+.search-wrap {
+  position: relative;
+  display: flex; align-items: center;
+  max-width: 520px; margin: 0 auto 1.25rem;
+}
+.search-icon {
+  position: absolute; left: .9rem;
+  font-size: 1rem; pointer-events: none; line-height: 1;
+  filter: grayscale(0.3);
+}
+.search-input {
+  width: 100%;
+  font-family: var(--font); font-size: .9rem; font-weight: 400; color: #2d2d3e;
+  background: rgba(255,255,255,0.52);
+  border: 1.5px solid rgba(255,255,255,0.72);
+  border-radius: 99px;
+  padding: .62rem 2.6rem .62rem 2.55rem;
+  backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: var(--glass-inset), 0 2px 12px rgba(0,0,0,0.06);
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.search-input::placeholder { color: #b0b0c0; }
+.search-input:focus {
+  outline: none;
+  border-color: rgba(249,115,22,.45);
+  box-shadow: var(--glass-inset), 0 0 0 3px rgba(249,115,22,.10), 0 2px 12px rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.78);
+}
+/* Remove browser default search cancel button */
+.search-input::-webkit-search-cancel-button { display: none; }
+
+.search-clear {
+  position: absolute; right: .65rem;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,0.08);
+  font-size: .72rem; color: #6b6b80; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s ease, transform .15s var(--spring);
+}
+.search-clear:hover { background: rgba(0,0,0,0.16); transform: scale(1.12); }
+.search-clear.hidden { display: none; }
+
+/* Highlight matched text inside cards */
+mark.search-match {
+  background: rgba(249,115,22,0.20);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
 /* ── Filter bar ──────────────────────────────────────────── */
 .filter-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.75rem; }
 
@@ -319,18 +423,30 @@ body {
 }
 .card:hover::after { opacity: 1; transform: scale(1); }
 
-/* Override for is-popular — the ::after is the hot badge instead */
+/* Override for is-popular — tier badge replaces expand hint */
 .card.is-popular::after {
-  content: '🔥 ฮอตฮิต';
   opacity: 1; transform: none;
-  top: auto; bottom: 12px; right: 12px;
-  font-size: 0.68rem; font-weight: 700; color: #d97706;
-  background: rgba(254,243,199,0.88);
+  top: auto; bottom: 10px; right: 10px;
+  font-size: 0.68rem; font-weight: 700;
   padding: 3px 10px; border-radius: 12px;
-  border: 1px solid rgba(251,191,36,0.5);
-  backdrop-filter: blur(8px);
-  z-index: 2;
+  backdrop-filter: blur(8px); z-index: 2;
   animation: hot-pulse 2s ease-in-out infinite;
+}
+/* Tier-specific badge content and colours */
+.card.tier-bronze::after {
+  content: '🌟 ฮอตฮิต';
+  color: #d97706; background: rgba(254,243,199,0.88);
+  border: 1px solid rgba(251,191,36,0.5);
+}
+.card.tier-silver::after {
+  content: '💎 ซุปเปอร์ฮิต';
+  color: #1e40af; background: rgba(219,234,254,0.88);
+  border: 1px solid rgba(59,130,246,0.45);
+}
+.card.tier-gold::after {
+  content: '👑 ตำนาน!';
+  color: #92400e; background: rgba(255,237,213,0.92);
+  border: 1px solid rgba(249,115,22,0.55);
 }
 
 .card { cursor: zoom-in; }
@@ -404,9 +520,27 @@ body {
 .modal-close:hover { background:rgba(0,0,0,.09); transform:rotate(90deg) scale(1.1); }
 
 /* ── Form elements ───────────────────────────────────────── */
-.field-section { margin-bottom:1.1rem; }
-.field-label   { display:block; font-size:.78rem; font-weight:600; color:#4b5563; margin-bottom:.4rem; letter-spacing:.02em; }
-.required      { color:#f97316; }
+.field-section   { margin-bottom:1.1rem; }
+.field-label     { display:block; font-size:.78rem; font-weight:600; color:#4b5563; margin-bottom:.4rem; letter-spacing:.02em; }
+.required        { color:#f97316; }
+.field-optional  { font-weight:400; color:#9ca3af; }
+
+/* Recipient field */
+.recipient-wrap  { position:relative; display:flex; align-items:center; }
+.recipient-at    { position:absolute; left:.9rem; font-size:.95rem; pointer-events:none; line-height:1; }
+.recipient-input { padding-left:2.45rem !important; }
+
+/* Recipient badge on card */
+.card-recipient {
+  display:inline-flex; align-items:center; gap:.28rem;
+  font-size:.68rem; font-weight:700;
+  color:#fff;
+  background: linear-gradient(135deg,#f97316,#ec4899);
+  padding:.18rem .6rem; border-radius:99px;
+  margin-bottom:.55rem;
+  box-shadow: 0 2px 8px rgba(249,115,22,.25);
+}
+.card-recipient::before { content:'👤'; font-size:.7rem; }
 
 /* Category tabs */
 .cat-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:.45rem; }
@@ -500,6 +634,46 @@ body {
 .skel-pill      { width:54px; height:1.7rem; border-radius:99px; }
 .motw-skeleton  { pointer-events:none; }
 
+/* ── Weekly Digest Card ──────────────────────────────────── */
+.digest-section { margin-bottom: 2.5rem; }
+.digest-section.hidden { display: none; }
+
+.digest-card {
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-top: 1px solid rgba(255,255,255,0.95);
+  border-radius: 22px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--glass-inset), 0 4px 16px rgba(0,0,0,0.07), 0 16px 48px rgba(0,0,0,0.09);
+  animation: modal-in .4s var(--ease-out);
+}
+
+.digest-stats { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: .85rem; }
+.digest-total { display: flex; align-items: baseline; gap: .4rem; }
+.digest-total-num   { font-size: 2.8rem; font-weight: 700; background: linear-gradient(135deg,#f97316,#ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.digest-total-label { font-size: .82rem; font-weight: 500; color: #6b7280; }
+
+.digest-bars { display: flex; flex-direction: column; gap: .45rem; }
+.digest-bar-row   { display: flex; align-items: center; gap: .55rem; }
+.digest-bar-label { font-size: .72rem; font-weight: 600; color: #4b5563; white-space: nowrap; width: 80px; }
+.digest-bar-track { flex: 1; height: 7px; border-radius: 99px; background: rgba(0,0,0,0.07); overflow: hidden; }
+.digest-bar-fill  { height: 100%; border-radius: 99px; transition: width .6s var(--ease-out); }
+.digest-bar-count { font-size: .72rem; font-weight: 700; color: #374151; width: 20px; text-align: right; }
+
+.digest-top {
+  flex: 1; min-width: 200px;
+  padding: 1rem 1.2rem;
+  background: rgba(255,255,255,0.45);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.70);
+  display: flex; flex-direction: column; gap: .35rem;
+}
+.digest-top-label  { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #f97316; }
+.digest-top-msg    { font-size: .85rem; font-weight: 400; color: #2d2d3e; line-height: 1.65; font-style: italic; }
+.digest-top-sender { font-size: .72rem; color: #9ca3af; font-weight: 500; }
+
 /* ── Empty / Error state ─────────────────────────────────── */
 .board-empty { column-count:1!important; }
 .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; text-align:center; width:100%; }
@@ -555,16 +729,15 @@ body {
  * box-shadow bright-spot rotates R→B→L→T at each keyframe; CSS interpolates
  * the offset smoothly → creates a convincing "light running around the border".
  */
-.card.is-popular {
-  outline: 4px solid #fbbf24;
-  outline-offset: 0;
-  animation: float-card 6s ease-in-out infinite, gold-orbit 3s linear infinite !important;
-}
+/* All popular cards share gold orbit + larger message text */
+.card.is-popular { animation: float-card 6s ease-in-out infinite, gold-orbit 3s linear infinite !important; }
 .card.is-popular .card-msg { font-size:1.05rem; }
-.card.is-popular:hover {
-  outline-color: #f59e0b;
-  animation: float-card 6s ease-in-out infinite, gold-orbit 1.1s linear infinite !important;
-}
+.card.is-popular:hover { animation: float-card 6s ease-in-out infinite, gold-orbit 1.1s linear infinite !important; }
+
+/* Tier-specific outline thickness/colour */
+.card.tier-bronze { outline: 3px solid #fbbf24; outline-offset: 0; }
+.card.tier-silver { outline: 4px solid #93c5fd; outline-offset: 0; }
+.card.tier-gold   { outline: 5px solid #f97316; outline-offset: 0; box-shadow: 0 0 28px rgba(249,115,22,.22) !important; }
 
 @keyframes gold-orbit {
   0% {
