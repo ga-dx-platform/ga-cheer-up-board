@@ -128,7 +128,7 @@ function renderCard(msg, idx, query = '') {
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
       </div>
       ${recipient ? `<div class="card-recipient" aria-label="ส่งถึง ${esc(recipient)}">${highlightText(recipient, query)}</div>` : ''}
-      ${msg.image_url ? `<div class="card-image"><img src="${esc(msg.image_url)}" alt="" loading="lazy" /></div>` : ''}
+      ${msg.image_url ? `<div class="card-image"><img src="${esc(msg.image_url)}" alt="" loading="lazy" decoding="async" /></div>` : ''}
       <p class="card-msg">${highlightText(msg.content, query)}</p>
       <div class="card-foot">
         <div class="card-meta">
@@ -540,7 +540,8 @@ async function loadBoard() {
     .select('*')
     .eq('is_visible', true)
     .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(30);
 
   if (error) {
     motwSec.style.display = 'none';
@@ -1194,7 +1195,7 @@ function openFocusMode(cardEl) {
   leftPane.className = 'focus-split-left';
   leftPane.innerHTML = `
     ${msg.image_url
-      ? `<div class="focus-image-wrap"><img class="focus-image" src="${esc(msg.image_url)}" alt="รูปภาพประกอบ" loading="lazy" /></div>`
+      ? `<div class="focus-image-wrap"><img class="focus-image" src="${esc(msg.image_url)}" alt="รูปภาพประกอบ" loading="lazy" decoding="async" /></div>`
       : ''}
     <div>
       <div class="focus-msg-head">

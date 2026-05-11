@@ -663,7 +663,10 @@ mark.search-match {
   transition: translate .28s ease-out, scale .28s ease-out, box-shadow .28s ease;
   overflow:hidden;
   will-change: transform;
+  transform: translateZ(0);
   backface-visibility: hidden;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 320px;
 }
 .card::before { display:none; }
 
