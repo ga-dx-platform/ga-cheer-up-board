@@ -102,17 +102,18 @@ function renderCard(msg, idx, query = '') {
   ].filter(Boolean).join(' ');
 
   const TIER_BADGE = {
-    bronze: { icon: '🌟', label: 'ฮอตฮิต'   },
-    silver: { icon: '💎', label: 'ซุปเปอร์ฮิต' },
-    gold:   { icon: '👑', label: 'ตำนาน!'    },
+    bronze: { icon: '🌟', label: 'ข้อความยอดนิยม' },
+    silver: { icon: '💎', label: 'ซุปเปอร์ฮิต'    },
+    gold:   { icon: '👑', label: 'ตำนาน!'         },
   };
 
-  const newBadge = isNew
+  // New badge only shows on non-popular cards; popular badge takes precedence
+  const newBadge = (isNew && !tier)
     ? `<span class="badge-new" aria-label="ข้อความใหม่">✨ NEW</span>`
     : '';
 
   const popularBadge = tier
-    ? `<span class="sr-only">${TIER_BADGE[tier].label}</span>`
+    ? `<span class="popular-badge tier-${tier}" aria-label="${TIER_BADGE[tier].label}">${TIER_BADGE[tier].icon} ${TIER_BADGE[tier].label}</span>`
     : '';
 
   const preview = esc(msg.content).slice(0, 60);

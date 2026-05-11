@@ -4,11 +4,6 @@
    ============================================================ */
 
 /* ── Animatable custom properties ───────────────────────── */
-@property --gold-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
 @property --shimmer-angle {
   syntax: '<angle>';
   initial-value: 0deg;
@@ -681,32 +676,6 @@ mark.search-match {
 }
 .card:hover::after { opacity: 1; transform: scale(1); }
 
-/* Override for is-popular — tier badge replaces expand hint */
-.card.is-popular::after {
-  opacity: 1; transform: none;
-  top: auto; bottom: 10px; right: 10px;
-  font-size: 0.68rem; font-weight: 700;
-  padding: 3px 10px; border-radius: 12px;
-  backdrop-filter: blur(8px); z-index: 2;
-  animation: hot-pulse 2s ease-in-out infinite;
-}
-/* Tier-specific badge content and colours */
-.card.tier-bronze::after {
-  content: '🌟 ฮอตฮิต';
-  color: #d97706; background: rgba(254,243,199,0.88);
-  border: 1px solid rgba(251,191,36,0.5);
-}
-.card.tier-silver::after {
-  content: '💎 ซุปเปอร์ฮิต';
-  color: #1e40af; background: rgba(219,234,254,0.88);
-  border: 1px solid rgba(59,130,246,0.45);
-}
-.card.tier-gold::after {
-  content: '👑 ตำนาน!';
-  color: #92400e; background: rgba(255,237,213,0.92);
-  border: 1px solid rgba(249,115,22,0.55);
-}
-
 .card { cursor: zoom-in; }
 
 .card:hover {
@@ -987,49 +956,79 @@ mark.search-match {
 /* Freeze float mid-frame on hover — no snap, translate/scale lift takes over */
 .card:hover { animation-play-state: paused !important; }
 
-/* ── Popular card — orbiting gold glow ───────────────────── */
-/*
- * No background override → card looks identical to regular cards.
- * outline  = constant gold ring.
- * box-shadow bright-spot rotates R→B→L→T at each keyframe; CSS interpolates
- * the offset smoothly → creates a convincing "light running around the border".
- */
-/* All popular cards share GPU-composited gold sweep + larger message text */
+/* ── Popular card — static external glow ────────────────── */
 .card.is-popular {
   animation: float-card 6s ease-in-out infinite !important;
-  overflow: visible; /* allow ::before glow to extend outside card bounds */
-  --gold-angle: 0deg;
+  padding-top: 2.2rem; /* room for popular badge at top-right */
 }
-.card.is-popular .card-msg { font-size:1.05rem; }
+.card.is-popular .card-msg { font-size: 1.05rem; }
 .card.is-popular:hover { animation-play-state: paused !important; }
+/* popular badge replaces the card expand affordance hint */
+.card.is-popular::after { display: none; }
 
-/* Orbiting gold arc via @property --gold-angle — only transform/gradient composited, no paint cost */
-.card.is-popular::before {
-  display: block;
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 24px; /* card border-radius (20px) + 4 */
-  background: conic-gradient(
-    from var(--gold-angle),
-    transparent 0deg,
-    rgba(251,191,36,0.85) 20deg,
-    transparent 40deg
-  );
-  z-index: -1;
-  pointer-events: none;
-  animation: gold-angle-spin 3s linear infinite;
+/* Tier glows: ring + near halo + far bloom — all static, no motion */
+.card.tier-bronze {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 4px 6px   rgba(0,0,0,0.04),
+    0 12px 32px rgba(0,0,0,0.09),
+    0 40px 80px rgba(0,0,0,0.07),
+    0 0 0    2px rgba(251,191,36,0.50),
+    0 0 20px 4px rgba(251,191,36,0.22),
+    0 0 44px 8px rgba(251,191,36,0.10) !important;
 }
-.card.is-popular:hover::before { animation-duration: 1.1s; }
-
-@keyframes gold-angle-spin {
-  to { --gold-angle: 360deg; }
+.card.tier-silver {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 4px 6px   rgba(0,0,0,0.04),
+    0 12px 32px rgba(0,0,0,0.09),
+    0 40px 80px rgba(0,0,0,0.07),
+    0 0 0    2.5px rgba(147,197,253,0.65),
+    0 0 24px 6px  rgba(147,197,253,0.28),
+    0 0 52px 12px rgba(147,197,253,0.12) !important;
+}
+.card.tier-gold {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 4px 6px   rgba(0,0,0,0.04),
+    0 12px 32px rgba(0,0,0,0.09),
+    0 40px 80px rgba(0,0,0,0.07),
+    0 0 0    3px  rgba(249,115,22,0.70),
+    0 0 28px 8px  rgba(249,115,22,0.30),
+    0 0 60px 16px rgba(249,115,22,0.14) !important;
 }
 
-/* Tier-specific outline thickness/colour */
-.card.tier-bronze { outline: 3px solid #fbbf24; outline-offset: 0; }
-.card.tier-silver { outline: 4px solid #93c5fd; outline-offset: 0; }
-.card.tier-gold   { outline: 5px solid #f97316; outline-offset: 0; box-shadow: 0 0 28px rgba(249,115,22,.22) !important; }
+/* Keep glow alive on hover (base .card:hover uses !important — must match here) */
+.card.tier-bronze:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 8px 16px   rgba(0,0,0,0.08),
+    0 28px 70px  rgba(0,0,0,0.16),
+    0 72px 130px rgba(0,0,0,0.12),
+    0 0 0    2px  rgba(251,191,36,0.55),
+    0 0 26px 6px  rgba(251,191,36,0.28),
+    0 0 54px 12px rgba(251,191,36,0.14) !important;
+}
+.card.tier-silver:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 8px 16px   rgba(0,0,0,0.08),
+    0 28px 70px  rgba(0,0,0,0.16),
+    0 72px 130px rgba(0,0,0,0.12),
+    0 0 0    2.5px rgba(147,197,253,0.70),
+    0 0 30px 8px  rgba(147,197,253,0.32),
+    0 0 60px 16px rgba(147,197,253,0.16) !important;
+}
+.card.tier-gold:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 8px 16px   rgba(0,0,0,0.08),
+    0 28px 70px  rgba(0,0,0,0.16),
+    0 72px 130px rgba(0,0,0,0.12),
+    0 0 0    3px  rgba(249,115,22,0.75),
+    0 0 36px 10px rgba(249,115,22,0.35),
+    0 0 72px 20px rgba(249,115,22,0.18) !important;
+}
 
 
 /* ── "New" badge ─────────────────────────────────────────── */
@@ -1055,13 +1054,23 @@ mark.search-match {
   50%     { box-shadow:inset 0 1px 0 rgba(255,255,255,.90), 0 0 20px rgba(249,115,22,.38), 0 2px 12px rgba(249,115,22,.22); }
 }
 
+/* ── Popular (trending) glass pill badge ─────────────────── */
+.popular-badge {
+  position: absolute; top: .55rem; right: .7rem; z-index: 2;
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-size: .6rem; font-weight: 700; letter-spacing: .05em;
+  border-radius: 99px; padding: .2rem .62rem;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.90), 0 2px 10px rgba(0,0,0,.06);
+  pointer-events: none; white-space: nowrap;
+}
+.popular-badge.tier-bronze { color:#92400e; background:rgba(253,230,138,.82); border:1px solid rgba(251,191,36,.55); }
+.popular-badge.tier-silver { color:#1e3a8a; background:rgba(219,234,254,.88); border:1px solid rgba(147,197,253,.60); }
+.popular-badge.tier-gold   { color:#7c2d12; background:rgba(255,237,213,.92); border:1px solid rgba(249,115,22,.55); }
+
 /* ── Reduced motion ──────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation:none!important; transition-duration:.01ms!important; }
-}
-@keyframes hot-pulse {
-  0%, 100% { transform: scale(1);    box-shadow: 0 0 0   0 rgba(251,191,36,0.40); }
-  50%      { transform: scale(1.05); box-shadow: 0 0 8px 2px rgba(251,191,36,0.22); }
 }
 
 /* ── Floating reaction particles ─────────────────────────── */
@@ -1118,9 +1127,6 @@ mark.search-match {
 .focus-overlay .card {
   animation: none !important;        /* stop float by default */
 }
-/* Restore gold sweep for tier cards inside the overlay */
-.focus-overlay .card.is-popular::before { animation-duration: 3s; }
-.focus-overlay .card.is-popular:hover::before { animation-duration: 1.1s; }
 .focus-overlay .card {
   transform: none !important;
   translate: 0 0 !important;
