@@ -20,7 +20,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
 
   <!-- Custom design system -->
-  <link rel="stylesheet" href="assets/styles.css?v=6" />
+  <link rel="stylesheet" href="assets/styles.css?v=7" />
 
   <script>
     tailwind.config = {
@@ -99,30 +99,26 @@
       </div>
     </div>
 
-    <!-- ─── Hero Text ─────────────────────────────────────────── -->
+    <!-- ─── Hero + Stats unified block ─────────────────────── -->
     <div class="hero-section">
       <h2 class="hero-title">ส่งต่อพลังบวกให้กัน</h2>
       <p class="hero-subtitle">พื้นที่แชร์ไอเดีย ส่งกำลังใจ และขอบคุณทีม GA</p>
-    </div>
-
-    <!-- ─── Stats bar (compact inline) ──────────────────────── -->
-    <div class="stats-bar" id="stats-bar" role="status" aria-live="polite">
-      <span class="stat-item">💌 <span id="stat-total">—</span> ข้อความ</span>
-      <span class="stat-sep" aria-hidden="true">·</span>
-      <span class="stat-item">💝 <span id="stat-thank">—</span> ขอบคุณ</span>
-      <span class="stat-sep" aria-hidden="true">·</span>
-      <span class="stat-item">💡 <span id="stat-idea">—</span> ไอเดีย</span>
-      <span class="stat-sep" aria-hidden="true">·</span>
-      <span class="stat-item">🌈 <span id="stat-cheer">—</span> ให้กำลังใจ</span>
-      <p class="stat-tagline" id="stat-tagline"></p>
+      <!-- Stats sit directly below subtitle, no gap -->
+      <div class="stats-bar" id="stats-bar" role="status" aria-live="polite">
+        <span class="stat-item">💌 <span id="stat-total">—</span> ข้อความ</span>
+        <span class="stat-sep" aria-hidden="true">·</span>
+        <span class="stat-item">💝 <span id="stat-thank">—</span> ขอบคุณ</span>
+        <span class="stat-sep" aria-hidden="true">·</span>
+        <span class="stat-item">💡 <span id="stat-idea">—</span> ไอเดีย</span>
+        <span class="stat-sep" aria-hidden="true">·</span>
+        <span class="stat-item">🌈 <span id="stat-cheer">—</span> ให้กำลังใจ</span>
+        <p class="stat-tagline" id="stat-tagline"></p>
+      </div>
     </div>
 
     <!-- ─── Message of the Week ─────────────────────────────── -->
+    <!-- section-tag label is now injected INSIDE .motw-card by renderMotw() -->
     <section class="motw-section" id="motw-section" aria-label="ข้อความแห่งสัปดาห์">
-      <div class="section-tag">
-        <span class="tag-star" aria-hidden="true">⭐</span>
-        ข้อความแห่งสัปดาห์
-      </div>
       <div id="motw-container"></div>
     </section>
 
