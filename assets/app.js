@@ -80,10 +80,18 @@ function renderCard(msg, idx) {
     ? `<span class="badge-new" aria-label="ข้อความใหม่">✨ NEW</span>`
     : '';
 
+  const popularBadge = isPopular
+    ? `<span class="sr-only">ข้อความฮอตฮิต</span>`
+    : '';
+
+  const preview = esc(msg.content).slice(0, 60);
+  const cardLabel = `ข้อความจาก ${esc(sender)}: ${preview}${msg.content.length > 60 ? '…' : ''}`;
+
   return `
     <article class="${classes}" style="--r:${r}deg"
-             data-id="${msg.id}" data-category="${msg.category}">
-      ${newBadge}
+             data-id="${msg.id}" data-category="${msg.category}"
+             aria-label="${cardLabel}">
+      ${newBadge}${popularBadge}
       <div class="card-head">
         <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
@@ -144,13 +152,41 @@ function skelMotw() {
     </div>`;
 }
 
-function renderEmpty() {
+const EMPTY_STATES = {
+  all: {
+    emoji: '💌',
+    title: 'ยังไม่มีข้อความเลย!',
+    sub:   'เป็นคนแรกที่แชร์ความรู้สึกดีๆ ให้ทีม',
+    cta:   '✨ เพิ่มข้อความแรก',
+  },
+  thank_you: {
+    emoji: '🍑',
+    title: 'ยังไม่มีคำขอบคุณเลยนะ',
+    sub:   'ลองส่งคำขอบคุณให้เพื่อนร่วมทีมที่ช่วยคุณเมื่อเร็วๆ นี้สิ!',
+    cta:   '💝 เขียนขอบคุณคนแรก',
+  },
+  idea: {
+    emoji: '💡',
+    title: 'ยังไม่มีไอเดียเลยจ้า',
+    sub:   'มีไอเดียดีๆ อยู่ในหัวไหม? แชร์ให้ทีมรู้ด้วยกันเลย!',
+    cta:   '💡 แชร์ไอเดียแรก',
+  },
+  cheer_up: {
+    emoji: '🌿',
+    title: 'ยังไม่มีข้อความให้กำลังใจ',
+    sub:   'ทีมต้องการพลังงานบวกจากคุณ ส่งกำลังใจให้กันหน่อยนะ!',
+    cta:   '🌈 ส่งกำลังใจแรก',
+  },
+};
+
+function renderEmpty(filter = 'all') {
+  const s = EMPTY_STATES[filter] ?? EMPTY_STATES.all;
   return `
     <div class="empty-state" role="status" aria-live="polite">
-      <div class="empty-emoji">💌</div>
-      <h3 class="empty-title">ยังไม่มีข้อความเลย!</h3>
-      <p class="empty-sub">เป็นคนแรกที่แชร์ความรู้สึกดีๆ ให้ทีม</p>
-      <button class="empty-cta" onclick="document.getElementById('openModal').click()">✨ เพิ่มข้อความแรก</button>
+      <div class="empty-emoji">${s.emoji}</div>
+      <h3 class="empty-title">${s.title}</h3>
+      <p class="empty-sub">${s.sub}</p>
+      <button class="empty-cta" onclick="document.getElementById('openModal').click()">${s.cta}</button>
     </div>`;
 }
 
@@ -208,41 +244,82 @@ function spawnParticles(btn, type) {
   }
 }
 
+/* ── Viewport-gated card animation ───────────────────────── */
+const _cardObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    entry.target.classList.toggle('in-view', entry.isIntersecting);
+  });
+}, { rootMargin: '0px 0px -40px 0px', threshold: 0.1 });
+
+function observeCards() {
+  document.querySelectorAll('#board .card').forEach(card => {
+    if (!card.dataset.observed) {
+      card.dataset.observed = '1';
+      _cardObserver.observe(card);
+    }
+  });
+}
+
 function wireReactions() {
   document.querySelectorAll('.rxn-btn').forEach(btn => {
     if (btn.dataset.bound) return;
     btn.dataset.bound = '1';
     btn.addEventListener('click', async () => {
-      const isReacted = btn.classList.contains('reacted');
-      const countEl   = btn.querySelector('.rxn-count');
-      const current   = parseInt(countEl?.textContent || '0', 10);
+      // Reactions are one-way: positive energy only goes up, never removed.
+      if (btn.classList.contains('reacted')) {
+        btn.classList.add('popped');
+        btn.addEventListener('animationend', () => btn.classList.remove('popped'), { once: true });
+        return;
+      }
 
-      const key = `${btn.dataset.id}:${btn.dataset.type}`;
+      const countEl = btn.querySelector('.rxn-count');
+      const current = parseInt(countEl?.textContent || '0', 10);
+      const key     = `${btn.dataset.id}:${btn.dataset.type}`;
 
       btn.classList.add('popped');
       btn.addEventListener('animationend', () => btn.classList.remove('popped'), { once: true });
-      btn.classList.toggle('reacted');
+      btn.classList.add('reacted');
+      spawnParticles(btn, btn.dataset.type);
+      reactedSet.add(key);
+      if (countEl) countEl.textContent = current + 1;
 
-      if (!isReacted) {
-        spawnParticles(btn, btn.dataset.type);
-        reactedSet.add(key);
-        if (countEl) countEl.textContent = current + 1;
-        const { error } = await sb.rpc('increment_reaction', {
-          message_id:    btn.dataset.id,
-          reaction_type: btn.dataset.type,
-        });
-        if (error) {
-          console.warn('[Reaction]', error);
-          if (countEl) countEl.textContent = current;
-          btn.classList.remove('reacted');
-          reactedSet.delete(key);
-        }
-      } else {
+      const { error } = await sb.rpc('increment_reaction', {
+        message_id:    btn.dataset.id,
+        reaction_type: btn.dataset.type,
+      });
+      if (error) {
+        console.warn('[Reaction]', error);
+        if (countEl) countEl.textContent = current;
+        btn.classList.remove('reacted');
         reactedSet.delete(key);
-        if (countEl) countEl.textContent = Math.max(0, current - 1);
       }
     });
   });
+}
+
+const MILESTONES   = [10, 25, 50, 100, 200, 500];
+const MILESTONE_KEY = 'cheer-milestone-seen';
+
+function getMilestoneTagline(total) {
+  if (total === 0) return null;
+  if (total < 10)  return `ทีมเราเริ่มส่งกำลังใจกันแล้ว 🌱`;
+  if (total < 25)  return `ส่งกำลังใจกันไปแล้ว ${total} ครั้ง ✨`;
+  if (total < 50)  return `พลังงานบวกจากทีม ${total} ข้อความ 💪`;
+  if (total < 100) return `ว้าว! ${total} ข้อความกำลังใจจากทีม 🎉`;
+  if (total < 200) return `${total} ข้อความ — ทีมนี้แน่มากเลย! 🏆`;
+  return `${total} ข้อความ — เราสุดยอดมากๆ! 🦄✨`;
+}
+
+function checkMilestone(total) {
+  const seen = parseInt(localStorage.getItem(MILESTONE_KEY) || '0', 10);
+  const hit  = MILESTONES.filter(m => m <= total && m > seen).pop();
+  if (!hit) return;
+  localStorage.setItem(MILESTONE_KEY, String(hit));
+
+  const bar = document.getElementById('stats-bar');
+  if (!bar) return;
+  bar.classList.add('milestone-pop');
+  bar.addEventListener('animationend', () => bar.classList.remove('milestone-pop'), { once: true });
 }
 
 function updateStats() {
@@ -256,6 +333,12 @@ function updateStats() {
   set('stat-thank', thank);
   set('stat-idea',  idea);
   set('stat-cheer', cheer);
+
+  const tagline = getMilestoneTagline(total);
+  const tagEl   = document.getElementById('stat-tagline');
+  if (tagEl) tagEl.textContent = tagline ?? '';
+
+  checkMilestone(total);
 }
 
 function updateCardReactions(id, rxn) {
@@ -278,7 +361,7 @@ function renderGrid(messages) {
   updateStats();
 
   if (filtered.length === 0) {
-    board.innerHTML = renderEmpty();
+    board.innerHTML = renderEmpty(activeFilter);
     board.classList.add('board-empty');
     return;
   }
@@ -303,6 +386,7 @@ function renderGrid(messages) {
       requestAnimationFrame(renderBatch);
     } else {
       wireReactions();
+      observeCards();
     }
   }
 
@@ -347,17 +431,45 @@ async function loadBoard() {
   allMessages = regular;
   renderGrid(allMessages);
   wireReactions();
+  observeCards();
 }
 
 /* ── Filter pills ────────────────────────────────────────── */
-document.querySelectorAll('.filter-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    activeFilter = pill.dataset.filter;
-    renderGrid(allMessages);
+function setActiveFilter(filter) {
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    const isActive = p.dataset.filter === filter;
+    p.classList.toggle('active', isActive);
+    p.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
+  activeFilter = filter;
+  renderGrid(allMessages);
+}
+
+document.querySelectorAll('.filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => setActiveFilter(pill.dataset.filter));
 });
+
+/* ══════════════════════════════════════════════════════════
+   FOCUS TRAP UTILITY
+   ══════════════════════════════════════════════════════════ */
+const FOCUSABLE = 'a[href],button:not([disabled]),input,textarea,select,[tabindex]:not([tabindex="-1"])';
+
+function trapFocus(containerEl) {
+  const focusable = () => [...containerEl.querySelectorAll(FOCUSABLE)].filter(el => !el.closest('[aria-hidden="true"]'));
+  function handler(e) {
+    if (e.key !== 'Tab') return;
+    const els   = focusable();
+    const first = els[0];
+    const last  = els[els.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+    } else {
+      if (document.activeElement === last)  { e.preventDefault(); first?.focus(); }
+    }
+  }
+  containerEl.addEventListener('keydown', handler);
+  return () => containerEl.removeEventListener('keydown', handler);
+}
 
 /* ══════════════════════════════════════════════════════════
    MODAL
@@ -366,12 +478,23 @@ const overlay  = document.getElementById('modal');
 const openBtn  = document.getElementById('openModal');
 const closeBtn = document.getElementById('closeModal');
 
+let _removeTrap = null;
+let _lastFocused = null;
+
 function openModal() {
+  _lastFocused = document.activeElement;
   overlay.classList.remove('hidden');
   resetForm();
-  setTimeout(() => document.getElementById('f-content')?.focus(), 80);
+  setTimeout(() => {
+    document.getElementById('f-content')?.focus();
+    _removeTrap = trapFocus(overlay);
+  }, 80);
 }
-function closeModal() { overlay.classList.add('hidden'); }
+function closeModal() {
+  overlay.classList.add('hidden');
+  if (_removeTrap) { _removeTrap(); _removeTrap = null; }
+  _lastFocused?.focus();
+}
 
 openBtn?.addEventListener('click', openModal);
 closeBtn?.addEventListener('click', closeModal);
@@ -540,6 +663,49 @@ function fireConfetti(category) {
   })();
 }
 
+/* ── Submit success interstitial ─────────────────────────── */
+function showSubmitSuccess(msg) {
+  const box = document.querySelector('.modal-box');
+  if (!box) { closeModal(); resetForm(); return; }
+
+  const cat    = CAT[msg.category] ?? CAT.cheer_up;
+  const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
+    ? 'ไม่ระบุชื่อ' : msg.sender_name;
+
+  // Inject a success panel that sits on top of the form content
+  const panel = document.createElement('div');
+  panel.className = 'success-panel';
+  panel.setAttribute('role', 'status');
+  panel.setAttribute('aria-live', 'assertive');
+  panel.innerHTML = `
+    <div class="success-icon" aria-hidden="true">✅</div>
+    <h2 class="success-title">ส่งสำเร็จแล้ว!</h2>
+    <p class="success-sub">การ์ดของคุณอยู่บนกระดานแล้วนะ 🎉</p>
+    <article class="card success-preview-card" style="--r:0deg" data-category="${msg.category}">
+      <div class="card-head">
+        <span class="card-avatar" aria-hidden="true">${esc(msg.avatar_emoji ?? '🌟')}</span>
+        <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
+      </div>
+      <p class="card-msg">${esc(msg.content)}</p>
+      <div class="card-foot">
+        <div class="card-meta">
+          <span class="card-sender">— ${esc(sender)}</span>
+          <span class="card-time">เพิ่งโพสต์</span>
+        </div>
+      </div>
+    </article>`;
+
+  box.appendChild(panel);
+  // Trigger entrance animation on next frame
+  requestAnimationFrame(() => panel.classList.add('success-panel--visible'));
+
+  setTimeout(() => {
+    closeModal();
+    panel.remove();
+    resetForm();
+  }, 2500);
+}
+
 /* ── Submit handler ──────────────────────────────────────── */
 document.getElementById('submit-form')?.addEventListener('submit', async e => {
   e.preventDefault();
@@ -588,15 +754,11 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
 
   // Prepend new card + reset filter to show it
   allMessages.unshift(data);
-  activeFilter = 'all';
-  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-  document.querySelector('.filter-pill[data-filter="all"]')?.classList.add('active');
-  renderGrid(allMessages);
+  setActiveFilter('all');
   wireReactions();
 
   fireConfetti(selectedCategory);
-  closeModal();
-  resetForm();
+  showSubmitSuccess(data);
 });
 
 /* ══════════════════════════════════════════════════════════
@@ -658,37 +820,56 @@ function subscribeRealtime() {
    ══════════════════════════════════════════════════════════ */
 const focusOverlay = document.getElementById('focus-overlay');
 
+let _focusLastEl = null;
+
 function openFocusMode(cardEl) {
   if (!focusOverlay) return;
 
-  // Clear any previous clone before inserting the new one
+  _focusLastEl = document.activeElement;
   focusOverlay.innerHTML = '';
 
   const clone = cardEl.cloneNode(true);
-  // Strip play-state override set by card:hover rule so CSS can fully control it
   clone.style.animationPlayState = '';
+  // Remove expand ::after hint — not needed inside overlay
+  clone.style.cursor = 'default';
+  // Re-bind data attributes on all reaction buttons so wireReactions can use them
+  clone.querySelectorAll('[data-bound]').forEach(el => delete el.dataset.bound);
 
+  // Close button
+  const closeBtn = document.createElement('button');
+  closeBtn.className   = 'focus-close-btn';
+  closeBtn.textContent = '✕';
+  closeBtn.setAttribute('aria-label', 'ปิด');
+  closeBtn.addEventListener('click', closeFocusMode);
+
+  focusOverlay.appendChild(closeBtn);
   focusOverlay.appendChild(clone);
   focusOverlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // Wire reactions on the cloned card
+  wireReactions();
+
+  // Focus the close button for keyboard users
+  setTimeout(() => closeBtn.focus(), 80);
 }
 
 function closeFocusMode() {
   if (!focusOverlay || focusOverlay.classList.contains('hidden')) return;
   focusOverlay.classList.add('hidden');
-  // Wait for the CSS fade-out transition before wiping the DOM
   focusOverlay.addEventListener('transitionend', () => {
     focusOverlay.innerHTML = '';
     document.body.style.overflow = '';
   }, { once: true });
+  _focusLastEl?.focus();
 }
 
-// Backdrop click — close only when clicking the overlay itself, not the card
+// Backdrop click — close only when clicking outside the card and close button
 focusOverlay?.addEventListener('click', e => {
-  if (!e.target.closest('.card')) closeFocusMode();
+  if (!e.target.closest('.card') && !e.target.closest('.focus-close-btn')) closeFocusMode();
 });
 
-// Escape key — close focus mode (existing modal Escape handler stays untouched)
+// Escape key — close focus mode
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeFocusMode();
 });

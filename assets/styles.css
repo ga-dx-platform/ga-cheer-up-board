@@ -13,6 +13,13 @@
 /* ── Reset ───────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Visually hidden (screen-reader only) ────────────────── */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
 /* ── Touch & interaction baseline ───────────────────────── */
 button, a, label { touch-action: manipulation; }
 
@@ -238,6 +245,23 @@ body {
 .stat-item span { font-weight:700; color:#1f2937; }
 .stat-sep  { color:#9ca3af; font-size:.78rem; user-select:none; }
 
+.stat-tagline {
+  width: 100%; text-align: center;
+  font-size: .75rem; font-weight: 500;
+  color: #f97316;
+  opacity: 0; max-height: 0; overflow: hidden;
+  transition: opacity .4s ease, max-height .4s ease;
+  white-space: nowrap;
+}
+.stat-tagline:not(:empty) { opacity: 1; max-height: 2rem; }
+
+@keyframes milestone-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.stats-bar.milestone-pop { animation: milestone-pop .5s var(--spring); }
+
 /* ── Filter bar ──────────────────────────────────────────── */
 .filter-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.75rem; }
 
@@ -283,6 +307,34 @@ body {
   backface-visibility: hidden;
 }
 .card::before { display:none; }
+
+/* Expand affordance — appears top-right on hover */
+.card::after {
+  content: '⤢';
+  position: absolute; top: .55rem; right: .65rem;
+  font-size: .72rem; color: rgba(107,107,128,0.55);
+  opacity: 0; transform: scale(0.7);
+  transition: opacity .2s ease, transform .2s var(--spring);
+  pointer-events: none; line-height: 1;
+}
+.card:hover::after { opacity: 1; transform: scale(1); }
+
+/* Override for is-popular — the ::after is the hot badge instead */
+.card.is-popular::after {
+  content: '🔥 ฮอตฮิต';
+  opacity: 1; transform: none;
+  top: auto; bottom: 12px; right: 12px;
+  font-size: 0.68rem; font-weight: 700; color: #d97706;
+  background: rgba(254,243,199,0.88);
+  padding: 3px 10px; border-radius: 12px;
+  border: 1px solid rgba(251,191,36,0.5);
+  backdrop-filter: blur(8px);
+  z-index: 2;
+  animation: hot-pulse 2s ease-in-out infinite;
+}
+
+.card { cursor: zoom-in; }
+
 .card:hover {
   translate: 0 -10px;
   scale: 1.018;
@@ -330,6 +382,7 @@ body {
 @keyframes overlay-in { from{opacity:0} to{opacity:1} }
 
 .modal-box {
+  position: relative;
   background: rgba(255,255,255,0.78);
   backdrop-filter:blur(56px) saturate(220%) brightness(1.08); -webkit-backdrop-filter:blur(56px) saturate(220%) brightness(1.08);
   border:1px solid rgba(255,255,255,0.90); border-radius:28px;
@@ -394,6 +447,27 @@ body {
 .form-error { font-size:.82rem; color:#ef4444; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.22); border-radius:10px; padding:.5rem .75rem; margin-bottom:.875rem; line-height:1.5; }
 .form-error.hidden { display:none; }
 
+/* ── Submit success panel ────────────────────────────────── */
+.success-panel {
+  position: absolute; inset: 0;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.6rem; padding: 2rem 1.5rem;
+  z-index: 10;
+  opacity: 0; transform: scale(0.94);
+  transition: opacity .32s var(--ease-out), transform .32s var(--ease-out);
+  pointer-events: none;
+}
+.success-panel--visible { opacity: 1; transform: scale(1); pointer-events: auto; }
+.success-icon  { font-size: 3.2rem; animation: success-pop .45s var(--spring) forwards; }
+@keyframes success-pop { 0%{transform:scale(0) rotate(-20deg)} 70%{transform:scale(1.2) rotate(5deg)} 100%{transform:scale(1) rotate(0deg)} }
+.success-title { font-size: 1.35rem; font-weight: 700; background: linear-gradient(135deg,#f97316,#ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.success-sub   { font-size: .88rem; color: #6b7280; margin-bottom: .75rem; }
+.success-preview-card { animation: none !important; transform: none !important; translate: 0 0 !important; scale: 1 !important; cursor: default; width: 100%; will-change: auto; }
+
 /* Submit button */
 .btn-submit { width:100%; padding:.78rem; font-family:var(--font); font-size:1rem; font-weight:600; color:#fff; background:linear-gradient(135deg,#f97316 0%,#ec4899 100%); border:none; border-radius:14px; cursor:pointer; box-shadow:0 4px 20px rgba(249,115,22,.38); transition:transform .25s var(--spring),box-shadow .25s ease,opacity .2s ease; display:flex;align-items:center;justify-content:center;gap:.5rem; }
 .btn-submit:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 28px rgba(249,115,22,.46); }
@@ -455,13 +529,15 @@ body {
 }
 
 /* ── Card organic float ──────────────────────────────────── */
+/* Reduced amplitude: -4px feels premium; -7px across many cards felt restless */
 @keyframes float-card {
   0%,100% { transform:translateY(0px)   rotate(var(--r,0deg)); }
-  50%     { transform:translateY(-7px)  rotate(var(--r,0deg)); }
+  50%     { transform:translateY(-4px)  rotate(var(--r,0deg)); }
 }
 
-/* Base float — 6 s, starts immediately (negative delay = mid-cycle on load) */
-.card { animation:float-card 6s ease-in-out infinite; }
+/* Cards are paused by default; JS (IntersectionObserver) adds .in-view to run animation */
+.card { animation:float-card 6s ease-in-out infinite; animation-play-state: paused; }
+.card.in-view { animation-play-state: running; }
 
 /* Stagger siblings so no two cards bob in perfect sync */
 .card:nth-child(2n) { animation-duration:7.5s; animation-delay:-1.0s; }
@@ -565,27 +641,6 @@ body {
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation:none!important; transition-duration:.01ms!important; }
 }
-/* ── "Hot" badge ─────────────────────────────────────────── */
-.card.is-popular::after {
-  content: '🔥 ฮอตฮิต';
-  display: inline-flex;
-  align-items: center;
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #d97706;
-  background: rgba(254, 243, 199, 0.88);
-  padding: 3px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(251, 191, 36, 0.5);
-  backdrop-filter: blur(8px);
-  z-index: 2;
-  pointer-events: none;
-  animation: hot-pulse 2s ease-in-out infinite;
-}
-
 @keyframes hot-pulse {
   0%, 100% { transform: scale(1);    box-shadow: 0 0 0   0 rgba(251,191,36,0.40); }
   50%      { transform: scale(1.05); box-shadow: 0 0 8px 2px rgba(251,191,36,0.22); }
@@ -654,15 +709,33 @@ body {
     0 40px 80px rgba(0,0,0,0.07) !important;
 }
 
-/* Reactions are visible but non-interactive — display-only */
+/* Reactions are fully interactive in focus mode */
 .focus-overlay .reactions {
-  pointer-events: none;
-  opacity: 0.72;
+  pointer-events: auto;
+  opacity: 1;
 }
+
+/* No expand hint inside the overlay */
+.focus-overlay .card::after { display: none !important; }
+
+/* Close button */
+.focus-close-btn {
+  position: absolute; top: 1.25rem; right: 1.25rem;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  color: #fff; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s ease, transform .2s var(--spring);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.focus-close-btn:hover { background: rgba(255,255,255,0.52); transform: scale(1.12) rotate(90deg); }
 
 @media (max-width: 520px) {
   .focus-overlay { padding: 1.25rem; align-items: flex-end; }
   .focus-overlay .card { transform: scale(1) !important; max-width: 100%; }
+  .focus-close-btn { top: .75rem; right: .75rem; }
 }
 
 /* ── Live card preview (inside modal) ────────────────────── */
