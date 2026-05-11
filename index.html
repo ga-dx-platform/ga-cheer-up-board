@@ -20,7 +20,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
 
   <!-- Custom design system -->
-  <link rel="stylesheet" href="assets/styles.css?v=5" />
+  <link rel="stylesheet" href="assets/styles.css?v=6" />
 
   <script>
     tailwind.config = {
@@ -99,7 +99,13 @@
       </div>
     </div>
 
-    <!-- ─── Stats bar ─────────────────────────────────────────── -->
+    <!-- ─── Hero Text ─────────────────────────────────────────── -->
+    <div class="hero-section">
+      <h2 class="hero-title">ส่งต่อพลังบวกให้กัน</h2>
+      <p class="hero-subtitle">พื้นที่แชร์ไอเดีย ส่งกำลังใจ และขอบคุณทีม GA</p>
+    </div>
+
+    <!-- ─── Stats bar (compact inline) ──────────────────────── -->
     <div class="stats-bar" id="stats-bar" role="status" aria-live="polite">
       <span class="stat-item">💌 <span id="stat-total">—</span> ข้อความ</span>
       <span class="stat-sep" aria-hidden="true">·</span>
@@ -117,43 +123,57 @@
         <span class="tag-star" aria-hidden="true">⭐</span>
         ข้อความแห่งสัปดาห์
       </div>
-      <!-- JS renders pinned card here, or hides the section -->
       <div id="motw-container"></div>
     </section>
 
-    <!-- ─── Weekly Digest ──────────────────────────────────── -->
+    <!-- ─── Weekly Digest (Collapsible Accordion) ────────────── -->
     <section class="digest-section hidden" id="digest-section" aria-label="สรุปประจำสัปดาห์">
-      <div class="section-tag">
-        <span class="tag-star" aria-hidden="true">📊</span>
-        สรุปสัปดาห์ที่ผ่านมา
+      <button class="digest-toggle" id="digest-toggle"
+              aria-expanded="false" aria-controls="digest-body">
+        <span class="digest-toggle-left">
+          <svg class="digest-toggle-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="2" y="4" width="4" height="12" rx="1" fill="currentColor" opacity=".7"/>
+            <rect x="8" y="7" width="4" height="9" rx="1" fill="currentColor" opacity=".85"/>
+            <rect x="14" y="2" width="4" height="14" rx="1" fill="currentColor"/>
+          </svg>
+          <span>ดูสรุปสัปดาห์ที่ผ่านมา</span>
+          <span class="digest-toggle-sub">Weekly Summary</span>
+        </span>
+        <svg class="digest-chevron" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M5 7.5 L10 12.5 L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="digest-body" id="digest-body" role="region" aria-label="รายละเอียดสรุปสัปดาห์">
+        <div id="digest-container"></div>
       </div>
-      <div id="digest-container"></div>
     </section>
 
-    <!-- ─── Search bar ──────────────────────────────────────── -->
-    <div class="search-wrap" role="search" aria-label="ค้นหาข้อความ">
-      <span class="search-icon" aria-hidden="true">🔍</span>
-      <input
-        type="search"
-        id="search-input"
-        class="search-input"
-        placeholder="ค้นหาข้อความ หรือชื่อผู้ส่ง..."
-        autocomplete="off"
-        aria-label="ค้นหาข้อความหรือชื่อผู้ส่ง"
-      />
-      <button class="search-clear hidden" id="search-clear" aria-label="ล้างการค้นหา">✕</button>
+    <!-- ─── Controls Bar: Search + Filters ───────────────────── -->
+    <div class="controls-bar">
+      <!-- Search on left -->
+      <div class="search-wrap" role="search" aria-label="ค้นหาข้อความ">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          id="search-input"
+          class="search-input"
+          placeholder="ค้นหาข้อความ หรือชื่อผู้ส่ง..."
+          autocomplete="off"
+          aria-label="ค้นหาข้อความหรือชื่อผู้ส่ง"
+        />
+        <button class="search-clear hidden" id="search-clear" aria-label="ล้างการค้นหา">✕</button>
+      </div>
+      <!-- Filter pills on right -->
+      <nav class="filter-bar" aria-label="กรองตามหมวดหมู่">
+        <button class="filter-pill active" data-filter="all" aria-pressed="true">ทั้งหมด</button>
+        <button class="filter-pill" data-filter="thank_you" aria-pressed="false">🍑 ขอบคุณ</button>
+        <button class="filter-pill" data-filter="idea" aria-pressed="false">💙 ไอเดีย</button>
+        <button class="filter-pill" data-filter="cheer_up" aria-pressed="false">🌿 เชียร์อัพ</button>
+      </nav>
     </div>
 
-    <!-- ─── Filter pills ─────────────────────────────────────── -->
-    <nav class="filter-bar" aria-label="กรองตามหมวดหมู่">
-      <button class="filter-pill active" data-filter="all" aria-pressed="true">ทั้งหมด</button>
-      <button class="filter-pill" data-filter="thank_you" aria-pressed="false">🍑 ขอบคุณ</button>
-      <button class="filter-pill" data-filter="idea" aria-pressed="false">💙 ไอเดีย</button>
-      <button class="filter-pill" data-filter="cheer_up" aria-pressed="false">🌿 เชียร์อัพ</button>
-    </nav>
-
-    <!-- ─── Masonry board — JS renders cards here ───────────── -->
-    <section class="masonry" id="board" aria-label="กระดาน"></section>
+    <!-- ─── Card Grid — JS renders cards here ────────────────── -->
+    <section class="card-grid" id="board" aria-label="กระดาน"></section>
 
   </main>
 
