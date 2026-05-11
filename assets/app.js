@@ -142,13 +142,15 @@ function renderCard(msg, idx, query = '') {
 }
 
 function renderMotw(msg) {
-  const cat    = CAT[msg.category] ?? CAT.cheer_up;
-  const avatar = msg.avatar_emoji  ?? '🌟';
-  const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
+  const cat       = CAT[msg.category] ?? CAT.cheer_up;
+  const avatar    = msg.avatar_emoji  ?? '🌟';
+  const sender    = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
     ? 'ไม่ระบุชื่อ'
     : msg.sender_name;
+  const recipient = msg.recipient_name?.trim() || '';
   return `
-    <div class="motw-card" role="article" data-id="${msg.id}">
+    <div class="motw-card" role="article" tabindex="0"
+         data-id="${msg.id}" aria-label="ข้อความแห่งสัปดาห์ — คลิกเพื่ออ่านและแสดงความคิดเห็น">
       <div class="motw-card-label">
         <span class="tag-star" aria-hidden="true">⭐</span>
         ข้อความแห่งสัปดาห์
@@ -156,9 +158,14 @@ function renderMotw(msg) {
       <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
       <div class="motw-body">
         <span class="motw-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
+        ${recipient ? `<div class="motw-recipient" aria-label="ส่งถึง ${esc(recipient)}">${esc(recipient)}</div>` : ''}
+        ${msg.image_url ? `<div class="motw-image-wrap"><img class="motw-image" src="${esc(msg.image_url)}" alt="รูปภาพประกอบ" loading="lazy" decoding="async" /></div>` : ''}
         <p class="motw-message">"${esc(msg.content)}"</p>
         <div class="motw-footer">
-          <span class="motw-sender">— ${esc(sender)}</span>
+          <div class="motw-meta">
+            <span class="motw-sender">— ${esc(sender)}</span>
+            <span class="motw-time">${thaiTime(msg.created_at)}</span>
+          </div>
           ${rxnHtml(msg.id, msg.reactions)}
         </div>
       </div>
@@ -563,6 +570,15 @@ async function loadBoard() {
   if (pinned) {
     motwSec.style.display = '';
     motwEl.innerHTML = renderMotw(pinned);
+    const motwCard = motwEl.querySelector('.motw-card');
+    motwCard?.addEventListener('click', e => {
+      if (!e.target.closest('.rxn-btn') && !e.target.closest('.reactions')) {
+        openFocusMode(motwCard);
+      }
+    });
+    motwCard?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFocusMode(motwCard); }
+    });
   } else {
     motwSec.style.display = 'none';
   }
