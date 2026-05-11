@@ -155,20 +155,26 @@ function renderMotw(msg) {
         <span class="tag-star" aria-hidden="true">⭐</span>
         ข้อความแห่งสัปดาห์
       </div>
-      <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
-      <div class="motw-body">
-        <span class="motw-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
-        ${recipient ? `<div class="motw-recipient" aria-label="ส่งถึง ${esc(recipient)}">${esc(recipient)}</div>` : ''}
-        ${msg.image_url ? `<div class="motw-image-wrap"><img class="motw-image" src="${esc(msg.image_url)}" alt="รูปภาพประกอบ" loading="lazy" decoding="async" /></div>` : ''}
-        <p class="motw-message">"${esc(msg.content)}"</p>
-        <div class="motw-footer">
-          <div class="motw-meta">
-            <span class="motw-sender">— ${esc(sender)}</span>
-            <span class="motw-time">${thaiTime(msg.created_at)}</span>
+      <div class="motw-left">
+        <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
+        <div class="motw-body">
+          <span class="motw-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
+          ${recipient ? `<div class="motw-recipient" aria-label="ส่งถึง ${esc(recipient)}">${esc(recipient)}</div>` : ''}
+          <p class="motw-message">"${esc(msg.content)}"</p>
+          <div class="motw-footer">
+            <div class="motw-meta">
+              <span class="motw-sender">— ${esc(sender)}</span>
+              <span class="motw-time">${thaiTime(msg.created_at)}</span>
+            </div>
+            ${rxnHtml(msg.id, msg.reactions)}
           </div>
-          ${rxnHtml(msg.id, msg.reactions)}
         </div>
       </div>
+      ${msg.image_url ? `
+      <div class="motw-image-col">
+        <img class="motw-image" src="${esc(msg.image_url)}" alt="รูปภาพประกอบ"
+             loading="lazy" decoding="async" />
+      </div>` : ''}
     </div>`;
 }
 
