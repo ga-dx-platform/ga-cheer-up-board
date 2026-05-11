@@ -1257,6 +1257,13 @@ function openFocusMode(cardEl) {
       </div>
     </div>
     <div class="focus-comment-input-wrap">
+      <div class="quick-emoji-bar" role="group" aria-label="ใส่อีโมจิ">
+        <button type="button" class="emoji-quick-btn" data-emoji="👍" aria-label="👍">👍</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="❤️" aria-label="❤️">❤️</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🎉" aria-label="🎉">🎉</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="✨" aria-label="✨">✨</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🙌" aria-label="🙌">🙌</button>
+      </div>
       <input class="focus-comment-name" type="text" placeholder="ชื่อของคุณ (ไม่บังคับ)" maxlength="60" />
       <div class="focus-comment-row">
         <textarea class="focus-comment-textarea" placeholder="เขียนความคิดเห็น..." rows="2" maxlength="300"></textarea>
@@ -1305,6 +1312,13 @@ function openFocusMode(cardEl) {
   submitBtn.addEventListener('click', handleCommentSubmit);
   textarea.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCommentSubmit(); }
+  });
+
+  rightPane.querySelectorAll('.emoji-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      textarea.value += btn.dataset.emoji;
+      textarea.focus();
+    });
   });
 
   setTimeout(() => textarea.focus(), 80);

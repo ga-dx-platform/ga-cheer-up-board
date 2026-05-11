@@ -1485,6 +1485,33 @@ mark.search-match {
   flex-shrink: 0;
   display: flex; flex-direction: column; gap: .4rem;
 }
+
+/* ── Quick Emoji Bar ─────────────────────────────────── */
+.quick-emoji-bar {
+  display: flex; gap: 0.5rem;
+  padding: 0.1rem 0 0.15rem;
+}
+.emoji-quick-btn {
+  font-size: 1.15rem; line-height: 1;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.75);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.92);
+  transition: transform .18s var(--spring), box-shadow .18s ease, background .14s ease;
+  will-change: transform;
+}
+.emoji-quick-btn:hover {
+  transform: scale(1.25);
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 4px 18px rgba(249,115,22,0.20), inset 0 1px 0 rgba(255,255,255,0.96);
+}
+.emoji-quick-btn:active { transform: scale(0.92); }
+/* ─────────────────────────────────────────────────────── */
+
 .focus-comment-name {
   width: 100%;
   font-family: var(--font); font-size: var(--fs-xs);
