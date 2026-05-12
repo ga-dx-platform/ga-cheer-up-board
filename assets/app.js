@@ -76,6 +76,26 @@ function rxnHtml(id, rxn) {
     </div>`;
 }
 
+function getCommentCount(msg) {
+  return Number(msg?.comments?.[0]?.count ?? msg?.comment_count ?? 0);
+}
+
+function setCommentCount(msg, count) {
+  if (!msg) return;
+  msg.comments = [{ count: Math.max(0, Number(count) || 0) }];
+}
+
+function commentCounterHtml(msg) {
+  const count = getCommentCount(msg);
+  return `
+    <span class="comment-counter" data-comment-id="${msg.id}" aria-label="${count} comments">
+      <svg class="comment-counter-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.7-.8L3 20.5l1.4-4.7A8.2 8.2 0 0 1 3 11.5C3 6.9 7 3.1 12 3.1s9 3.8 9 8.4Z" />
+      </svg>
+      <span class="comment-count">${count}</span>
+    </span>`;
+}
+
 /* Exported for Phase 3 optimistic prepend */
 function renderCard(msg, idx, query = '') {
   const cat       = CAT[msg.category] ?? CAT.cheer_up;
@@ -136,7 +156,10 @@ function renderCard(msg, idx, query = '') {
           <span class="card-sender">— ${highlightText(sender, query)}</span>
           <span class="card-time">${thaiTime(msg.created_at)}</span>
         </div>
-        ${rxnHtml(msg.id, msg.reactions)}
+        <div class="card-engagement">
+          ${rxnHtml(msg.id, msg.reactions)}
+          ${commentCounterHtml(msg)}
+        </div>
       </div>
     </article>`;
 }
@@ -479,6 +502,25 @@ function updateCardReactions(id, rxn) {
   });
 }
 
+function updateCommentCounter(id, count) {
+  document.querySelectorAll(`[data-comment-id="${id}"]`).forEach(el => {
+    el.setAttribute('aria-label', `${count} comments`);
+  });
+  document.querySelectorAll(`[data-comment-id="${id}"] .comment-count`).forEach(el => {
+    el.textContent = count;
+  });
+}
+
+function incrementCommentCount(messageId) {
+  const msg = allMessages.find(m => m.id === messageId)
+           ?? (pinnedMsg?.id === messageId ? pinnedMsg : null);
+  if (!msg) return;
+
+  const next = getCommentCount(msg) + 1;
+  setCommentCount(msg, next);
+  updateCommentCounter(messageId, next);
+}
+
 let _renderGen = 0;
 
 function highlightText(text, query) {
@@ -555,7 +597,7 @@ async function loadBoard() {
 
   const { data, error } = await sb
     .from('cheer_up_messages')
-    .select('*')
+    .select('*, comments(count)')
     .eq('is_visible', true)
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
@@ -1064,6 +1106,7 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   }
 
   // Prepend new card + reset filter to show it
+  setCommentCount(data, getCommentCount(data));
   allMessages.unshift(data);
   setActiveFilter('all');
   wireReactions();
@@ -1082,6 +1125,7 @@ function subscribeRealtime() {
       ({ new: msg }) => {
         if (!msg.is_visible) return;
         if (allMessages.find(m => m.id === msg.id)) return; // already optimistically added
+        setCommentCount(msg, 0);
         allMessages.unshift(msg);
         updateStats();
 
@@ -1123,7 +1167,10 @@ function subscribeRealtime() {
           if (!msg.is_visible || !msg.is_pinned) {
             motwSec.style.display = 'none';
           } else {
+            setCommentCount(msg, getCommentCount(pinnedMsg));
+            pinnedMsg = msg;
             updateCardReactions(msg.id, msg.reactions);
+            updateCommentCounter(msg.id, getCommentCount(msg));
           }
         }
 
@@ -1132,6 +1179,7 @@ function subscribeRealtime() {
         if (idx === -1) {
           // Became visible or un-pinned → add to board
           if (msg.is_visible && !msg.is_pinned) {
+            setCommentCount(msg, 0);
             allMessages.unshift(msg);
             renderGrid(allMessages);
           }
@@ -1144,8 +1192,15 @@ function subscribeRealtime() {
           return;
         }
 
+        setCommentCount(msg, getCommentCount(allMessages[idx]));
         allMessages[idx] = msg;
         updateCardReactions(msg.id, msg.reactions);
+      }
+    )
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'comments' },
+      ({ new: comment }) => {
+        incrementCommentCount(comment.message_id);
       }
     )
     .subscribe();
