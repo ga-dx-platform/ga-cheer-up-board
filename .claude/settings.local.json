@@ -15,7 +15,9 @@
       "Bash(git push *)",
       "Bash(Select-String -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\\\\app.js\" -Pattern \"\\(compressImage|selectedImageBlob|clearSelectedImage|renderComment|fetchAndSubscribeComments|focus-split|closeFocusMode\\)\")",
       "Bash(Select-Object LineNumber, Line)",
-      "Bash(Format-Table -AutoSize)"
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" | Where-Object { $_.Name -ne 'node_modules' } | Select-Object Name)",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board /a\")"
     ]
   }
 }

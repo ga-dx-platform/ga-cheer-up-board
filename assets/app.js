@@ -60,6 +60,24 @@ function compressImage(file) {
 }
 
 /* ══════════════════════════════════════════════════════════
+   AUTO-CENSOR
+   ══════════════════════════════════════════════════════════ */
+const BANNED_WORDS = [
+  'badword1',
+  'badword2',
+  // Add Thai/English profanities here
+];
+
+const _censorRegex = BANNED_WORDS.length
+  ? new RegExp(BANNED_WORDS.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi')
+  : null;
+
+function censorText(text) {
+  if (!_censorRegex) return text;
+  return String(text).replace(_censorRegex, '***');
+}
+
+/* ══════════════════════════════════════════════════════════
    RENDER HELPERS
    ══════════════════════════════════════════════════════════ */
 function rxnHtml(id, rxn) {
@@ -1102,9 +1120,11 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
     imageUrl = urlData.publicUrl;
   }
 
+  const censoredContent = censorText(content);
+
   const payload = {
     category:     selectedCategory,
-    content,
+    content:      censoredContent,
     sender_name:  anon || !sender ? 'ไม่ระบุชื่อ' : sender,
     is_anonymous: anon,
     avatar_emoji: selectedEmoji,
@@ -1413,7 +1433,7 @@ function openFocusMode(cardEl) {
     const text = textarea.value.trim();
     if (!text) return;
     submitBtn.disabled = true;
-    await postComment(msg.id, nameInput.value.trim(), text);
+    await postComment(msg.id, nameInput.value.trim(), censorText(text));
     textarea.value = '';
     submitBtn.disabled = false;
     textarea.focus();
