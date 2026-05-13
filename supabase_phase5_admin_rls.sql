@@ -19,3 +19,11 @@ CREATE POLICY "authenticated_update_messages"
 CREATE POLICY "authenticated_delete_messages"
   ON cheer_up_messages FOR DELETE TO authenticated
   USING (true);
+
+-- ── Add 'announcement' as valid category value ─────────────────────
+ALTER TABLE cheer_up_messages
+  DROP CONSTRAINT IF EXISTS cheer_up_messages_category_check;
+
+ALTER TABLE cheer_up_messages
+  ADD CONSTRAINT cheer_up_messages_category_check
+  CHECK (category IN ('thank_you', 'idea', 'cheer_up', 'announcement'));
