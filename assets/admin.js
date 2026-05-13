@@ -73,6 +73,7 @@ function showDashboard() {
   document.getElementById('login-view').classList.add('a-hidden');
   document.getElementById('dashboard-view').classList.remove('a-hidden');
   loadMessages();
+  loadBoardSettings();
   subscribeRealtime();
 }
 
@@ -346,6 +347,131 @@ function subscribeRealtime() {
     )
     .subscribe();
 }
+
+/* ══════════════════════════════════════════════════════════
+   BOARD SETTINGS — FEATURE 1 & 2
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Load & sync lock toggle state ── */
+async function loadBoardSettings() {
+  const { data, error } = await sb
+    .from('board_settings')
+    .select('is_locked')
+    .eq('id', 1)
+    .single();
+  if (error) { console.warn('[Admin] board_settings', error); return; }
+  applyAdminLockUI(data?.is_locked ?? false);
+}
+
+function applyAdminLockUI(locked) {
+  const toggle = document.getElementById('board-lock-toggle');
+  const label  = document.getElementById('lock-label');
+  if (toggle) toggle.checked = locked;
+  if (label) {
+    label.textContent = locked ? '🔴 ปิดรับข้อความอยู่' : '🟢 รับข้อความอยู่';
+    label.classList.toggle('is-locked', locked);
+  }
+  const sw = document.querySelector('.toggle-switch');
+  if (sw) sw.setAttribute('aria-checked', String(locked));
+}
+
+/* ── Lock toggle handler ── */
+document.getElementById('board-lock-toggle')?.addEventListener('change', async e => {
+  const newState = e.target.checked;
+  applyAdminLockUI(newState); // optimistic
+  const { error } = await sb
+    .from('board_settings')
+    .update({ is_locked: newState })
+    .eq('id', 1);
+  if (error) {
+    console.error('[Admin] lock toggle', error);
+    applyAdminLockUI(!newState); // revert
+    showToast('❌ อัปเดตสถานะไม่สำเร็จ');
+    return;
+  }
+  showToast(newState ? '🔴 ปิดรับข้อความแล้ว' : '🟢 เปิดรับข้อความแล้ว');
+});
+
+/* ── Broadcast Modal ── */
+function openBroadcastModal() {
+  const modal = document.getElementById('broadcast-modal');
+  if (!modal) return;
+  modal.classList.remove('a-hidden');
+  document.getElementById('broadcast-text')?.focus();
+  document.getElementById('broadcast-error')?.classList.add('a-hidden');
+}
+
+function closeBroadcastModal() {
+  document.getElementById('broadcast-modal')?.classList.add('a-hidden');
+}
+
+document.getElementById('btn-broadcast')?.addEventListener('click', openBroadcastModal);
+document.getElementById('broadcast-close')?.addEventListener('click', closeBroadcastModal);
+
+document.getElementById('broadcast-modal')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeBroadcastModal();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeBroadcastModal();
+});
+
+document.getElementById('broadcast-submit')?.addEventListener('click', async () => {
+  const textarea = document.getElementById('broadcast-text');
+  const errEl    = document.getElementById('broadcast-error');
+  const label    = document.getElementById('broadcast-submit-label');
+  const spinner  = document.getElementById('broadcast-spinner');
+  const btn      = document.getElementById('broadcast-submit');
+
+  const text = textarea?.value.trim() ?? '';
+  errEl?.classList.add('a-hidden');
+
+  if (!text) {
+    if (errEl) { errEl.textContent = '✍️ กรุณาเขียนข้อความก่อนนะ'; errEl.classList.remove('a-hidden'); }
+    textarea?.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  if (label)   label.textContent = 'กำลังส่ง...';
+  spinner?.classList.remove('a-hidden');
+
+  // Unpin any current pinned messages
+  const currentlyPinned = allAdminMessages.filter(m => m.is_pinned);
+  if (currentlyPinned.length) {
+    await sb.from('cheer_up_messages')
+      .update({ is_pinned: false })
+      .in('id', currentlyPinned.map(m => m.id));
+  }
+
+  const { error } = await sb
+    .from('cheer_up_messages')
+    .insert({
+      category:     'announcement',
+      content:      text,
+      sender_name:  'ทีม GA',
+      is_anonymous: false,
+      avatar_emoji: '📢',
+      reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
+      is_visible:   true,
+      is_pinned:    true,
+    });
+
+  btn.disabled = false;
+  if (label)   label.textContent = '📢 ประกาศเลย';
+  spinner?.classList.add('a-hidden');
+
+  if (error) {
+    console.error('[Admin] broadcast', error);
+    if (errEl) { errEl.textContent = '❌ ส่งไม่สำเร็จ กรุณาลองอีกครั้ง'; errEl.classList.remove('a-hidden'); }
+    return;
+  }
+
+  if (textarea) textarea.value = '';
+  closeBroadcastModal();
+  showToast('📢 ส่งประกาศแล้ว!');
+  await loadMessages();
+});
 
 /* ══════════════════════════════════════════════════════════
    BOOT

@@ -87,6 +87,21 @@
         </div>
       </div>
 
+      <!-- ─── Admin Tools Bar ──────────────────────────────── -->
+      <div class="admin-tools-bar">
+        <button class="btn-broadcast" id="btn-broadcast" aria-haspopup="dialog">
+          📢 สร้างประกาศ
+        </button>
+        <label class="lock-toggle-wrap" for="board-lock-toggle">
+          <span class="lock-label" id="lock-label">🟢 รับข้อความอยู่</span>
+          <div class="toggle-switch" role="switch" aria-checked="false">
+            <input type="checkbox" id="board-lock-toggle" class="toggle-input"
+                   aria-label="ปิดรับข้อความชั่วคราว" />
+            <span class="toggle-track"></span>
+          </div>
+        </label>
+      </div>
+
       <!-- ─── Filter pills ─────────────────────────────────── -->
       <nav class="filter-bar" aria-label="กรองข้อความ">
         <button class="filter-pill active" data-admin-filter="all">ทั้งหมด</button>
@@ -98,6 +113,28 @@
       <div id="admin-list" class="admin-list" role="list" aria-label="รายการข้อความ"></div>
 
     </main>
+  </div>
+
+  <!-- ═══ Broadcast Modal ════════════════════════════════════ -->
+  <div class="broadcast-overlay a-hidden" id="broadcast-modal"
+       role="dialog" aria-modal="true" aria-labelledby="broadcast-title">
+    <div class="broadcast-box">
+      <div class="broadcast-head">
+        <h2 class="broadcast-title" id="broadcast-title">📢 สร้างประกาศจากทีม GA</h2>
+        <button class="broadcast-close" id="broadcast-close" aria-label="ปิด">✕</button>
+      </div>
+      <p class="broadcast-hint">ประกาศจะปักหมุดเป็น MOTW อัตโนมัติพร้อมสไตล์พิเศษ — กดส่งเพื่อแทนที่ MOTW เดิม</p>
+      <div class="field-section">
+        <label class="field-label" for="broadcast-text">ข้อความ <span class="required">*</span></label>
+        <textarea id="broadcast-text" class="form-textarea" rows="4" maxlength="500"
+                  placeholder="พิมพ์ข้อความประกาศจากทีม GA..."></textarea>
+      </div>
+      <p class="form-error a-hidden" id="broadcast-error" role="alert" aria-live="assertive"></p>
+      <button class="btn-submit" id="broadcast-submit">
+        <span id="broadcast-submit-label">📢 ประกาศเลย</span>
+        <span class="spinner a-hidden" id="broadcast-spinner" aria-hidden="true"></span>
+      </button>
+    </div>
   </div>
 
   <!-- ═══ Toast ════════════════════════════════════════════════ -->

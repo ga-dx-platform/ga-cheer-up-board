@@ -165,19 +165,28 @@ function renderCard(msg, idx, query = '') {
 }
 
 function renderMotw(msg) {
-  const cat       = CAT[msg.category] ?? CAT.cheer_up;
+  const isAnnouncement = msg.category === 'announcement';
+  const cat       = isAnnouncement
+    ? { label: 'ประกาศ', emoji: '📢', cls: 'announcement' }
+    : (CAT[msg.category] ?? CAT.cheer_up);
   const avatar    = msg.avatar_emoji  ?? '🌟';
   const sender    = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
     ? 'ไม่ระบุชื่อ'
     : msg.sender_name;
   const recipient = msg.recipient_name?.trim() || '';
+
+  const cardClass  = isAnnouncement ? 'motw-card is-announcement' : 'motw-card';
+  const ariaLabel  = isAnnouncement
+    ? 'ประกาศจากทีม GA — คลิกเพื่ออ่านและแสดงความคิดเห็น'
+    : 'ข้อความแห่งสัปดาห์ — คลิกเพื่ออ่านและแสดงความคิดเห็น';
+  const labelHtml  = isAnnouncement
+    ? `<div class="motw-card-label announcement-label"><span aria-hidden="true">📢</span> ประกาศจากทีม GA</div>`
+    : `<div class="motw-card-label"><span class="tag-star" aria-hidden="true">⭐</span> ข้อความแห่งสัปดาห์</div>`;
+
   return `
-    <div class="motw-card" role="article" tabindex="0"
-         data-id="${msg.id}" aria-label="ข้อความแห่งสัปดาห์ — คลิกเพื่ออ่านและแสดงความคิดเห็น">
-      <div class="motw-card-label">
-        <span class="tag-star" aria-hidden="true">⭐</span>
-        ข้อความแห่งสัปดาห์
-      </div>
+    <div class="${cardClass}" role="article" tabindex="0"
+         data-id="${msg.id}" aria-label="${ariaLabel}">
+      ${labelHtml}
       <div class="motw-left">
         <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
         <div class="motw-body">
@@ -360,6 +369,7 @@ let allMessages  = [];
 let activeFilter = 'all';
 let searchQuery  = '';
 let pinnedMsg    = null;
+let boardLocked  = false;
 const reactedSet = new Set(); // key: `${msgId}:${type}`
 
 const RXN_EMOJI = { thumbs_up: '👍', heart: '❤️', clap: '👏' };
@@ -586,6 +596,14 @@ function renderGrid(messages) {
   requestAnimationFrame(renderBatch);
 }
 
+function applyMaintenanceMode(isLocked) {
+  boardLocked = isLocked;
+  const btn    = document.getElementById('openModal');
+  const banner = document.getElementById('maintenance-banner');
+  if (btn)    btn.style.display    = isLocked ? 'none' : '';
+  if (banner) banner.style.display = isLocked ? ''     : 'none';
+}
+
 async function loadBoard() {
   const board   = document.getElementById('board');
   const motwEl  = document.getElementById('motw-container');
@@ -595,13 +613,17 @@ async function loadBoard() {
   board.innerHTML  = skelCard().repeat(4);
   board.classList.remove('board-empty');
 
-  const { data, error } = await sb
-    .from('cheer_up_messages')
-    .select('*, comments(count)')
-    .eq('is_visible', true)
-    .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(30);
+  const [{ data, error }, { data: settingsData }] = await Promise.all([
+    sb.from('cheer_up_messages')
+      .select('*, comments(count)')
+      .eq('is_visible', true)
+      .order('is_pinned', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(30),
+    sb.from('board_settings').select('is_locked').eq('id', 1).single(),
+  ]);
+
+  applyMaintenanceMode(settingsData?.is_locked ?? false);
 
   if (error) {
     motwSec.style.display = 'none';
@@ -742,6 +764,7 @@ let _removeTrap = null;
 let _lastFocused = null;
 
 function openModal() {
+  if (boardLocked) return;
   _lastFocused = document.activeElement;
   overlay.classList.remove('hidden');
   resetForm();
@@ -1201,6 +1224,16 @@ function subscribeRealtime() {
       { event: 'INSERT', schema: 'public', table: 'comments' },
       ({ new: comment }) => {
         incrementCommentCount(comment.message_id);
+      }
+    )
+    .subscribe();
+
+  // Board settings — maintenance mode realtime
+  sb.channel('board-settings-watch')
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'board_settings', filter: 'id=eq.1' },
+      ({ new: settings }) => {
+        applyMaintenanceMode(settings.is_locked);
       }
     )
     .subscribe();
