@@ -328,6 +328,12 @@ const EMPTY_STATES = {
     sub:   'เป็นคนแรกที่แชร์ความรู้สึกดีๆ ให้ทีม',
     cta:   '✨ เพิ่มข้อความแรก',
   },
+  today: {
+    emoji: '✨',
+    title: 'ยังไม่มีโพสต์ของวันนี้',
+    sub:   'เป็นคนแรกที่ส่งกำลังใจวันนี้เลย!',
+    cta:   '✨ เพิ่มข้อความแรกวันนี้',
+  },
   thank_you: {
     emoji: '🍑',
     title: 'ยังไม่มีคำขอบคุณเลยนะ',
@@ -564,7 +570,9 @@ function renderGrid(messages) {
 
   let filtered = activeFilter === 'all'
     ? messages
-    : messages.filter(m => m.category === activeFilter);
+    : activeFilter === 'today'
+      ? messages.filter(m => (Date.now() - new Date(m.created_at).getTime()) < 86_400_000)
+      : messages.filter(m => m.category === activeFilter);
 
   if (q) {
     filtered = filtered.filter(m =>
@@ -591,12 +599,24 @@ function renderGrid(messages) {
   const BATCH = 5;
   let offset = 0;
   const gen = ++_renderGen;
+  let lastTimeGroup = null;
 
   function renderBatch() {
     if (gen !== _renderGen) return;
     const slice = filtered.slice(offset, offset + BATCH);
     const frag  = document.createDocumentFragment();
     slice.forEach((msg, i) => {
+      if (activeFilter === 'all') {
+        const isToday = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
+        const group = isToday ? 'today' : 'older';
+        if (group !== lastTimeGroup) {
+          const divider = document.createElement('div');
+          divider.className = 'grid-divider';
+          divider.innerHTML = `<span>${isToday ? '✨ โพสต์ของวันนี้' : '🕰️ ก่อนหน้านี้'}</span>`;
+          frag.appendChild(divider);
+          lastTimeGroup = group;
+        }
+      }
       const tmp = document.createElement('div');
       tmp.innerHTML = renderCard(msg, offset + i, q).trim();
       frag.appendChild(tmp.firstElementChild);
