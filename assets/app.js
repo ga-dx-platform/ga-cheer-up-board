@@ -1673,6 +1673,24 @@ document.getElementById('board')?.addEventListener('click', e => {
 })();
 
 /* ══════════════════════════════════════════════════════════
+   WELCOME MODAL
+   ══════════════════════════════════════════════════════════ */
+(function initWelcomeModal() {
+  if (localStorage.getItem('cheer-welcome-seen')) return;
+  const modal = document.getElementById('welcome-modal');
+  const cta   = document.getElementById('welcome-cta');
+  if (!modal || !cta) return;
+
+  setTimeout(() => modal.classList.remove('hidden'), 800);
+
+  cta.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    localStorage.setItem('cheer-welcome-seen', 'true');
+    fireConfetti('thank_you');
+  });
+})();
+
+/* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
 loadBoard().then(subscribeRealtime);

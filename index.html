@@ -185,6 +185,42 @@
 
   </main>
 
+  <!-- ═══ Welcome / Onboarding Modal ═══════════════════════════ -->
+  <div class="modal-overlay hidden" id="welcome-modal"
+       role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="modal-box welcome-box">
+      <div class="welcome-header">
+        <span class="welcome-icon" aria-hidden="true">👋</span>
+        <h2 class="welcome-title" id="welcome-title">ยินดีต้อนรับสู่<br>GA Cheer Up Board!</h2>
+        <p class="welcome-subtitle">พื้นที่ปลอดภัยสำหรับส่งต่อพลังบวกและขอบคุณเพื่อนร่วมทีม</p>
+      </div>
+      <ul class="welcome-features" role="list">
+        <li class="feature-row">
+          <span class="feature-icon" aria-hidden="true">✨</span>
+          <div class="feature-text">
+            <strong>แชร์เรื่องราว</strong>
+            <span>กดปุ่ม "เพิ่มข้อความ" เพื่อส่งต่อเรื่องราวดีๆ</span>
+          </div>
+        </li>
+        <li class="feature-row">
+          <span class="feature-icon" aria-hidden="true">💖</span>
+          <div class="feature-text">
+            <strong>ให้กำลังใจ</strong>
+            <span>กดปุ่มรีแอคชัน 👍 ❤️ 👏 ที่การ์ดเพื่อส่งกำลังใจ</span>
+          </div>
+        </li>
+        <li class="feature-row">
+          <span class="feature-icon" aria-hidden="true">💬</span>
+          <div class="feature-text">
+            <strong>พูดคุยกัน</strong>
+            <span>คลิกที่การ์ดเพื่อขยายอ่านเต็มๆ และร่วมคอมเมนต์</span>
+          </div>
+        </li>
+      </ul>
+      <button class="btn-welcome-cta" id="welcome-cta" type="button">🚀 เริ่มใช้งานเลย!</button>
+    </div>
+  </div>
+
   <!-- ═══ Submit Modal (shell · Phase 3 will wire form) ══════ -->
   <div class="modal-overlay hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-box">
