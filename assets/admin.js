@@ -166,6 +166,9 @@ function renderRow(msg) {
           <button class="action-btn btn-del" data-id="${msg.id}" aria-label="ลบข้อความ">
             🗑 ลบ
           </button>
+          <button class="action-btn btn-cmt" data-id="${msg.id}" aria-label="ดูคอมเมนต์">
+            💬 คอมเมนต์
+          </button>
         </div>
       </div>
       <p class="row-content">${esc(snippet)}</p>
@@ -173,6 +176,7 @@ function renderRow(msg) {
         <span class="rxn-summary">👍 ${rxn.thumbs_up ?? 0}  ❤️ ${rxn.heart ?? 0}  👏 ${rxn.clap ?? 0}</span>
         <span class="row-time">${thaiTime(msg.created_at)}</span>
       </div>
+      <div class="admin-comments-wrap a-hidden" id="admin-comments-${msg.id}"></div>
     </div>`;
 }
 
@@ -288,6 +292,70 @@ async function doToggleVisible(id, currentlyVisible) {
   renderList();
 }
 
+async function fetchAdminComments(messageId) {
+  const wrap = document.getElementById(`admin-comments-${messageId}`);
+  if (!wrap) return;
+
+  wrap.innerHTML = `<p class="admin-comments-loading">⏳ กำลังโหลดคอมเมนต์...</p>`;
+
+  const { data, error } = await sb
+    .from('comments')
+    .select('*')
+    .eq('message_id', messageId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    wrap.innerHTML = `<p class="admin-comments-loading">❌ โหลดไม่สำเร็จ</p>`;
+    return;
+  }
+
+  const comments = data ?? [];
+  if (comments.length === 0) {
+    wrap.innerHTML = `<p class="admin-comments-empty">ยังไม่มีคอมเมนต์</p>`;
+    return;
+  }
+
+  wrap.innerHTML = comments.map(c => `
+    <div class="admin-comment-item" data-comment-id="${c.id}">
+      <div class="admin-comment-meta">
+        <span class="admin-comment-sender">${esc(c.sender_name ?? 'ไม่ระบุชื่อ')}</span>
+        <span class="admin-comment-time">${thaiTime(c.created_at)}</span>
+      </div>
+      <div class="admin-comment-body">
+        <p class="admin-comment-text">${esc(c.comment_text)}</p>
+        <button class="btn-del-comment" data-comment-id="${c.id}" data-message-id="${messageId}"
+                aria-label="ลบคอมเมนต์">🗑 ลบ</button>
+      </div>
+    </div>`).join('');
+
+  wrap.querySelectorAll('.btn-del-comment').forEach(btn => {
+    btn.addEventListener('click', () => doDeleteComment(btn.dataset.commentId, btn.dataset.messageId));
+  });
+}
+
+function toggleAdminComments(messageId) {
+  const wrap = document.getElementById(`admin-comments-${messageId}`);
+  if (!wrap) return;
+
+  if (!wrap.classList.contains('a-hidden')) {
+    wrap.classList.add('a-hidden');
+    return;
+  }
+
+  wrap.classList.remove('a-hidden');
+  fetchAdminComments(messageId);
+}
+
+async function doDeleteComment(commentId, messageId) {
+  if (!window.confirm('ต้องการลบคอมเมนต์นี้ถาวรหรือไม่?')) return;
+
+  const { error } = await sb.from('comments').delete().eq('id', commentId);
+  if (error) { showToast('❌ ลบคอมเมนต์ไม่สำเร็จ'); return; }
+
+  showToast('🗑 ลบคอมเมนต์แล้ว');
+  fetchAdminComments(messageId);
+}
+
 async function doDelete(id) {
   const confirmed = window.confirm('ต้องการลบข้อความนี้ถาวรหรือไม่?');
   if (!confirmed) return;
@@ -313,6 +381,9 @@ function wireActions() {
   });
   document.querySelectorAll('.btn-del').forEach(btn => {
     btn.addEventListener('click', () => doDelete(btn.dataset.id));
+  });
+  document.querySelectorAll('.btn-cmt').forEach(btn => {
+    btn.addEventListener('click', () => toggleAdminComments(btn.dataset.id));
   });
 }
 
