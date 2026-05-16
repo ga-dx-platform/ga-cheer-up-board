@@ -17,7 +17,11 @@
       "Bash(Select-Object LineNumber, Line)",
       "Bash(Format-Table -AutoSize)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" | Where-Object { $_.Name -ne 'node_modules' } | Select-Object Name)",
-      "PowerShell(cmd /c \"dir C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board /a\")"
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board /a\")",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" -Filter \"styles.css\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(head *)",
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\\\\styles.css\" -Raw; $lines = $content -split \"`n\"; $i = 0; foreach \\($line in $lines\\) { $i++; if \\($line -match \"nudge-banner|card-grid|1100px|320px|1440px\"\\) { Write-Host \"$i : $line\" } })"
     ]
   }
 }

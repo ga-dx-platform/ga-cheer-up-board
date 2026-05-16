@@ -63,7 +63,7 @@ button, a, label { touch-action: manipulation; }
 
   --font:        'Kanit','Noto Sans Thai',sans-serif;
   --header-h:    70px;
-  --content-max: 1440px;
+  --content-max: 1600px;
   --gap:         1.5rem;
   --spring:      cubic-bezier(0.34,1.56,0.64,1);
   --ease-out:    cubic-bezier(0.16,1,0.3,1);
@@ -251,7 +251,6 @@ body {
 .controls-bar,
 .motw-section,
 .digest-section {
-  max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -774,7 +773,7 @@ mark.search-match {
 /* ── Card Grid ───────────────────────────────────────────── */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: var(--gap);
 }
 @media(max-width:700px) {
