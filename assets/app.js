@@ -157,11 +157,21 @@ function renderCard(msg, idx, query = '') {
   const preview = esc(msg.content).slice(0, 60);
   const cardLabel = `ข้อความจาก ${esc(sender)}: ${preview}${msg.content.length > 60 ? '…' : ''}`;
 
+  const inlineAdminHtml = isAdmin ? `
+    <div class="inline-admin-actions" role="group" aria-label="ตัวเลือกแอดมิน">
+      <button type="button" data-id="${msg.id}" data-action="pin" data-pinned="${!!msg.is_pinned}"
+              title="${msg.is_pinned ? 'เลิกปักหมุด' : 'ปักหมุด MOTW'}" aria-label="ปักหมุด">📌</button>
+      <button type="button" data-id="${msg.id}" data-action="hide"
+              title="ซ่อนจากบอร์ด" aria-label="ซ่อน">🙈</button>
+      <button type="button" data-id="${msg.id}" data-action="delete"
+              title="ลบถาวร" aria-label="ลบ">🗑️</button>
+    </div>` : '';
+
   return `
     <article class="${classes}" style="--r:${r}deg"
              data-id="${msg.id}" data-category="${msg.category}"
              aria-label="${cardLabel}">
-      ${newBadge}${popularBadge}
+      ${newBadge}${popularBadge}${inlineAdminHtml}
       <div class="card-head">
         <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
@@ -201,10 +211,20 @@ function renderMotw(msg) {
     ? `<div class="motw-card-label announcement-label"><span aria-hidden="true">📢</span> ประกาศจากทีม GA</div>`
     : `<div class="motw-card-label"><span class="tag-star" aria-hidden="true">⭐</span> ข้อความแห่งสัปดาห์</div>`;
 
+  const inlineAdminHtml = isAdmin ? `
+    <div class="inline-admin-actions" role="group" aria-label="ตัวเลือกแอดมิน">
+      <button type="button" data-id="${msg.id}" data-action="pin" data-pinned="${!!msg.is_pinned}"
+              title="${msg.is_pinned ? 'เลิกปักหมุด' : 'ปักหมุด MOTW'}" aria-label="ปักหมุด">📌</button>
+      <button type="button" data-id="${msg.id}" data-action="hide"
+              title="ซ่อนจากบอร์ด" aria-label="ซ่อน">🙈</button>
+      <button type="button" data-id="${msg.id}" data-action="delete"
+              title="ลบถาวร" aria-label="ลบ">🗑️</button>
+    </div>` : '';
+
   return `
     <div class="${cardClass}" role="article" tabindex="0"
          data-id="${msg.id}" aria-label="${ariaLabel}">
-      ${labelHtml}
+      ${labelHtml}${inlineAdminHtml}
       <div class="motw-left">
         <div class="motw-avatar" aria-label="อีโมจิผู้ส่ง">${esc(avatar)}</div>
         <div class="motw-body">
@@ -394,6 +414,7 @@ let activeFilter = 'all';
 let searchQuery  = '';
 let pinnedMsg    = null;
 let boardLocked  = false;
+let isAdmin      = false;
 const reactedSet = new Set(); // key: `${msgId}:${type}`
 
 // Infinite scroll pagination
@@ -789,6 +810,7 @@ async function loadBoard() {
     motwEl.innerHTML = renderMotw(pinned);
     const motwCard = motwEl.querySelector('.motw-card');
     motwCard?.addEventListener('click', e => {
+      if (e.target.closest('.inline-admin-actions')) return;
       if (!e.target.closest('.rxn-btn') && !e.target.closest('.reactions')) {
         openFocusMode(motwCard);
       }
@@ -1605,11 +1627,18 @@ document.addEventListener('keydown', e => {
 });
 
 // Delegated click on the board — open focus mode for card clicks,
-// but let reaction buttons continue to work normally
+// but let reaction buttons and inline admin actions work normally
 document.getElementById('board')?.addEventListener('click', e => {
+  const adminBtn = e.target.closest('.inline-admin-actions button');
+  if (adminBtn) { e.stopPropagation(); handleInlineAdminAction(adminBtn); return; }
   if (e.target.closest('.rxn-btn') || e.target.closest('.reactions')) return;
   const card = e.target.closest('.card');
   if (card) openFocusMode(card);
+});
+
+document.getElementById('motw-container')?.addEventListener('click', e => {
+  const adminBtn = e.target.closest('.inline-admin-actions button');
+  if (adminBtn) { e.stopPropagation(); handleInlineAdminAction(adminBtn); }
 });
 
 /* ══════════════════════════════════════════════════════════
@@ -1661,6 +1690,50 @@ document.getElementById('board')?.addEventListener('click', e => {
 })();
 
 /* ══════════════════════════════════════════════════════════
+   INLINE ADMIN
+   ══════════════════════════════════════════════════════════ */
+async function checkAdminSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  isAdmin = !!session;
+}
+
+async function handleInlineAdminAction(btn) {
+  const id     = btn.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === 'pin') {
+    const currentlyPinned = btn.dataset.pinned === 'true';
+    const { error } = await sb.from('cheer_up_messages')
+      .update({ is_pinned: !currentlyPinned })
+      .eq('id', id);
+    if (error) { console.error('[Admin pin]', error); return; }
+    // Pin/unpin swaps card ↔ MOTW — full reload is simplest correct approach
+    loadBoard();
+
+  } else if (action === 'hide') {
+    const { error } = await sb.from('cheer_up_messages')
+      .update({ is_visible: false, is_pinned: false })
+      .eq('id', id);
+    if (error) { console.error('[Admin hide]', error); return; }
+    // Realtime UPDATE handler already removes card + re-renders on is_visible=false
+
+  } else if (action === 'delete') {
+    if (!window.confirm('ต้องการลบข้อความนี้ถาวรหรือไม่?')) return;
+    const { error } = await sb.from('cheer_up_messages').delete().eq('id', id);
+    if (error) { console.error('[Admin delete]', error); return; }
+    if (pinnedMsg?.id === id) {
+      pinnedMsg = null;
+      const motwSec = document.getElementById('motw-section');
+      if (motwSec) motwSec.style.display = 'none';
+    } else {
+      allMessages = allMessages.filter(m => m.id !== id);
+    }
+    updateStats();
+    renderGrid(allMessages);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
    INFINITE SCROLL
    ══════════════════════════════════════════════════════════ */
 (function initInfiniteScroll() {
@@ -1693,4 +1766,4 @@ document.getElementById('board')?.addEventListener('click', e => {
 /* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
-loadBoard().then(subscribeRealtime);
+checkAdminSession().then(() => loadBoard().then(subscribeRealtime));

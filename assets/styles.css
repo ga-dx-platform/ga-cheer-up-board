@@ -798,6 +798,64 @@ mark.search-match {
   .card-grid { grid-template-columns: 1fr; }
 }
 
+/* ── Inline Admin Actions ────────────────────────────────── */
+.motw-card { position: relative; }
+
+.inline-admin-actions {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  gap: 0.15rem;
+  background: rgba(255,255,255,0.88);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 99px;
+  padding: 0.18rem 0.28rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-5px) scale(0.90);
+  transition: opacity 0.18s ease, transform 0.20s var(--spring);
+  z-index: 20;
+}
+
+.card:hover .inline-admin-actions,
+.motw-card:hover .inline-admin-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.inline-admin-actions button {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.15s ease, transform 0.15s var(--spring);
+}
+.inline-admin-actions button:hover {
+  transform: scale(1.22);
+}
+.inline-admin-actions button[data-action="pin"]:hover {
+  background: rgba(251,191,36,0.22);
+}
+.inline-admin-actions button[data-action="hide"]:hover {
+  background: rgba(59,130,246,0.15);
+}
+.inline-admin-actions button[data-action="delete"]:hover {
+  background: rgba(239,68,68,0.16);
+}
+
 /* ── Cards ───────────────────────────────────────────────── */
 .card {
   position:relative; border-radius:20px;
