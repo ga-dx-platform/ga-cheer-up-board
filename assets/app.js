@@ -396,6 +396,13 @@ let pinnedMsg    = null;
 let boardLocked  = false;
 const reactedSet = new Set(); // key: `${msgId}:${type}`
 
+// Infinite scroll pagination
+let currentOffset = 0;
+const PAGE_SIZE   = 30;
+let hasMorePosts  = true;
+let isFetching    = false;
+let lastTimeGroup = null;
+
 const RXN_EMOJI = { thumbs_up: '👍', heart: '❤️', clap: '👏' };
 
 function spawnParticles(btn, type) {
@@ -557,6 +564,26 @@ function incrementCommentCount(messageId) {
 
 let _renderGen = 0;
 
+function getTimeGroup(createdAt) {
+  const age = Date.now() - new Date(createdAt).getTime();
+  if (age < 86_400_000)     return 'today';
+  if (age < 7 * 86_400_000) return 'this_week';
+  return 'older';
+}
+
+const DIVIDER_LABEL = {
+  today:     '✨ โพสต์ของวันนี้',
+  this_week: '📅 สัปดาห์นี้',
+  older:     '🕰️ ก่อนหน้านี้',
+};
+
+function makeDividerEl(group) {
+  const el = document.createElement('div');
+  el.className = 'grid-divider';
+  el.innerHTML = `<span>${DIVIDER_LABEL[group]}</span>`;
+  return el;
+}
+
 function highlightText(text, query) {
   if (!query) return esc(text);
   const escaped = esc(text);
@@ -599,7 +626,7 @@ function renderGrid(messages) {
   const BATCH = 5;
   let offset = 0;
   const gen = ++_renderGen;
-  let lastTimeGroup = null;
+  lastTimeGroup = null;
 
   function renderBatch() {
     if (gen !== _renderGen) return;
@@ -607,13 +634,9 @@ function renderGrid(messages) {
     const frag  = document.createDocumentFragment();
     slice.forEach((msg, i) => {
       if (activeFilter === 'all') {
-        const isToday = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
-        const group = isToday ? 'today' : 'older';
+        const group = getTimeGroup(msg.created_at);
         if (group !== lastTimeGroup) {
-          const divider = document.createElement('div');
-          divider.className = 'grid-divider';
-          divider.innerHTML = `<span>${isToday ? '✨ โพสต์ของวันนี้' : '🕰️ ก่อนหน้านี้'}</span>`;
-          frag.appendChild(divider);
+          frag.appendChild(makeDividerEl(group));
           lastTimeGroup = group;
         }
       }
@@ -634,6 +657,53 @@ function renderGrid(messages) {
   requestAnimationFrame(renderBatch);
 }
 
+function appendToBoard(newMessages) {
+  const board = document.getElementById('board');
+  const q = searchQuery.trim().toLowerCase();
+
+  let filtered = activeFilter === 'all'
+    ? newMessages
+    : activeFilter === 'today'
+      ? newMessages.filter(m => (Date.now() - new Date(m.created_at).getTime()) < 86_400_000)
+      : newMessages.filter(m => m.category === activeFilter);
+
+  if (q) {
+    filtered = filtered.filter(m =>
+      m.content?.toLowerCase().includes(q) ||
+      m.sender_name?.toLowerCase().includes(q) ||
+      m.recipient_name?.toLowerCase().includes(q)
+    );
+  }
+
+  if (filtered.length === 0) return;
+
+  // If board was empty-state, wipe it first
+  const emptyEl = board.querySelector('.empty-state');
+  if (emptyEl) {
+    board.innerHTML = '';
+    board.classList.remove('board-empty');
+    lastTimeGroup = null;
+  }
+
+  const startIdx = board.querySelectorAll('.card').length;
+  const frag = document.createDocumentFragment();
+  filtered.forEach((msg, i) => {
+    if (activeFilter === 'all') {
+      const group = getTimeGroup(msg.created_at);
+      if (group !== lastTimeGroup) {
+        frag.appendChild(makeDividerEl(group));
+        lastTimeGroup = group;
+      }
+    }
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderCard(msg, startIdx + i, q).trim();
+    frag.appendChild(tmp.firstElementChild);
+  });
+  board.appendChild(frag);
+  wireReactions();
+  observeCards();
+}
+
 function applyMaintenanceMode(isLocked) {
   boardLocked = isLocked;
   const btn    = document.getElementById('openModal');
@@ -642,7 +712,42 @@ function applyMaintenanceMode(isLocked) {
   if (banner) banner.style.display = isLocked ? ''     : 'none';
 }
 
+async function fetchMessagesPage() {
+  if (isFetching || !hasMorePosts) return;
+  isFetching = true;
+
+  const spinner = document.getElementById('scroll-spinner');
+  spinner?.classList.remove('hidden');
+
+  const { data, error } = await sb.from('cheer_up_messages')
+    .select('*, comments(count)')
+    .eq('is_visible', true)
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(currentOffset, currentOffset + PAGE_SIZE - 1);
+
+  spinner?.classList.add('hidden');
+  isFetching = false;
+
+  if (error) { console.error('[Fetch page]', error); return; }
+
+  const rows = data ?? [];
+  if (rows.length < PAGE_SIZE) hasMorePosts = false;
+
+  const regular = rows.filter(m => !m.is_pinned);
+  currentOffset += rows.length;
+
+  allMessages.push(...regular);
+  updateStats();
+  appendToBoard(regular);
+}
+
 async function loadBoard() {
+  isFetching = true;
+  allMessages = [];
+  currentOffset = 0;
+  hasMorePosts = true;
+
   const board   = document.getElementById('board');
   const motwEl  = document.getElementById('motw-container');
   const motwSec = document.getElementById('motw-section');
@@ -657,13 +762,14 @@ async function loadBoard() {
       .eq('is_visible', true)
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(30),
+      .range(0, PAGE_SIZE - 1),
     sb.from('board_settings').select('is_locked').eq('id', 1).single(),
   ]);
 
   applyMaintenanceMode(settingsData?.is_locked ?? false);
 
   if (error) {
+    isFetching = false;
     motwSec.style.display = 'none';
     board.innerHTML = renderError(error);
     board.classList.add('board-empty');
@@ -673,6 +779,9 @@ async function loadBoard() {
   const rows    = data ?? [];
   const pinned  = rows.find(m => m.is_pinned);
   const regular = rows.filter(m => !m.is_pinned);
+
+  currentOffset = rows.length;
+  hasMorePosts  = rows.length >= PAGE_SIZE;
 
   pinnedMsg = pinned ?? null;
   if (pinned) {
@@ -707,6 +816,7 @@ async function loadBoard() {
   renderGrid(allMessages);
   wireReactions();
   observeCards();
+  isFetching = false;
 }
 
 /* ── Filter pills ────────────────────────────────────────── */
@@ -1548,6 +1658,18 @@ document.getElementById('board')?.addEventListener('click', e => {
       ticking = false;
     });
   }, { passive: true });
+})();
+
+/* ══════════════════════════════════════════════════════════
+   INFINITE SCROLL
+   ══════════════════════════════════════════════════════════ */
+(function initInfiniteScroll() {
+  const trigger = document.getElementById('scroll-trigger');
+  if (!trigger) return;
+  const obs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && hasMorePosts && !isFetching) fetchMessagesPage();
+  }, { rootMargin: '200px' });
+  obs.observe(trigger);
 })();
 
 /* ══════════════════════════════════════════════════════════
