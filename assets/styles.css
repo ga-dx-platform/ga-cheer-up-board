@@ -103,32 +103,46 @@ body {
   color: #2d2d3e;
   min-height: 100dvh;
   overflow-x: hidden;
-  background: #f0ece8;
-}
-@media (hover: hover) {
-  body { background-attachment: fixed; }
+  background: #fdf8ff;
 }
 
-/* ── Floating ambient orbs ───────────────────────────────── */
+/* ── Aurora Mesh Gradient Background ────────────────────── */
 /*
- * NO filter:blur() — software blur on animated elements forces a full
- * rasterization + composite pass every frame, destroying scroll perf.
- * Softness is achieved by a 4-stop radial-gradient with a long transparent
- * tail — visually identical, GPU cost is zero (single paint, never repainted).
- * NO animation — animated elements under backdrop-filter cards triggers
- * recomposition of every card on every frame (the real jank source).
+ * Gradient lives on body::before (position:fixed, z-index:-1).
+ * Animation is transform-only (translate + scale) so it runs on the
+ * compositor thread and never triggers a repaint of backdrop-filter cards.
+ * inset:-12% oversizes the layer so slow drift never reveals a hard edge.
  */
-.orb {
+.orb { display: none !important; }
+
+body::before {
+  content: '';
   position: fixed;
-  border-radius: 50%;
+  inset: -12%;
+  z-index: -1;
   pointer-events: none;
-  z-index: 0;
+  contain: layout paint;
+  background:
+    radial-gradient(ellipse 130%  90% at 15% 10%, rgba(216,180,254,.52) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 120% at 88%  5%, rgba(186,230,253,.50) 0%, transparent 55%),
+    radial-gradient(ellipse 110%  80% at  5% 78%, rgba(167,243,208,.46) 0%, transparent 55%),
+    radial-gradient(ellipse  90% 100% at 90% 75%, rgba(253,186,153,.50) 0%, transparent 55%),
+    radial-gradient(ellipse 120%  70% at 48% 52%, rgba(251,207,232,.40) 0%, transparent 52%);
+  will-change: transform;
+  animation: aurora-drift 22s ease-in-out infinite alternate;
 }
-.orb-peach  { width:900px;height:900px; background:radial-gradient(ellipse at center,rgba(255,154,112,.52) 0%,rgba(255,107,61,.26) 32%,rgba(255,107,61,.07) 62%,transparent 100%); top:-100px;left:-150px; }
-.orb-blue   { width:800px;height:800px; background:radial-gradient(ellipse at center,rgba(96,165,250,.48) 0%,rgba(59,130,246,.24) 32%,rgba(59,130,246,.07) 62%,transparent 100%); top:20%;right:-100px; }
-.orb-mint   { width:850px;height:850px; background:radial-gradient(ellipse at center,rgba(74,222,128,.44) 0%,rgba(16,185,129,.22) 32%,rgba(16,185,129,.06) 62%,transparent 100%); bottom:-50px;left:-50px; }
-.orb-butter { width:700px;height:700px; background:radial-gradient(ellipse at center,rgba(251,191,36,.50) 0%,rgba(245,158,11,.25) 32%,rgba(245,158,11,.07) 62%,transparent 100%); bottom:15%;right:-50px; }
-.orb-rose   { width:750px;height:750px; background:radial-gradient(ellipse at center,rgba(251,113,133,.42) 0%,rgba(225,29,72,.20) 32%,rgba(225,29,72,.06) 62%,transparent 100%); top:40%;left:30%; }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation-play-state: paused; }
+}
+
+@keyframes aurora-drift {
+  0%   { transform: translate(   0%,    0%) scale(1);    }
+  25%  { transform: translate(-2.5%,  1.8%) scale(1.03); }
+  50%  { transform: translate( 1.8%, -2.2%) scale(1.02); }
+  75%  { transform: translate(-1.5%,  2.5%) scale(1.04); }
+  100% { transform: translate( 2.2%, -1.5%) scale(1.03); }
+}
 
 /* ── Floating Glass Pill Header ──────────────────────────── */
 #site-header {
