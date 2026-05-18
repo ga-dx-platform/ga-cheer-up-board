@@ -418,7 +418,8 @@ let searchQuery  = '';
 let pinnedMsg    = null;
 let boardLocked  = false;
 let isAdmin      = false;
-const reactedSet = new Set(); // key: `${msgId}:${type}`
+const reactedSet   = new Set(); // key: `${msgId}:${type}`
+const localComments = new Set();
 
 // Infinite scroll pagination
 let currentOffset = 0;
@@ -1398,6 +1399,7 @@ function subscribeRealtime() {
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'comments' },
       ({ new: comment }) => {
+        if (localComments.has(comment.id)) return;
         incrementCommentCount(comment.message_id);
       }
     )
@@ -1462,6 +1464,7 @@ async function fetchAndSubscribeComments(msgId, threadEl) {
       event: 'INSERT', schema: 'public', table: 'comments',
       filter: `message_id=eq.${msgId}`,
     }, ({ new: comment }) => {
+      if (localComments.has(comment.id)) return;
       const emptyEl = threadEl.querySelector('.focus-comments-empty');
       if (emptyEl) emptyEl.remove();
       const tmp = document.createElement('div');
@@ -1473,12 +1476,13 @@ async function fetchAndSubscribeComments(msgId, threadEl) {
 }
 
 async function postComment(msgId, senderName, text) {
-  const { error } = await sb.from('comments').insert({
+  const { data, error } = await sb.from('comments').insert({
     message_id:   msgId,
     sender_name:  senderName || 'ไม่ระบุชื่อ',
     comment_text: text,
-  });
-  if (error) console.error('[Comment]', error);
+  }).select().single();
+  if (error) { console.error('[Comment]', error); return null; }
+  return data;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1597,10 +1601,27 @@ function openFocusMode(cardEl) {
     const text = textarea.value.trim();
     if (!text) return;
     submitBtn.disabled = true;
-    await postComment(msg.id, nameInput.value.trim(), censorText(text));
+
+    const newComment = await postComment(msg.id, nameInput.value.trim(), censorText(text));
+
     textarea.value = '';
     submitBtn.disabled = false;
     textarea.focus();
+
+    if (newComment) {
+      localComments.add(newComment.id);
+
+      // Optimistic Counter Update
+      incrementCommentCount(msg.id);
+
+      // Optimistic Thread Update
+      const emptyEl = threadEl.querySelector('.focus-comments-empty');
+      if (emptyEl) emptyEl.remove();
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderComment(newComment).trim();
+      threadEl.appendChild(tmp.firstElementChild);
+      threadEl.scrollTop = threadEl.scrollHeight;
+    }
   }
 
   submitBtn.addEventListener('click', handleCommentSubmit);
