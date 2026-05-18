@@ -47,15 +47,15 @@ button, a, label { touch-action: manipulation; }
   --glass-bg:          rgba(255,255,255,0.18);
   --glass-bg-strong:   rgba(255,255,255,0.82);
   --glass-border:      rgba(255,255,255,0.72);
-  --glass-inset:       inset 0 1px 0 rgba(255,255,255,0.90);
+  --glass-inset:       inset 0 1.5px 0 rgba(255,255,255,0.95);
   --glass-shadow:
-    0 4px 8px   rgba(0,0,0,0.06),
-    0 16px 48px rgba(0,0,0,0.12),
-    0 48px 96px rgba(0,0,0,0.10);
+    0 2px 4px   rgba(20,10,60,0.05),
+    0 10px 30px rgba(20,10,60,0.10),
+    0 36px 72px rgba(20,10,60,0.08);
   --glass-shadow-lift:
-    0 8px 16px   rgba(0,0,0,0.08),
-    0 28px 70px rgba(0,0,0,0.18),
-    0 72px 130px rgba(0,0,0,0.14);
+    0 8px 18px   rgba(20,10,60,0.09),
+    0 30px 72px  rgba(20,10,60,0.16),
+    0 72px 130px rgba(20,10,60,0.12);
 
   --cat-peach: rgba(249,115,22,0.50);
   --cat-blue:  rgba(59,130,246,0.50);
@@ -129,7 +129,28 @@ body::before {
     radial-gradient(ellipse  90% 100% at 90% 75%, rgba(253,186,153,.50) 0%, transparent 55%),
     radial-gradient(ellipse 120%  70% at 48% 52%, rgba(251,207,232,.40) 0%, transparent 52%);
   will-change: transform;
+  backface-visibility: hidden;
   animation: aurora-drift 22s ease-in-out infinite alternate;
+}
+
+/* ── Noise dither layer — eliminates gradient banding ───── */
+/*
+ * SVG feTurbulence tiled at 256px; opacity 0.018 is below visual
+ * perception as texture but enough high-frequency noise to break up
+ * the Mach-band artifacts at gradient transition edges.
+ * position:fixed + z-index:-1 keeps it below all page content;
+ * DOM order (::after > ::before) ensures it composites above the aurora.
+ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -137,11 +158,11 @@ body::before {
 }
 
 @keyframes aurora-drift {
-  0%   { transform: translate(   0%,    0%) scale(1);    }
-  25%  { transform: translate(-2.5%,  1.8%) scale(1.03); }
-  50%  { transform: translate( 1.8%, -2.2%) scale(1.02); }
-  75%  { transform: translate(-1.5%,  2.5%) scale(1.04); }
-  100% { transform: translate( 2.2%, -1.5%) scale(1.03); }
+  0%   { transform: translate3d(    0,     0, 0) scale(1);    }
+  25%  { transform: translate3d(-2.5%,  1.8%, 0) scale(1.03); }
+  50%  { transform: translate3d( 1.8%, -2.2%, 0) scale(1.02); }
+  75%  { transform: translate3d(-1.5%,  2.5%, 0) scale(1.04); }
+  100% { transform: translate3d( 2.2%, -1.5%, 0) scale(1.03); }
 }
 
 /* ── Floating Glass Pill Header ──────────────────────────── */
@@ -874,18 +895,18 @@ mark.search-match {
 .card {
   position:relative; border-radius:20px;
   padding:1.2rem 1.3rem 1rem;
-  background: rgba(255,255,255,0.78) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  background: rgba(255,255,255,0.70) !important;
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
   border: 1px solid rgba(255,255,255,0.25) !important;
-  border-top: 1px solid rgba(255,255,255,0.85) !important;
-  border-left: 1px solid rgba(255,255,255,0.55) !important;
-  /* Base shadow — static, never animates */
+  border-top: 1px solid rgba(255,255,255,0.90) !important;
+  border-left: 1px solid rgba(255,255,255,0.58) !important;
+  /* Base shadow — static, never animates; cool-tinted to harmonise with aurora */
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.90),
-    0 4px 6px  rgba(0,0,0,0.04),
-    0 12px 32px rgba(0,0,0,0.09),
-    0 40px 80px rgba(0,0,0,0.07);
+    inset 0 1.5px 0 rgba(255,255,255,0.95),
+    0 2px 4px   rgba(20,10,60,0.05),
+    0 10px 28px rgba(20,10,60,0.10),
+    0 36px 72px rgba(20,10,60,0.08);
   /*
    * GPU-only transitions — translate/scale are compositor-thread properties.
    * box-shadow is intentionally ABSENT: shadow changes trigger full repaints.
@@ -924,10 +945,10 @@ mark.search-match {
   border-radius: inherit;
   pointer-events: none;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    0 10px 24px  rgba(0,0,0,0.10),
-    0 36px 80px  rgba(0,0,0,0.18),
-    0 80px 140px rgba(0,0,0,0.14);
+    inset 0 1.5px 0 rgba(255,255,255,1),
+    0 10px 28px  rgba(20,10,60,0.12),
+    0 40px 90px  rgba(20,10,60,0.20),
+    0 80px 140px rgba(20,10,60,0.16);
   opacity: 0;
   transition: opacity .28s ease;
 }
