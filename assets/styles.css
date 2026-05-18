@@ -1804,7 +1804,7 @@ mark.search-match {
 
 /* ── Quick Emoji Bar ─────────────────────────────────── */
 .quick-emoji-bar {
-  display: flex; gap: 0.5rem;
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
   padding: 0.1rem 0 0.15rem;
 }
 .emoji-quick-btn {

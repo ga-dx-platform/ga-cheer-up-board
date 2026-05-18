@@ -1545,9 +1545,18 @@ function openFocusMode(cardEl) {
       <div class="quick-emoji-bar" role="group" aria-label="ใส่อีโมจิ">
         <button type="button" class="emoji-quick-btn" data-emoji="👍" aria-label="👍">👍</button>
         <button type="button" class="emoji-quick-btn" data-emoji="❤️" aria-label="❤️">❤️</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="😂" aria-label="😂">😂</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="😊" aria-label="😊">😊</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🥺" aria-label="🥺">🥺</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="✌️" aria-label="✌️">✌️</button>
         <button type="button" class="emoji-quick-btn" data-emoji="🎉" aria-label="🎉">🎉</button>
-        <button type="button" class="emoji-quick-btn" data-emoji="✨" aria-label="✨">✨</button>
-        <button type="button" class="emoji-quick-btn" data-emoji="🙌" aria-label="🙌">🙌</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="😐" aria-label="😐">😐</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="😫" aria-label="😫">😫</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🔥" aria-label="🔥">🔥</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🤣" aria-label="🤣">🤣</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="😭" aria-label="😭">😭</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🤩" aria-label="🤩">🤩</button>
+        <button type="button" class="emoji-quick-btn" data-emoji="🙏" aria-label="🙏">🙏</button>
       </div>
       <input class="focus-comment-name" type="text" placeholder="ชื่อของคุณ (ไม่บังคับ)" maxlength="60" />
       <div class="focus-comment-row">
