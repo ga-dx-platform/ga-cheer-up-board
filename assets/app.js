@@ -12,9 +12,12 @@ const sb = supabase.createClient(
    CONSTANTS
    ══════════════════════════════════════════════════════════ */
 const CAT = {
-  thank_you: { label: 'ขอบคุณ',     emoji: '💝', cls: 'thank_you' },
-  idea:      { label: 'ไอเดีย',      emoji: '💡', cls: 'idea'      },
-  cheer_up:  { label: 'ให้กำลังใจ', emoji: '🌈', cls: 'cheer_up'  },
+  thank_you:   { label: 'ขอบคุณ',          emoji: '💝', cls: 'thank_you' },
+  cheer_up:    { label: 'ให้กำลังใจ',       emoji: '🌈', cls: 'cheer_up' },
+  idea:        { label: 'ไอเดีย',           emoji: '💡', cls: 'idea' },
+  want_to_say: { label: 'อยากบอก',         emoji: '📢', cls: 'want_to_say' },
+  help:        { label: 'ขอความช่วยเหลือ',   emoji: '🙋‍♀️', cls: 'help' },
+  others:      { label: 'อื่นๆ',             emoji: '🔮', cls: 'others' }
 };
 
 const ROTS = [0.6, -0.8, 0.4, -0.5, 0.7, -0.6, 0.5, -0.4, 0.8, -0.7, 0.3, -0.9];
