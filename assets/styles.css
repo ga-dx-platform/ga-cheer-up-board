@@ -1899,3 +1899,24 @@ mark.search-match {
   .focus-split-right { max-height: 50dvh; }
   .focus-image { max-height: 160px; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   NEW CATEGORIES: want_to_say · help · others
+   ══════════════════════════════════════════════════════════ */
+:root {
+  --cat-purple: rgba(139, 92, 246, 0.50);
+  --cat-amber:  rgba(245, 158, 11, 0.50);
+  --cat-slate:  rgba(107, 114, 128, 0.50);
+}
+
+.card[data-category="want_to_say"] { border-left: 3px solid var(--cat-purple) !important; }
+.card[data-category="help"]        { border-left: 3px solid var(--cat-amber) !important; }
+.card[data-category="others"]      { border-left: 3px solid var(--cat-slate) !important; }
+
+.badge-want_to_say { background: rgba(139, 92, 246, 0.15); color: #6d28d9; border: 1px solid rgba(139, 92, 246, 0.30); }
+.badge-help        { background: rgba(245, 158, 11, 0.15);  color: #b45309; border: 1px solid rgba(245, 158, 11, 0.30); }
+.badge-others      { background: rgba(107, 114, 128, 0.15); color: #374151; border: 1px solid rgba(107, 114, 128, 0.30); }
+
+.cat-tab-want_to_say.active { background: linear-gradient(145deg, rgba(216, 180, 254, 0.9), rgba(192, 132, 252, 0.75)); border-color: rgba(139, 92, 246, 0.45); color: #6d28d9; box-shadow: 0 3px 10px rgba(139, 92, 246, 0.18); }
+.cat-tab-help.active        { background: linear-gradient(145deg, rgba(253, 230, 138, 0.9), rgba(252, 211, 77, 0.75));  border-color: rgba(245, 158, 11, 0.45);  color: #b45309; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.18); }
+.cat-tab-others.active      { background: linear-gradient(145deg, rgba(243, 244, 246, 0.9), rgba(229, 231, 235, 0.75)); border-color: rgba(107, 114, 128, 0.45); color: #374151; box-shadow: 0 3px 10px rgba(107, 114, 128, 0.18); }
