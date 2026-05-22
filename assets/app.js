@@ -1781,20 +1781,37 @@ async function handleInlineAdminAction(btn) {
 /* ══════════════════════════════════════════════════════════
    WELCOME MODAL
    ══════════════════════════════════════════════════════════ */
-(function initWelcomeModal() {
-  if (localStorage.getItem('cheer-welcome-seen')) return;
+async function initWelcomeModal() {
   const modal = document.getElementById('welcome-modal');
   const cta   = document.getElementById('welcome-cta');
   if (!modal || !cta) return;
+
+  // Fetch force_welcome from Supabase; fall back to localStorage if table missing
+  let forceWelcome = false;
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('value_bool')
+      .eq('key', 'force_welcome')
+      .single();
+    if (!error && data != null) forceWelcome = data.value_bool ?? false;
+  } catch (_) {
+    // site_settings table not yet created — graceful fallback to localStorage
+  }
+
+  // If force mode is off and user has already seen the modal, skip it
+  if (!forceWelcome && localStorage.getItem('cheer-welcome-seen')) return;
 
   setTimeout(() => modal.classList.remove('hidden'), 800);
 
   cta.addEventListener('click', () => {
     modal.classList.add('hidden');
-    localStorage.setItem('cheer-welcome-seen', 'true');
+    // Only persist to localStorage when not in force mode
+    if (!forceWelcome) localStorage.setItem('cheer-welcome-seen', 'true');
     fireConfetti('thank_you');
   });
-})();
+}
+initWelcomeModal();
 
 /* ══════════════════════════════════════════════════════════
    BOOT

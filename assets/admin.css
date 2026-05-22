@@ -559,9 +559,14 @@
 .toggle-input:checked + .toggle-track {
   background: #ef4444;
 }
-.toggle-input:checked + .toggle-track::after {
+.toggle-input:checked + .toggle-track--launch {
+  background: #f97316;
+}
+.toggle-input:checked + .toggle-track::after,
+.toggle-input:checked + .toggle-track--launch::after {
   transform: translateX(24px);
 }
+.lock-label.is-launch-active { color: #f97316; }
 
 /* ══════════════════════════════════════════════════════════
    BROADCAST MODAL

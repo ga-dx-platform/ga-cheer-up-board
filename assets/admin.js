@@ -77,6 +77,7 @@ function showDashboard() {
   document.getElementById('dashboard-view').classList.remove('a-hidden');
   loadMessages();
   loadBoardSettings();
+  loadForceWelcomeSetting();
   subscribeRealtime();
 }
 
@@ -448,6 +449,48 @@ function applyAdminLockUI(locked) {
   const sw = document.querySelector('.toggle-switch');
   if (sw) sw.setAttribute('aria-checked', String(locked));
 }
+
+/* ══════════════════════════════════════════════════════════
+   SITE SETTINGS — FORCE WELCOME MODAL
+   ══════════════════════════════════════════════════════════ */
+
+async function loadForceWelcomeSetting() {
+  const { data, error } = await sb
+    .from('site_settings')
+    .select('value_bool')
+    .eq('key', 'force_welcome')
+    .single();
+  if (error) { console.warn('[Admin] site_settings load', error); return; }
+  applyForceWelcomeUI(data?.value_bool ?? false);
+}
+
+function applyForceWelcomeUI(active) {
+  const toggle = document.getElementById('toggle-force-welcome');
+  const label  = document.getElementById('force-welcome-label');
+  const sw     = document.getElementById('force-welcome-switch');
+  if (toggle) toggle.checked = active;
+  if (sw)     sw.setAttribute('aria-checked', String(active));
+  if (label)  label.classList.toggle('is-launch-active', active);
+}
+
+document.getElementById('toggle-force-welcome')?.addEventListener('change', async e => {
+  const newState = e.target.checked;
+  applyForceWelcomeUI(newState); // optimistic
+
+  const { error } = await sb
+    .from('site_settings')
+    .upsert({ key: 'force_welcome', value_bool: newState }, { onConflict: 'key' });
+
+  if (error) {
+    console.error('[Admin] force_welcome toggle', error);
+    applyForceWelcomeUI(!newState); // revert on failure
+    showToast('❌ อัปเดตสถานะไม่สำเร็จ');
+    return;
+  }
+  showToast(newState
+    ? '🚀 เปิดโหมด Launch — Welcome แสดงทุกครั้ง'
+    : '✅ อัปเดตสถานะโหมด Launch เรียบร้อย!');
+});
 
 /* ── Lock toggle handler ── */
 document.getElementById('board-lock-toggle')?.addEventListener('change', async e => {
