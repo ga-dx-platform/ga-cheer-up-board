@@ -4,6 +4,10 @@
 -- Admin-controlled Welcome Modal force-show toggle.
 -- ============================================================
 
+-- Required for newer Supabase projects where CREATE on public schema
+-- is not granted by default — this runs the script as the superuser.
+set role postgres;
+
 -- 1. Create the table
 create table if not exists public.site_settings (
   id         bigint generated always as identity primary key,
