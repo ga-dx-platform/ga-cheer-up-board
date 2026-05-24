@@ -147,12 +147,14 @@ function renderStats() {
     engagement += (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) * 2 + (rxn.clap ?? 0) * 2;
     dayCounts[new Date(m.created_at).getDay()]++;
   });
-  document.getElementById('stat-engagement')?.textContent = engagement;
+  const engEl = document.getElementById('stat-engagement');
+  if (engEl) engEl.textContent = engagement;
 
   const DAY_NAMES = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   const maxCount  = Math.max(...dayCounts);
   const activeDay = total === 0 ? '—' : `${DAY_NAMES[dayCounts.indexOf(maxCount)]} (${maxCount})`;
-  document.getElementById('stat-active-day')?.textContent = activeDay;
+  const dayEl = document.getElementById('stat-active-day');
+  if (dayEl) dayEl.textContent = activeDay;
 }
 
 /* ── Render a single row ── */
@@ -269,7 +271,6 @@ async function doPin(id, currentlyPinned) {
 
   } else {
     // Step 1: Global DB reset — authoritative clear regardless of local state.
-    // .eq('is_pinned', true) catches every pinned row even if allAdminMessages is stale.
     const { error: unpinError } = await sb.from('cheer_up_messages')
       .update({ is_pinned: false })
       .eq('is_pinned', true);
@@ -290,6 +291,9 @@ async function doPin(id, currentlyPinned) {
 
   renderStats();
   renderList();
+  if (typeof renderAnalytics === 'function') {
+    renderAnalytics();
+  }
 }
 
 async function doToggleVisible(id, currentlyVisible) {
