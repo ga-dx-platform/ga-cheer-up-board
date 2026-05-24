@@ -1358,26 +1358,86 @@ function subscribeRealtime() {
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'cheer_up_messages' },
       ({ new: msg }) => {
-        const motwEl  = document.getElementById('motw-container');
-        const motwSec = document.getElementById('motw-section');
+        const motwEl       = document.getElementById('motw-container');
+        const motwSec      = document.getElementById('motw-section');
+        const isCurrentMotw = pinnedMsg?.id === msg.id;
+        const boardIdx      = allMessages.findIndex(m => m.id === msg.id);
 
-        // Sync pinned (MOTW) updates
-        const motwCard = motwEl?.querySelector(`[data-id="${msg.id}"]`);
-        if (motwCard) {
+        /*
+         * Three-case state machine for the MOTW ↔ board swap.
+         *
+         * Case A — message was MOTW, now unpinned or hidden
+         *   → clear MOTW section; if still visible push back to board
+         *
+         * Case B — board card just became the new MOTW
+         *   → splice from board array; render MOTW; re-render grid
+         *
+         * Case C — regular board card update (reactions, visibility, etc.)
+         *   → in-place update or remove/add as before
+         *
+         * The two realtime events from a global-unpin + re-pin operation
+         * arrive sequentially; both cases are handled correctly regardless
+         * of which event fires first.
+         */
+
+        // ── Case A: current MOTW was updated ───────────────────────
+        if (isCurrentMotw) {
           if (!msg.is_visible || !msg.is_pinned) {
+            // Clear MOTW section
             motwSec.style.display = 'none';
+            motwEl.innerHTML = '';
+            pinnedMsg = null;
+
+            // If still visible and just unpinned, return it to the board
+            if (msg.is_visible && !msg.is_pinned) {
+              setCommentCount(msg, 0);
+              allMessages.unshift(msg);
+              renderGrid(allMessages);
+              wireReactions();
+              observeCards();
+            }
           } else {
+            // Still MOTW — in-place update (reactions, content, etc.)
             setCommentCount(msg, getCommentCount(pinnedMsg));
             pinnedMsg = msg;
             updateCardReactions(msg.id, msg.reactions);
             updateCommentCounter(msg.id, getCommentCount(msg));
           }
+          return;
         }
 
-        const idx = allMessages.findIndex(m => m.id === msg.id);
+        // ── Case B: a board (or off-screen) card just became MOTW ──
+        if (msg.is_visible && msg.is_pinned && msg.category !== 'announcement') {
+          // Preserve comment count from local cache before splicing
+          const prevCount = boardIdx !== -1 ? getCommentCount(allMessages[boardIdx]) : 0;
+          if (boardIdx !== -1) allMessages.splice(boardIdx, 1);
 
-        if (idx === -1) {
-          // Became visible or un-pinned → add to board
+          setCommentCount(msg, prevCount);
+          pinnedMsg = msg;
+          motwSec.style.display = '';
+          motwEl.innerHTML = renderMotw(msg);
+
+          const motwCard = motwEl.querySelector('.motw-card');
+          if (motwCard) {
+            motwCard.addEventListener('click', e => {
+              if (e.target.closest('.inline-admin-actions')) return;
+              if (!e.target.closest('.rxn-btn') && !e.target.closest('.reactions')) {
+                openFocusMode(motwCard);
+              }
+            });
+            motwCard.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFocusMode(motwCard); }
+            });
+          }
+          // Wire MOTW reactions immediately; renderGrid wires board reactions at end of its last batch
+          wireReactions();
+          renderGrid(allMessages);
+          return;
+        }
+
+        // ── Case C: regular board card update ──────────────────────
+        if (boardIdx === -1) {
+          // Not in board — became visible and unpinned → add it
           if (msg.is_visible && !msg.is_pinned) {
             setCommentCount(msg, 0);
             allMessages.unshift(msg);
@@ -1387,13 +1447,13 @@ function subscribeRealtime() {
         }
 
         if (!msg.is_visible) {
-          allMessages.splice(idx, 1);
+          allMessages.splice(boardIdx, 1);
           renderGrid(allMessages);
           return;
         }
 
-        setCommentCount(msg, getCommentCount(allMessages[idx]));
-        allMessages[idx] = msg;
+        setCommentCount(msg, getCommentCount(allMessages[boardIdx]));
+        allMessages[boardIdx] = msg;
         updateCardReactions(msg.id, msg.reactions);
       }
     )
@@ -1749,12 +1809,29 @@ async function handleInlineAdminAction(btn) {
 
   if (action === 'pin') {
     const currentlyPinned = btn.dataset.pinned === 'true';
-    const { error } = await sb.from('cheer_up_messages')
-      .update({ is_pinned: !currentlyPinned })
-      .eq('id', id);
-    if (error) { console.error('[Admin pin]', error); return; }
-    // Pin/unpin swaps card ↔ MOTW — full reload is simplest correct approach
-    loadBoard();
+
+    if (currentlyPinned) {
+      // Unpin this specific message
+      const { error } = await sb.from('cheer_up_messages')
+        .update({ is_pinned: false })
+        .eq('id', id);
+      if (error) { console.error('[Admin pin]', error); return; }
+
+    } else {
+      // Step 1: Global DB reset — clears ALL pinned messages atomically.
+      // Uses .eq('is_pinned', true) so it's authoritative regardless of local state.
+      const { error: unpinError } = await sb.from('cheer_up_messages')
+        .update({ is_pinned: false })
+        .eq('is_pinned', true);
+      if (unpinError) { console.error('[Admin] Failed to clear previous pin:', unpinError); return; }
+
+      // Step 2: Pin the new target
+      const { error: pinError } = await sb.from('cheer_up_messages')
+        .update({ is_pinned: true })
+        .eq('id', id);
+      if (pinError) { console.error('[Admin pin]', pinError); return; }
+    }
+    // Realtime UPDATE events drive the MOTW ↔ board swap — no full reload needed
 
   } else if (action === 'hide') {
     const { error } = await sb.from('cheer_up_messages')

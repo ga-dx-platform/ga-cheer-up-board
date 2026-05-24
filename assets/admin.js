@@ -252,21 +252,20 @@ async function doPin(id, currentlyPinned) {
     showToast('📌 เลิกปักหมุดแล้ว');
 
   } else {
-    // Remove existing pin before setting the new one
-    const othersPinned = allAdminMessages.filter(m => m.is_pinned && m.id !== id);
-    if (othersPinned.length) {
-      await sb.from('cheer_up_messages')
-        .update({ is_pinned: false })
-        .in('id', othersPinned.map(m => m.id));
-      othersPinned.forEach(m => {
-        const i = allAdminMessages.findIndex(x => x.id === m.id);
-        if (i !== -1) allAdminMessages[i].is_pinned = false;
-      });
-    }
+    // Step 1: Global DB reset — authoritative clear regardless of local state.
+    // .eq('is_pinned', true) catches every pinned row even if allAdminMessages is stale.
+    const { error: unpinError } = await sb.from('cheer_up_messages')
+      .update({ is_pinned: false })
+      .eq('is_pinned', true);
+    if (unpinError) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
 
-    const { error } = await sb.from('cheer_up_messages')
+    // Mirror the DB reset in local state so the UI is consistent before renderList()
+    allAdminMessages.forEach(m => { m.is_pinned = false; });
+
+    // Step 2: Pin the target message
+    const { error: pinError } = await sb.from('cheer_up_messages')
       .update({ is_pinned: true }).eq('id', id);
-    if (error) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
+    if (pinError) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
 
     const idx = allAdminMessages.findIndex(m => m.id === id);
     if (idx !== -1) allAdminMessages[idx].is_pinned = true;
@@ -417,6 +416,18 @@ function subscribeRealtime() {
       ({ new: msg }) => {
         if (allAdminMessages.find(m => m.id === msg.id)) return;
         allAdminMessages.unshift(msg);
+        renderStats();
+        renderList();
+      }
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'cheer_up_messages' },
+      ({ new: msg }) => {
+        // Keeps admin list badges (📌 MOTW, 🙈 ซ่อน) accurate from any pin source.
+        // Merges only DB-provided fields; preserves client-only fields like comments count.
+        const idx = allAdminMessages.findIndex(m => m.id === msg.id);
+        if (idx === -1) return;
+        allAdminMessages[idx] = { ...allAdminMessages[idx], ...msg };
         renderStats();
         renderList();
       }
