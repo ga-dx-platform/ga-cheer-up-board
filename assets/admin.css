@@ -639,6 +639,100 @@
 .broadcast-box .btn-submit { margin-top: 0.5rem; }
 
 /* ══════════════════════════════════════════════════════════
+   ADMIN ANNOUNCEMENT PANEL
+   Separate section from MOTW — manages site_settings banner.
+   ══════════════════════════════════════════════════════════ */
+.aap-panel {
+  background:
+    linear-gradient(135deg,
+      rgba(254,243,199,0.72) 0%,
+      rgba(237,233,254,0.60) 55%,
+      rgba(254,243,199,0.55) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1.5px solid rgba(251,191,36,0.38);
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem 1.375rem;
+  margin-bottom: 1.25rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 4px 20px rgba(251,191,36,0.12);
+}
+
+.aap-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.aap-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.aap-title-group { flex: 1; min-width: 0; }
+
+.aap-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #78350f;
+  margin-bottom: 0.2rem;
+}
+
+.aap-hint {
+  font-size: 0.75rem;
+  color: #92400e;
+  opacity: 0.75;
+  line-height: 1.5;
+}
+
+.aap-body { display: flex; flex-direction: column; gap: 0.55rem; }
+
+.aap-textarea {
+  border-color: rgba(251,191,36,0.45) !important;
+  background: rgba(255,255,255,0.70) !important;
+}
+.aap-textarea:focus {
+  border-color: rgba(180,83,9,0.55) !important;
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.16) !important;
+}
+
+.aap-char-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0;
+}
+.aap-char {
+  font-size: 0.68rem;
+  color: #b45309;
+  font-weight: 500;
+}
+
+.aap-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.aap-save-btn {
+  flex: 1;
+  padding: 0.6rem 1.25rem !important;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  box-shadow: 0 4px 16px rgba(245,158,11,0.35) !important;
+}
+.aap-save-btn:hover:not(:disabled) {
+  box-shadow: 0 7px 22px rgba(245,158,11,0.50) !important;
+}
+
+.aap-clear-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
@@ -653,6 +747,9 @@
   .login-card  { padding: 2.25rem 1.5rem 2rem; }
   .admin-tools-bar { flex-direction: column; align-items: flex-start; }
   .broadcast-box   { padding: 1.75rem 1.25rem 1.5rem; }
+  .aap-actions     { flex-direction: column; }
+  .aap-save-btn    { width: 100%; }
+  .aap-clear-btn   { width: 100%; text-align: center; }
   .admin-toast {
     left: 1rem;
     right: 1rem;

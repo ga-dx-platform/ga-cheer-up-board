@@ -111,6 +111,33 @@
         </label>
       </div>
 
+      <!-- ─── Admin Announcement Panel ───────────────────────── -->
+      <div class="aap-panel" role="region" aria-label="จัดการประกาศแอดมิน">
+        <div class="aap-header">
+          <span class="aap-icon" aria-hidden="true">📢</span>
+          <div class="aap-title-group">
+            <h2 class="aap-title">จัดการประกาศแอดมิน (แถบบาร์บนสุด)</h2>
+            <p class="aap-hint">ข้อความจะแสดงเป็นแถบสีเหลืองบนสุดของหน้าบอร์ดสำหรับทุกคน — เว้นว่างเพื่อซ่อนแถบ</p>
+          </div>
+        </div>
+        <div class="aap-body">
+          <textarea id="announcement-text" class="form-textarea aap-textarea" rows="2" maxlength="200"
+                    placeholder="พิมพ์ข้อความประกาศ เช่น 'ประชุมทีมวันศุกร์นี้ 14:00 น. ห้อง GA-01 📅'"></textarea>
+          <div class="aap-char-row">
+            <span id="aap-char-count" class="aap-char">0</span><span class="aap-char">/200</span>
+          </div>
+          <div class="aap-actions">
+            <button type="button" class="btn-submit aap-save-btn" id="announcement-save-btn">
+              <span id="announcement-save-label">💾 บันทึกประกาศ</span>
+              <span class="spinner a-hidden" id="announcement-spinner" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="action-btn btn-del aap-clear-btn" id="announcement-clear-btn"
+                    aria-label="ล้างประกาศและซ่อนแถบ">✕ ล้างประกาศ</button>
+          </div>
+          <p class="form-error a-hidden" id="announcement-error" role="alert" aria-live="assertive"></p>
+        </div>
+      </div>
+
       <!-- ─── Filter pills ─────────────────────────────────── -->
       <nav class="filter-bar" aria-label="กรองข้อความ">
         <button class="filter-pill active" data-admin-filter="all">ทั้งหมด</button>

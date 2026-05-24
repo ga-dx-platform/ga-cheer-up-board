@@ -78,6 +78,7 @@ function showDashboard() {
   loadMessages();
   loadBoardSettings();
   loadForceWelcomeSetting();
+  loadAdminAnnouncement();
   subscribeRealtime();
 }
 
@@ -588,6 +589,79 @@ document.getElementById('broadcast-submit')?.addEventListener('click', async () 
   closeBroadcastModal();
   showToast('📢 ส่งประกาศแล้ว!');
   await loadMessages();
+});
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN ANNOUNCEMENT BANNER
+   Separate from MOTW — stored in site_settings.admin_announcement
+   (value_text). Empty string = banner hidden on the board.
+   ══════════════════════════════════════════════════════════ */
+
+async function loadAdminAnnouncement() {
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('value_text')
+      .eq('key', 'admin_announcement')
+      .single();
+    if (error) return;
+    const textarea = document.getElementById('announcement-text');
+    if (textarea) {
+      textarea.value = data?.value_text ?? '';
+      updateAapCharCount();
+    }
+  } catch (_) {}
+}
+
+async function saveAdminAnnouncement(text) {
+  const btn     = document.getElementById('announcement-save-btn');
+  const label   = document.getElementById('announcement-save-label');
+  const spinner = document.getElementById('announcement-spinner');
+  const errEl   = document.getElementById('announcement-error');
+
+  errEl?.classList.add('a-hidden');
+  if (btn)    btn.disabled    = true;
+  if (label)  label.textContent = 'กำลังบันทึก...';
+  spinner?.classList.remove('a-hidden');
+
+  const { error } = await sb
+    .from('site_settings')
+    .upsert({ key: 'admin_announcement', value_text: text }, { onConflict: 'key' });
+
+  if (btn)    btn.disabled    = false;
+  if (label)  label.textContent = '💾 บันทึกประกาศ';
+  spinner?.classList.add('a-hidden');
+
+  if (error) {
+    console.error('[Admin] announcement upsert', error);
+    if (errEl) {
+      errEl.textContent = '❌ บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง';
+      errEl.classList.remove('a-hidden');
+    }
+    return;
+  }
+
+  showToast(text ? '📢 บันทึกประกาศแล้ว!' : '✅ ล้างประกาศแล้ว — แถบซ่อนอยู่');
+}
+
+function updateAapCharCount() {
+  const textarea  = document.getElementById('announcement-text');
+  const countEl   = document.getElementById('aap-char-count');
+  if (!textarea || !countEl) return;
+  countEl.textContent = textarea.value.length;
+}
+
+document.getElementById('announcement-text')?.addEventListener('input', updateAapCharCount);
+
+document.getElementById('announcement-save-btn')?.addEventListener('click', () => {
+  const text = document.getElementById('announcement-text')?.value.trim() ?? '';
+  saveAdminAnnouncement(text);
+});
+
+document.getElementById('announcement-clear-btn')?.addEventListener('click', async () => {
+  const textarea = document.getElementById('announcement-text');
+  if (textarea) { textarea.value = ''; updateAapCharCount(); }
+  await saveAdminAnnouncement('');
 });
 
 /* ══════════════════════════════════════════════════════════

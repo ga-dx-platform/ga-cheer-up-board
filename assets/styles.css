@@ -1998,3 +1998,103 @@ mark.search-match {
 .cat-tab-want_to_say.active { background: linear-gradient(145deg, rgba(216, 180, 254, 0.9), rgba(192, 132, 252, 0.75)); border-color: rgba(139, 92, 246, 0.45); color: #6d28d9; box-shadow: 0 3px 10px rgba(139, 92, 246, 0.18); }
 .cat-tab-help.active        { background: linear-gradient(145deg, rgba(253, 230, 138, 0.9), rgba(252, 211, 77, 0.75));  border-color: rgba(245, 158, 11, 0.45);  color: #b45309; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.18); }
 .cat-tab-others.active      { background: linear-gradient(145deg, rgba(243, 244, 246, 0.9), rgba(229, 231, 235, 0.75)); border-color: rgba(107, 114, 128, 0.45); color: #374151; box-shadow: 0 3px 10px rgba(107, 114, 128, 0.18); }
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN ANNOUNCEMENT BANNER
+   Persistent sticky bar between topbar and main content.
+   Fetched from site_settings.admin_announcement (value_text).
+   Hidden by default; JS removes .hidden when text is set.
+   ══════════════════════════════════════════════════════════ */
+
+/*
+ * Sticky positioning places the banner immediately below the fixed
+ * header. top: var(--header-h) ensures it docks flush under the bar
+ * once the page scrolls past its natural document position.
+ * z-index: 190 keeps it below the header (200) and modals (300+).
+ */
+.admin-banner {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 190;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .7rem;
+  padding: .6rem clamp(1rem, 4vw, 2.5rem);
+  background:
+    linear-gradient(135deg,
+      rgba(251,191,36,0.20)  0%,
+      rgba(167,139,250,0.16) 55%,
+      rgba(251,191,36,0.14)  100%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%);
+  border-bottom: 1px solid rgba(251,191,36,0.38);
+  /* Static base shadow — never animates, zero repaints */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.82),
+    0 2px 18px rgba(251,191,36,0.14);
+  font-family: var(--font);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: #78350f;
+  text-align: center;
+  line-height: 1.55;
+  overflow: hidden;
+  isolation: isolate;
+}
+.admin-banner.hidden { display: none; }
+
+/*
+ * GLOW LAYER — opacity trick: the expanded shadow is pre-painted on
+ * ::before at rest (opacity:0). Only opacity is animated (compositor-
+ * thread only, zero repaints). Matches the card hover-shadow pattern.
+ */
+.admin-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 2px 28px rgba(251,191,36,0.30),
+    0 0 0 1px rgba(251,191,36,0.18);
+  opacity: 0;
+  animation: banner-glow 3.5s ease-in-out infinite;
+}
+
+.admin-banner-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  line-height: 1;
+  will-change: transform;
+  animation: banner-bob 3s ease-in-out infinite;
+}
+
+.admin-banner-text {
+  flex: 1;
+  min-width: 0;
+  max-width: 960px;
+}
+
+/* Opacity-only animation — compositor thread, no repaint */
+@keyframes banner-glow {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+
+/* transform is GPU-composited via will-change:transform on the element */
+@keyframes banner-bob {
+  0%, 100% { transform: translateY(0)   rotate(0deg);  }
+  30%       { transform: translateY(-2px) rotate(-8deg); }
+  60%       { transform: translateY(1px)  rotate(4deg);  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-banner::before { animation: none; }
+  .admin-banner-icon    { animation: none; }
+}
+
+@media (max-width: 520px) {
+  .admin-banner { padding: .55rem .875rem; font-size: var(--fs-xs); gap: .45rem; }
+}

@@ -802,7 +802,8 @@ async function loadBoard() {
   }
 
   const rows    = data ?? [];
-  const pinned  = rows.find(m => m.is_pinned);
+  // Only regular user messages qualify as MOTW — announcement banner is separate
+  const pinned  = rows.find(m => m.is_pinned && m.category !== 'announcement');
   const regular = rows.filter(m => !m.is_pinned);
 
   currentOffset = rows.length;
@@ -1414,6 +1415,18 @@ function subscribeRealtime() {
       }
     )
     .subscribe();
+
+  // Site settings — admin announcement banner realtime
+  sb.channel('site-settings-watch')
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'site_settings' },
+      ({ new: settings }) => {
+        if (settings.key === 'admin_announcement') {
+          applyAnnouncementBanner(settings.value_text);
+        }
+      }
+    )
+    .subscribe();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1779,6 +1792,36 @@ async function handleInlineAdminAction(btn) {
 })();
 
 /* ══════════════════════════════════════════════════════════
+   ADMIN ANNOUNCEMENT BANNER
+   Fetches site_settings.admin_announcement (value_text).
+   Shows/hides the sticky bar below the topbar in real-time.
+   ══════════════════════════════════════════════════════════ */
+function applyAnnouncementBanner(text) {
+  const banner = document.getElementById('admin-banner');
+  if (!banner) return;
+  const t = (text ?? '').trim();
+  if (t) {
+    banner.innerHTML =
+      `<span class="admin-banner-icon" aria-hidden="true">📢</span>` +
+      `<span class="admin-banner-text">${esc(t)}</span>`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+async function fetchAdminAnnouncement() {
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('value_text')
+      .eq('key', 'admin_announcement')
+      .single();
+    if (!error) applyAnnouncementBanner(data?.value_text);
+  } catch (_) {}
+}
+
+/* ══════════════════════════════════════════════════════════
    WELCOME MODAL
    ══════════════════════════════════════════════════════════ */
 async function initWelcomeModal() {
@@ -1816,4 +1859,7 @@ initWelcomeModal();
 /* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
-checkAdminSession().then(() => loadBoard().then(subscribeRealtime));
+checkAdminSession().then(() => Promise.all([
+  loadBoard().then(subscribeRealtime),
+  fetchAdminAnnouncement(),
+]));
