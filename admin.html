@@ -67,86 +67,139 @@
 
     <main class="admin-main">
 
-      <!-- ─── Stats bar ────────────────────────────────────── -->
-      <div class="stats-bar" role="region" aria-label="สถิติ">
-        <div class="stat-card">
-          <span class="stat-num" id="stat-total">—</span>
-          <span class="stat-label">ทั้งหมด</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-num" id="stat-visible">—</span>
-          <span class="stat-label">มองเห็น</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-num" id="stat-hidden">—</span>
-          <span class="stat-label">ซ่อนอยู่</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-num" id="stat-pinned">—</span>
-          <span class="stat-label">ปักหมุด (MOTW)</span>
-        </div>
-      </div>
-
-      <!-- ─── Admin Tools Bar ──────────────────────────────── -->
+      <!-- ─── Admin Tools Bar (full-width) ─────────────────── -->
       <div class="admin-tools-bar">
-        <button class="btn-broadcast" id="btn-broadcast" aria-haspopup="dialog">
+        <button class="btn-broadcast" id="btn-broadcast" type="button" aria-haspopup="dialog">
           📢 สร้างประกาศ
         </button>
         <label class="lock-toggle-wrap" for="board-lock-toggle">
           <span class="lock-label" id="lock-label">🟢 รับข้อความอยู่</span>
-          <div class="toggle-switch" role="switch" aria-checked="false">
+          <div class="toggle-switch">
             <input type="checkbox" id="board-lock-toggle" class="toggle-input"
+                   role="switch" aria-checked="false"
                    aria-label="ปิดรับข้อความชั่วคราว" />
             <span class="toggle-track"></span>
           </div>
         </label>
-
         <label class="lock-toggle-wrap" for="toggle-force-welcome">
           <span class="lock-label" id="force-welcome-label">🚀 Welcome ทุกครั้ง (Launch)</span>
-          <div class="toggle-switch" role="switch" aria-checked="false" id="force-welcome-switch">
+          <div class="toggle-switch" id="force-welcome-switch">
             <input type="checkbox" id="toggle-force-welcome" class="toggle-input"
+                   role="switch" aria-checked="false"
                    aria-label="บังคับแสดง Welcome Modal ทุกครั้งที่โหลดหน้า" />
             <span class="toggle-track toggle-track--launch"></span>
           </div>
         </label>
       </div>
 
-      <!-- ─── Admin Announcement Panel ───────────────────────── -->
-      <div class="aap-panel" role="region" aria-label="จัดการประกาศแอดมิน">
-        <div class="aap-header">
-          <span class="aap-icon" aria-hidden="true">📢</span>
-          <div class="aap-title-group">
-            <h2 class="aap-title">จัดการประกาศแอดมิน (แถบบาร์บนสุด)</h2>
-            <p class="aap-hint">ข้อความจะแสดงเป็นแถบสีเหลืองบนสุดของหน้าบอร์ดสำหรับทุกคน — เว้นว่างเพื่อซ่อนแถบ</p>
-          </div>
-        </div>
-        <div class="aap-body">
-          <textarea id="announcement-text" class="form-textarea aap-textarea" rows="2" maxlength="200"
-                    placeholder="พิมพ์ข้อความประกาศ เช่น 'ประชุมทีมวันศุกร์นี้ 14:00 น. ห้อง GA-01 📅'"></textarea>
-          <div class="aap-char-row">
-            <span id="aap-char-count" class="aap-char">0</span><span class="aap-char">/200</span>
-          </div>
-          <div class="aap-actions">
-            <button type="button" class="btn-submit aap-save-btn" id="announcement-save-btn">
-              <span id="announcement-save-label">💾 บันทึกประกาศ</span>
-              <span class="spinner a-hidden" id="announcement-spinner" aria-hidden="true"></span>
-            </button>
-            <button type="button" class="action-btn btn-del aap-clear-btn" id="announcement-clear-btn"
-                    aria-label="ล้างประกาศและซ่อนแถบ">✕ ล้างประกาศ</button>
-          </div>
-          <p class="form-error a-hidden" id="announcement-error" role="alert" aria-live="assertive"></p>
-        </div>
-      </div>
+      <!-- ─── 2-Column Executive Dashboard Grid ────────────── -->
+      <div class="dashboard-grid">
 
-      <!-- ─── Filter pills ─────────────────────────────────── -->
-      <nav class="filter-bar" aria-label="กรองข้อความ">
-        <button class="filter-pill active" data-admin-filter="all">ทั้งหมด</button>
-        <button class="filter-pill" data-admin-filter="visible">👁 มองเห็น</button>
-        <button class="filter-pill" data-admin-filter="hidden">🙈 ซ่อนอยู่</button>
-      </nav>
+        <!-- LEFT: Stats · Announcement · Charts ─────────────── -->
+        <div class="dash-left">
 
-      <!-- ─── Message list ──────────────────────────────────── -->
-      <div id="admin-list" class="admin-list" role="list" aria-label="รายการข้อความ"></div>
+          <!-- 6-Card Executive Overview -->
+          <section class="exec-grid" aria-label="สรุปภาพรวม">
+            <div class="stat-card stat-card--orange">
+              <span class="stat-num" id="stat-total">—</span>
+              <span class="stat-label">ทั้งหมด</span>
+            </div>
+            <div class="stat-card stat-card--green">
+              <span class="stat-num" id="stat-visible">—</span>
+              <span class="stat-label">มองเห็น</span>
+            </div>
+            <div class="stat-card stat-card--rose">
+              <span class="stat-num" id="stat-hidden">—</span>
+              <span class="stat-label">ซ่อนอยู่</span>
+            </div>
+            <div class="stat-card stat-card--amber">
+              <span class="stat-num" id="stat-pinned">—</span>
+              <span class="stat-label">ปักหมุด (MOTW)</span>
+            </div>
+            <div class="stat-card stat-card--violet">
+              <span class="stat-num" id="stat-engagement">—</span>
+              <span class="stat-label">Engagement Score</span>
+            </div>
+            <div class="stat-card stat-card--sky">
+              <span class="stat-num stat-num--sm" id="stat-active-day">—</span>
+              <span class="stat-label">วันที่คึกคักสุด</span>
+            </div>
+          </section>
+
+          <!-- Admin Announcement Panel -->
+          <div class="aap-panel" role="region" aria-label="จัดการประกาศแอดมิน">
+            <div class="aap-header">
+              <span class="aap-icon" aria-hidden="true">📢</span>
+              <div class="aap-title-group">
+                <h2 class="aap-title">จัดการประกาศแอดมิน (แถบบาร์บนสุด)</h2>
+                <p class="aap-hint">ข้อความจะแสดงเป็นแถบสีเหลืองบนสุดของหน้าบอร์ดสำหรับทุกคน — เว้นว่างเพื่อซ่อนแถบ</p>
+              </div>
+            </div>
+            <div class="aap-body">
+              <textarea id="announcement-text" class="form-textarea aap-textarea" rows="2" maxlength="200"
+                        placeholder="พิมพ์ข้อความประกาศ เช่น 'ประชุมทีมวันศุกร์นี้ 14:00 น. ห้อง GA-01 📅'"></textarea>
+              <div class="aap-char-row">
+                <span id="aap-char-count" class="aap-char">0</span><span class="aap-char">/200</span>
+              </div>
+              <div class="aap-actions">
+                <button type="button" class="btn-submit aap-save-btn" id="announcement-save-btn">
+                  <span id="announcement-save-label">💾 บันทึกประกาศ</span>
+                  <span class="spinner a-hidden" id="announcement-spinner" aria-hidden="true"></span>
+                </button>
+                <button type="button" class="action-btn btn-del aap-clear-btn" id="announcement-clear-btn"
+                        aria-label="ล้างประกาศและซ่อนแถบ">✕ ล้างประกาศ</button>
+              </div>
+              <p class="form-error a-hidden" id="announcement-error" role="alert" aria-live="assertive"></p>
+            </div>
+          </div>
+
+          <!-- Analytics Charts -->
+          <div class="charts-row">
+            <div class="chart-box">
+              <div class="chart-box-head">
+                <span class="chart-box-title">หมวดหมู่</span>
+                <span class="chart-box-sub">Category Distribution</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="categoryChart" aria-label="กราฟแจกแจงหมวดหมู่" role="img"></canvas>
+              </div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-box-head">
+                <span class="chart-box-title">14 วันที่ผ่านมา</span>
+                <span class="chart-box-sub">Message Timeline</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="timelineChart" aria-label="กราฟข้อความย้อนหลัง 14 วัน" role="img"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /dash-left -->
+
+        <!-- RIGHT: Live Message Feed (sticky) ───────────────── -->
+        <div class="dash-right">
+          <div class="live-panel">
+
+            <div class="live-panel-head">
+              <div class="live-title-group">
+                <span class="live-dot" aria-hidden="true"></span>
+                <h2 class="live-title">Live Message Feed</h2>
+              </div>
+            </div>
+
+            <nav class="filter-bar live-filter" aria-label="กรองข้อความ">
+              <button type="button" class="filter-pill active" data-admin-filter="all">ทั้งหมด</button>
+              <button type="button" class="filter-pill" data-admin-filter="visible">👁 มองเห็น</button>
+              <button type="button" class="filter-pill" data-admin-filter="hidden">🙈 ซ่อนอยู่</button>
+            </nav>
+
+            <div id="admin-list" class="admin-list" role="list" aria-label="รายการข้อความ"></div>
+
+          </div>
+        </div><!-- /dash-right -->
+
+      </div><!-- /dashboard-grid -->
 
     </main>
   </div>
@@ -157,7 +210,7 @@
     <div class="broadcast-box">
       <div class="broadcast-head">
         <h2 class="broadcast-title" id="broadcast-title">📢 สร้างประกาศจากทีม GA</h2>
-        <button class="broadcast-close" id="broadcast-close" aria-label="ปิด">✕</button>
+        <button type="button" class="broadcast-close" id="broadcast-close" aria-label="ปิด">✕</button>
       </div>
       <p class="broadcast-hint">ประกาศจะปักหมุดเป็น MOTW อัตโนมัติพร้อมสไตล์พิเศษ — กดส่งเพื่อแทนที่ MOTW เดิม</p>
       <div class="field-section">
@@ -166,7 +219,7 @@
                   placeholder="พิมพ์ข้อความประกาศจากทีม GA..."></textarea>
       </div>
       <p class="form-error a-hidden" id="broadcast-error" role="alert" aria-live="assertive"></p>
-      <button class="btn-submit" id="broadcast-submit">
+      <button type="button" class="btn-submit" id="broadcast-submit">
         <span id="broadcast-submit-label">📢 ประกาศเลย</span>
         <span class="spinner a-hidden" id="broadcast-spinner" aria-hidden="true"></span>
       </button>
@@ -177,6 +230,7 @@
   <div id="toast" class="admin-toast a-hidden" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="assets/admin.js"></script>
 </body>
 </html>

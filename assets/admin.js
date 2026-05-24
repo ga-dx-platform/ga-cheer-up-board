@@ -138,6 +138,21 @@ function renderStats() {
   document.getElementById('stat-visible').textContent = visible;
   document.getElementById('stat-hidden').textContent  = hidden;
   document.getElementById('stat-pinned').textContent  = pinned ? '📌 1' : '—';
+
+  // Engagement Score: thumbs_up×1, heart×2, clap×2
+  let engagement = 0;
+  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+  allAdminMessages.forEach(m => {
+    const rxn = m.reactions ?? {};
+    engagement += (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) * 2 + (rxn.clap ?? 0) * 2;
+    dayCounts[new Date(m.created_at).getDay()]++;
+  });
+  document.getElementById('stat-engagement')?.textContent = engagement;
+
+  const DAY_NAMES = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+  const maxCount  = Math.max(...dayCounts);
+  const activeDay = total === 0 ? '—' : `${DAY_NAMES[dayCounts.indexOf(maxCount)]} (${maxCount})`;
+  document.getElementById('stat-active-day')?.textContent = activeDay;
 }
 
 /* ── Render a single row ── */
@@ -228,6 +243,7 @@ async function loadMessages() {
   allAdminMessages = data ?? [];
   renderStats();
   renderList();
+  renderAnalytics();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -418,6 +434,7 @@ function subscribeRealtime() {
         allAdminMessages.unshift(msg);
         renderStats();
         renderList();
+        renderAnalytics();
       }
     )
     .on('postgres_changes',
@@ -458,7 +475,7 @@ function applyAdminLockUI(locked) {
     label.textContent = locked ? '🔴 ปิดรับข้อความอยู่' : '🟢 รับข้อความอยู่';
     label.classList.toggle('is-locked', locked);
   }
-  const sw = document.querySelector('.toggle-switch');
+  const sw = document.getElementById('board-lock-toggle');
   if (sw) sw.setAttribute('aria-checked', String(locked));
 }
 
@@ -479,9 +496,8 @@ async function loadForceWelcomeSetting() {
 function applyForceWelcomeUI(active) {
   const toggle = document.getElementById('toggle-force-welcome');
   const label  = document.getElementById('force-welcome-label');
-  const sw     = document.getElementById('force-welcome-switch');
   if (toggle) toggle.checked = active;
-  if (sw)     sw.setAttribute('aria-checked', String(active));
+  if (toggle) toggle.setAttribute('aria-checked', String(active));
   if (label)  label.classList.toggle('is-launch-active', active);
 }
 
@@ -565,13 +581,10 @@ document.getElementById('broadcast-submit')?.addEventListener('click', async () 
   if (label)   label.textContent = 'กำลังส่ง...';
   spinner?.classList.remove('a-hidden');
 
-  // Unpin any current pinned messages
-  const currentlyPinned = allAdminMessages.filter(m => m.is_pinned);
-  if (currentlyPinned.length) {
-    await sb.from('cheer_up_messages')
-      .update({ is_pinned: false })
-      .in('id', currentlyPinned.map(m => m.id));
-  }
+  // DB-authoritative reset — clears all pinned rows regardless of local state
+  await sb.from('cheer_up_messages')
+    .update({ is_pinned: false })
+    .eq('is_pinned', true);
 
   const { error } = await sb
     .from('cheer_up_messages')
@@ -674,6 +687,155 @@ document.getElementById('announcement-clear-btn')?.addEventListener('click', asy
   if (textarea) { textarea.value = ''; updateAapCharCount(); }
   await saveAdminAnnouncement('');
 });
+
+/* ══════════════════════════════════════════════════════════
+   ANALYTICS & CHARTS  (Chart.js v4)
+   ══════════════════════════════════════════════════════════ */
+
+const doughnutCenterText = {
+  id: 'doughnutCenterText',
+  beforeDatasetsDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+    const total = (chart.data.datasets[0]?.data ?? []).reduce((a, b) => a + b, 0);
+    const { width, height, ctx } = chart;
+    const sz = Math.min(width, height);
+    ctx.save();
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = '#111827';
+    ctx.font         = `700 ${(sz * 0.14).toFixed(0)}px Kanit, sans-serif`;
+    ctx.fillText(total, width / 2, height / 2 - sz * 0.06);
+    ctx.fillStyle = '#9ca3af';
+    ctx.font      = `400 ${(sz * 0.075).toFixed(0)}px Kanit, sans-serif`;
+    ctx.fillText('ทั้งหมด', width / 2, height / 2 + sz * 0.1);
+    ctx.restore();
+  }
+};
+
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.font.family = 'Kanit, sans-serif';
+}
+
+let _categoryChart = null;
+let _timelineChart = null;
+
+function buildTimelineData() {
+  const DAYS   = 14;
+  const now    = new Date();
+  const counts = new Array(DAYS).fill(0);
+  const labels = [];
+
+  for (let i = DAYS - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    labels.push(`${d.getDate()}/${d.getMonth() + 1}`);
+  }
+  allAdminMessages.forEach(m => {
+    const diff = Math.floor((now - new Date(m.created_at)) / 86_400_000);
+    if (diff >= 0 && diff < DAYS) counts[DAYS - 1 - diff]++;
+  });
+  return { labels, counts };
+}
+
+function renderCategoryChart(catCounts) {
+  const canvas = document.getElementById('categoryChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const keys   = Object.keys(CAT);
+  const labels = keys.map(k => `${CAT[k].emoji} ${CAT[k].label}`);
+  const data   = keys.map(k => catCounts[k] ?? 0);
+  const colors = ['#f97316', '#22c55e', '#eab308', '#3b82f6', '#ec4899', '#8b5cf6'];
+
+  if (_categoryChart) {
+    _categoryChart.data.datasets[0].data = data;
+    _categoryChart.update('none');
+    return;
+  }
+
+  _categoryChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.85)',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+      },
+    },
+    plugins: [doughnutCenterText],
+  });
+}
+
+function renderTimelineChart({ labels, counts }) {
+  const canvas = document.getElementById('timelineChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  if (_timelineChart) {
+    _timelineChart.data.labels           = labels;
+    _timelineChart.data.datasets[0].data = counts;
+    _timelineChart.update('none');
+    return;
+  }
+
+  _timelineChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'ข้อความ',
+        data: counts,
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139,92,246,0.10)',
+        borderWidth: 2,
+        pointBackgroundColor: '#8b5cf6',
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        fill: true,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10 }, maxRotation: 0, maxTicksLimit: 7 },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, font: { size: 10 } },
+          grid: { color: 'rgba(0,0,0,0.06)' },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} ข้อความ` } },
+      },
+    },
+  });
+}
+
+function renderAnalytics() {
+  const catCounts = {};
+  Object.keys(CAT).forEach(k => { catCounts[k] = 0; });
+  allAdminMessages.forEach(m => {
+    if (m.category in catCounts) catCounts[m.category]++;
+  });
+  renderCategoryChart(catCounts);
+  renderTimelineChart(buildTimelineData());
+}
 
 /* ══════════════════════════════════════════════════════════
    BOOT

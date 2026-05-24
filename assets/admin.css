@@ -764,3 +764,194 @@
     to   { opacity: 0; transform: translateY(8px); }
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   EXECUTIVE DASHBOARD — 2-COLUMN GRID
+   ══════════════════════════════════════════════════════════ */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.dash-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.dash-right {
+  position: sticky;
+  top: calc(70px + 1rem);
+  height: calc(100dvh - 70px - 3rem);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── 6-Card Executive Overview ── */
+.exec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+/* Override and extend the base .stat-card with exec styling */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 1.125rem 0.875rem 1rem;
+  cursor: default;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+}
+
+/* Accent top bar via pseudo-element */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+.stat-card--orange::before { background: linear-gradient(90deg, #f97316, #fb923c); }
+.stat-card--green::before  { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.stat-card--rose::before   { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+.stat-card--amber::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.stat-card--violet::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.stat-card--sky::before    { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+
+/* Override base sizes for exec grid */
+.stat-num { font-size: 2rem; }
+.stat-num--sm { font-size: 1.1rem; line-height: 1.3; }
+.stat-label { font-size: 0.67rem; line-height: 1.4; }
+
+/* ── Analytics Charts ── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+.chart-box {
+  background: rgba(255,255,255,0.72);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1.5px solid rgba(255,255,255,0.80);
+  border-radius: 18px;
+  padding: 1.125rem 1rem 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  min-width: 0;
+}
+
+.chart-box-head { margin-bottom: 0.75rem; }
+
+.chart-box-title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.1rem;
+}
+
+.chart-box-sub {
+  display: block;
+  font-size: 0.67rem;
+  color: #9ca3af;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 200px;
+}
+
+/* ── Live Feed Panel (right column) ── */
+.live-panel {
+  background: rgba(255,255,255,0.72);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1.5px solid rgba(255,255,255,0.80);
+  border-radius: 22px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.live-panel-head {
+  padding: 1.125rem 1.25rem 0.875rem;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  flex-shrink: 0;
+}
+
+.live-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.live-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* Scoped filter bar inside live panel */
+.live-filter {
+  padding: 0.625rem 1.25rem !important;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  flex-shrink: 0;
+  margin-bottom: 0 !important;
+}
+
+/* Scrollable message list inside live panel */
+.live-panel .admin-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+.live-panel .admin-list::-webkit-scrollbar { width: 4px; }
+.live-panel .admin-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 4px;
+}
+
+/* ── Responsive: stack to 1-column at ≤ 1100px ── */
+@media (max-width: 1100px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .dash-right     { position: static; height: auto; }
+  .live-panel     { height: 640px; }
+}
+
+@media (max-width: 700px) {
+  .exec-grid  { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 440px) {
+  .exec-grid { grid-template-columns: 1fr 1fr; }
+}
