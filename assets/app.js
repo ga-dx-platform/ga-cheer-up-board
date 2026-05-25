@@ -682,6 +682,33 @@ function renderGrid(messages) {
   requestAnimationFrame(renderBatch);
 }
 
+function renderBoard() {
+  renderGrid(allMessages);
+}
+
+function renderPinnedMessage() {
+  const motwEl  = document.getElementById('motw-container');
+  const motwSec = document.getElementById('motw-section');
+  if (!pinnedMsg) {
+    motwSec.style.display = 'none';
+    motwEl.innerHTML = '';
+    return;
+  }
+  motwSec.style.display = '';
+  motwEl.innerHTML = renderMotw(pinnedMsg);
+  const motwCard = motwEl.querySelector('.motw-card');
+  if (motwCard) {
+    motwCard.addEventListener('click', e => {
+      if (e.target.closest('.inline-admin-actions')) return;
+      if (!e.target.closest('.rxn-btn') && !e.target.closest('.reactions')) openFocusMode(motwCard);
+    });
+    motwCard.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFocusMode(motwCard); }
+    });
+  }
+  wireReactions();
+}
+
 function appendToBoard(newMessages) {
   const board = document.getElementById('board');
   const q = searchQuery.trim().toLowerCase();
@@ -1458,6 +1485,9 @@ function subscribeRealtime() {
         setCommentCount(msg, getCommentCount(allMessages[boardIdx]));
         allMessages[boardIdx] = msg;
         updateCardReactions(msg.id, msg.reactions);
+        // Force the UI to reflect the new state instantly without page reload
+        if (typeof renderPinnedMessage === 'function') renderPinnedMessage();
+        if (typeof renderBoard === 'function') renderBoard();
       }
     )
     .on('postgres_changes',
