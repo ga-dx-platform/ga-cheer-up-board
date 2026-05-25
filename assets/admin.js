@@ -126,26 +126,46 @@ const thaiVariations = {
 };
 
 const _censorRegex = (() => {
-  const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const all = [];
-  // Thai/English character variations (Unicode-specific, low false-positive risk)
+  const escRe      = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const isAlphaNum = s => /^[A-Za-z0-9]+$/.test(s);
+  const isAscii    = s => /^[\x20-\x7E]+$/.test(s);
+
+  const thai = [], asciiWord = [], asciiSym = [];
+
+  const add = v => {
+    const e = escRe(v);
+    if (!isAscii(v))        thai.push(e);      // Thai Unicode — no word boundaries
+    else if (isAlphaNum(v)) asciiWord.push(e); // Pure letters/digits — needs \b to avoid Scunthorpe
+    else                    asciiSym.push(e);  // Leet/symbol variants — special chars act as delimiters
+  };
+
   [thaiVariations, englishVariations].forEach(map =>
-    Object.values(map).forEach(vs => vs.forEach(v => all.push(escRe(v))))
+    Object.values(map).forEach(vs => vs.forEach(add))
   );
   // Karaoke (romanized Thai) — minimum 3 chars to avoid single-letter false positives
   Object.values(thaiKaraokeMapping).forEach(vs =>
-    vs.filter(v => v.length >= 3).forEach(v => all.push(escRe(v)))
+    vs.filter(v => v.length >= 3).forEach(add)
   );
-  // Base word lists
-  [...defaultThaiProfanityList, ...defaultEnglishProfanityList].forEach(w => all.push(escRe(w)));
-  // Deduplicate; sort longest first so multi-char patterns win over substrings
-  const unique = [...new Set(all)].sort((a, b) => b.length - a.length);
-  return new RegExp(unique.join('|'), 'gi');
+  [...defaultThaiProfanityList, ...defaultEnglishProfanityList].forEach(add);
+
+  const dedup = arr => [...new Set(arr)].sort((a, b) => b.length - a.length);
+
+  return {
+    thai:      thai.length      ? new RegExp(dedup(thai).join('|'), 'gi') : null,
+    // \b boundaries prevent "hee" matching inside "cheer", "hear" inside "cheer", etc.
+    asciiWord: asciiWord.length ? new RegExp(`\\b(?:${dedup(asciiWord).join('|')})\\b`, 'gi') : null,
+    asciiSym:  asciiSym.length  ? new RegExp(dedup(asciiSym).join('|'), 'gi') : null,
+  };
 })();
 
 function censorText(text) {
   if (!text) return text;
-  return String(text).replace(_censorRegex, match => '*'.repeat(match.length));
+  let out = String(text);
+  const { thai, asciiWord, asciiSym } = _censorRegex;
+  if (thai)      out = out.replace(thai,      m => '*'.repeat(m.length));
+  if (asciiWord) out = out.replace(asciiWord, m => '*'.repeat(m.length));
+  if (asciiSym)  out = out.replace(asciiSym,  m => '*'.repeat(m.length));
+  return out;
 }
 
 /* ══════════════════════════════════════════════════════════
