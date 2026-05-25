@@ -1412,6 +1412,9 @@ function subscribeRealtime() {
           const prevCount = boardIdx !== -1 ? getCommentCount(allMessages[boardIdx]) : 0;
           if (boardIdx !== -1) allMessages.splice(boardIdx, 1);
 
+          // Zero out any stale is_pinned flags — guards against out-of-order realtime events
+          allMessages.forEach(m => { m.is_pinned = false; });
+
           setCommentCount(msg, prevCount);
           pinnedMsg = msg;
           motwSec.style.display = '';

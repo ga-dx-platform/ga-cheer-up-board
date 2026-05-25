@@ -381,9 +381,7 @@ async function doPin(id, currentlyPinned) {
 
   renderStats();
   renderList();
-  if (typeof renderAnalytics === 'function') {
-    renderAnalytics();
-  }
+  renderAnalytics();
 }
 
 async function doToggleVisible(id, currentlyVisible) {
@@ -545,9 +543,21 @@ function subscribeRealtime() {
         // Merges only DB-provided fields; preserves client-only fields like comments count.
         const idx = allAdminMessages.findIndex(m => m.id === msg.id);
         if (idx === -1) return;
+
+        // When a new pin arrives from any source (another admin window, public board),
+        // clear stale is_pinned on all other rows before merging — handles out-of-order events
+        if (msg.is_pinned) {
+          allAdminMessages.forEach(m => { if (m.id !== msg.id) m.is_pinned = false; });
+        }
+
         allAdminMessages[idx] = { ...allAdminMessages[idx], ...msg };
+
+        const listEl = document.getElementById('admin-list');
+        const savedScroll = listEl ? listEl.scrollTop : 0;
         renderStats();
         renderList();
+        if (listEl) listEl.scrollTop = savedScroll;
+        renderAnalytics();
       }
     )
     .subscribe();
