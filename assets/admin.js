@@ -282,6 +282,7 @@ function showDashboard() {
   loadForceWelcomeSetting();
   loadAdminAnnouncement();
   loadAuditLogs();
+  loadFeedbacks();
   subscribeRealtime();
 }
 
@@ -1084,6 +1085,110 @@ function renderAnalytics() {
   renderCategoryChart(catCounts);
   renderTimelineChart(buildTimelineData());
 }
+
+/* ══════════════════════════════════════════════════════════
+   FEEDBACK INBOX
+   ══════════════════════════════════════════════════════════ */
+
+function feedbackDateTime(iso) {
+  return new Date(iso).toLocaleString('th-TH', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function renderFeedbacks(feedbacks) {
+  const listEl = document.getElementById('feedback-list');
+  if (!listEl) return;
+
+  if (feedbacks.length === 0) {
+    listEl.innerHTML = `
+      <div class="feedback-empty" role="status">
+        <span style="font-size:2.2rem">📭</span>
+        <p>ยังไม่มีข้อเสนอแนะใหม่</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = feedbacks.map(fb => `
+    <div class="feedback-item" data-feedback-id="${fb.id}" role="listitem">
+      <div class="feedback-item-head">
+        <div class="feedback-item-meta">
+          <span class="feedback-sender">👤 ${esc(fb.sender_name ?? 'ไม่ระบุชื่อ')}</span>
+          <span class="feedback-time">${feedbackDateTime(fb.created_at)}</span>
+        </div>
+        <button class="btn-del-feedback" data-id="${fb.id}" aria-label="ลบข้อเสนอแนะ">
+          🗑 ลบ
+        </button>
+      </div>
+      <p class="feedback-msg">${esc(fb.message)}</p>
+    </div>`).join('');
+
+  listEl.querySelectorAll('.btn-del-feedback').forEach(btn => {
+    btn.addEventListener('click', () => doDeleteFeedback(btn.dataset.id));
+  });
+}
+
+async function loadFeedbacks() {
+  const badge = document.getElementById('feedback-badge');
+
+  const { data, error } = await sb
+    .from('app_feedbacks')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) { console.warn('[Admin] feedbacks', error); return; }
+
+  const feedbacks = data ?? [];
+  const count     = feedbacks.length;
+
+  if (badge) {
+    badge.textContent  = count;
+    badge.style.display = count > 0 ? 'inline' : 'none';
+  }
+
+  renderFeedbacks(feedbacks);
+}
+
+async function doDeleteFeedback(id) {
+  if (!window.confirm('ต้องการลบข้อเสนอแนะนี้ถาวรหรือไม่?')) return;
+
+  const btn = document.querySelector(`.btn-del-feedback[data-id="${id}"]`);
+  if (btn) btn.disabled = true;
+
+  const { error } = await sb.from('app_feedbacks').delete().eq('id', id);
+
+  if (error) {
+    console.error('[Admin] delete feedback', error);
+    showToast('❌ ลบไม่สำเร็จ กรุณาลองใหม่');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  showToast('🗑 ลบข้อเสนอแนะแล้ว');
+  loadFeedbacks();
+}
+
+/* ── Feedback inbox modal open / close ── */
+function openFeedbackInbox() {
+  const modal = document.getElementById('feedback-inbox-modal');
+  if (!modal) return;
+  modal.classList.remove('a-hidden');
+  loadFeedbacks();
+}
+
+function closeFeedbackInbox() {
+  document.getElementById('feedback-inbox-modal')?.classList.add('a-hidden');
+}
+
+document.getElementById('btn-open-feedbacks')?.addEventListener('click', openFeedbackInbox);
+document.getElementById('feedback-inbox-close')?.addEventListener('click', closeFeedbackInbox);
+document.getElementById('feedback-inbox-modal')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeFeedbackInbox();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeFeedbackInbox();
+});
 
 /* ══════════════════════════════════════════════════════════
    BOOT
