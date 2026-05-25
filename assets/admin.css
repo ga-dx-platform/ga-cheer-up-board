@@ -955,3 +955,127 @@
 @media (max-width: 440px) {
   .exec-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   AUDIT LOG PANEL
+   ══════════════════════════════════════════════════════════ */
+.audit-panel {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1.5px solid rgba(255,255,255,0.72);
+  border-radius: 20px;
+  padding: 1.125rem 1.25rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.audit-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
+}
+
+.audit-icon { font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
+
+.audit-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0;
+}
+
+.audit-log-list {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.14) transparent;
+}
+.audit-log-list::-webkit-scrollbar { width: 4px; }
+.audit-log-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 4px;
+}
+.audit-log-list::-webkit-scrollbar-track { background: transparent; }
+
+.audit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: background 0.15s ease;
+}
+.audit-item:hover { background: rgba(255,255,255,0.82); }
+
+.audit-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+}
+
+.audit-pill--green {
+  background: rgba(34,197,94,0.14);
+  color: #166534;
+  border: 1px solid rgba(34,197,94,0.30);
+}
+.audit-pill--red {
+  background: rgba(239,68,68,0.12);
+  color: #991b1b;
+  border: 1px solid rgba(239,68,68,0.28);
+}
+.audit-pill--amber {
+  background: rgba(245,158,11,0.13);
+  color: #92400e;
+  border: 1px solid rgba(245,158,11,0.30);
+}
+
+.audit-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.audit-actor {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audit-detail {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audit-ts {
+  font-size: 0.67rem;
+  color: #c4c4d0;
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.audit-empty {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
