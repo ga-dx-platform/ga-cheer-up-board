@@ -63,21 +63,98 @@ function compressImage(file) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   AUTO-CENSOR
+   AUTO-CENSOR ENGINE
    ══════════════════════════════════════════════════════════ */
-const BANNED_WORDS = [
-  'badword1',
-  'badword2',
-  // Add Thai/English profanities here
+const defaultThaiProfanityList = [
+  'เหี้ย', 'สัส', 'ควย', 'เย็ด', 'แม่ง', 'กู', 'มึง', 'ไอ้', 'อีดอก', 'ระยำ',
+  'หี', 'แตด', 'ห่า', 'ชิบหาย', 'แม่เย็ด', 'พ่อมึงตาย', 'ไอ้สัตว์', 'อีสัตว์',
+  'เชี่ย', 'เชี้ย', 'แม่มึง', 'พ่อมึง', 'ตอแหล', 'ส้นตีน', 'อีห่า', 'อีเหี้ย', 'ไอ้เหี้ย',
+  'อีควาย', 'ไอ้ควาย', 'อีชั่ว', 'อีบ้า', 'ไอ้บ้า', 'อีโง่', 'ไอ้โง่', 'อีหน้าด้าน',
+  'อีหน้าหี', 'ไอ้หน้าหี', 'อีตัว', 'กระหรี่', 'แรด', 'อีแรด', 'ดอกทอง', 'อีดอกทอง',
+  'จัญไร', 'อีจัญไร', 'ขี้', 'เลว', 'อีเลว', 'สารเลว', 'หน้าตัวเมีย', 'ตัวเมีย',
+  'หน้าผี', 'ผีน้อย', 'ไอ้ผี', 'อีผี', 'ทุเรศ', 'อีทุเรศ', 'เปรต', 'อีเปรต', 'ไอ้เปรต',
+  'นรก', 'ตกนรก', 'หน้าโง่', 'โง่เง่า', 'งั่ง', 'ปัญญาอ่อน', 'สมองน้อย', 'ไร้สมอง',
+  'ควายถึก', 'ควายเถิก', 'กาก', 'ขยะ', 'ขยะสังคม', 'ลูกหี', 'ลูกหำ', 'ไอ้หำ', 'อีหำ',
+  'พ่อง', 'แม่ง', 'น่าเกลียด',
 ];
 
-const _censorRegex = BANNED_WORDS.length
-  ? new RegExp(BANNED_WORDS.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi')
-  : null;
+const defaultEnglishProfanityList = [
+  'fuck', 'shit', 'ass', 'bitch', 'damn', 'hell', 'dick', 'cock', 'pussy',
+  'bastard', 'asshole', 'cunt', 'piss', 'whore', 'slut', 'fag', 'faggot',
+  'nigger', 'nigga', 'crap', 'bullshit', 'motherfucker', 'fucker', 'fucking',
+  'shitty', 'bitchy', 'dickhead', 'jackass', 'dumbass', 'retard', 'retarded',
+  'hoe', 'thot', 'simp', 'incel', 'loser', 'noob', 'trash', 'garbage', 'toxic',
+  'cancer', 'wtf', 'omfg', 'stfu', 'gtfo', 'kys', 'kms',
+];
+
+const thaiKaraokeMapping = {
+  'เหี้ย': ['hia', 'hea', 'hear', 'heya', 'hiya'],
+  'สัส':   ['sus', 'sas', 'sat', 'sud', 'sut'],
+  'ควย':   ['kuay', 'kuai', 'kwai', 'kway', 'quay', 'quai'],
+  'เย็ด':  ['yed', 'yet', 'yedd', 'yaed', 'yad'],
+  'แม่ง':  ['maeng', 'mang', 'meang', 'meng'],
+  'กู':    ['goo', 'koo', 'guu', 'kuu'],
+  'มึง':   ['mueng', 'mung', 'meung', 'muang'],
+  'หี':    ['hee', 'hii', 'heee'],
+  'แตด':   ['taed', 'taet'],
+  'ชิบหาย': ['chibhai', 'shibhai', 'chiphai', 'shiphay'],
+  'ตอแหล': ['torler', 'torlae', 'tohlae', 'tawlae'],
+  'ส้นตีน': ['sontien', 'sontean', 'santien', 'santean'],
+  'ควาย':  ['kwai', 'kway', 'kuai', 'kuay', 'quai', 'quay'],
+  'สัตว์': ['satw', 'sutw'],
+  'โง่':   ['ngo', 'ngoh', 'ngor', 'ngaw'],
+  'เลว':   ['leo', 'lew', 'laew', 'laeo'],
+  'ขี้':   ['kee', 'khee', 'khii'],
+  'ผี':    ['pee', 'phee', 'phii'],
+  'นรก':   ['narok', 'nalok'],
+  'หำ':    ['hum', 'ham', 'haam', 'hahm'],
+};
+
+const englishVariations = {
+  'fuck':  ['fck', 'fuk', 'fuq', 'fvck', 'f*ck', 'f**k', 'f***'],
+  'shit':  ['sh1t', 'sh!t', '$hit', 'sh*t', 'sh**', 's**t'],
+  'ass':   ['@ss', 'a$$', 'a**', '@$$'],
+  'bitch': ['b1tch', 'b!tch', 'b*tch', 'bi+ch'],
+  'damn':  ['d@mn', 'darn', 'd*mn'],
+  'dick':  ['d1ck', 'd!ck', 'd*ck'],
+  'pussy': ['pu$$y', 'p*ssy', 'pu**y'],
+  'hell':  ['h3ll', 'he!!', 'h*ll'],
+};
+
+const thaiVariations = {
+  'เหี้ย': ['เหี้ยย', 'เหี่ย', 'เฮีย', 'เฮี้ย', 'เหิ่ย', 'เฮิ่ย', 'เหี๋ย', 'เหี๊ย', 'เหia', 'เหื่ย', 'เหือ่ย', 'เฮี่ย', 'เฮีย์', 'เฮี๊ย'],
+  'สัส':   ['สาส', 'สาด', 'สัด', 'สัสส์', 'ซัส', 'ซาส', 'ส๊าส', 'ส๋าส', 'สสส', 'สะส', 'สุส', 'สึส', 'สฺส', 'ส@ส', 'ส*ส', 'ส.ั.ส'],
+  'ควย':   ['คอย', 'ค.ว.ย', 'ค_ว_ย', 'กวย', 'กอย', 'ควาย', 'คุย', 'ค9ย', 'ค๙ย', 'ควยยยยยย', 'ควยๆลๆ'],
+  'แม่ง':  ['แม้ง', 'แม่งง', 'ม่ง', 'มง'],
+  'กู':    ['กุ', 'กรู', 'กูู', 'ก.ู', 'กู๋', 'กู๊', 'กูกู'],
+  'มึง':   ['มุง', 'มึ้ง', 'ม.ึ.ง', 'มรึง', 'มืง', 'มึ่ง'],
+  'ไอ้':   ['อิ้', 'ไอ่', 'ไอ๊'],
+  'อี':    ['อิ', 'อี่', 'อี้', 'อื'],
+  'หี':    ['ฮี', 'ฮี่', 'ห.ี', 'หิ'],
+  'บ้า':   ['บ่า', 'บ๊า', 'บ้าา', 'บร้า'],
+};
+
+const _censorRegex = (() => {
+  const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const all = [];
+  // Thai/English character variations (Unicode-specific, low false-positive risk)
+  [thaiVariations, englishVariations].forEach(map =>
+    Object.values(map).forEach(vs => vs.forEach(v => all.push(escRe(v))))
+  );
+  // Karaoke (romanized Thai) — minimum 3 chars to avoid single-letter false positives
+  Object.values(thaiKaraokeMapping).forEach(vs =>
+    vs.filter(v => v.length >= 3).forEach(v => all.push(escRe(v)))
+  );
+  // Base word lists
+  [...defaultThaiProfanityList, ...defaultEnglishProfanityList].forEach(w => all.push(escRe(w)));
+  // Deduplicate; sort longest first so multi-char patterns win over substrings
+  const unique = [...new Set(all)].sort((a, b) => b.length - a.length);
+  return new RegExp(unique.join('|'), 'gi');
+})();
 
 function censorText(text) {
-  if (!_censorRegex) return text;
-  return String(text).replace(_censorRegex, '***');
+  if (!text) return text;
+  return String(text).replace(_censorRegex, match => '*'.repeat(match.length));
 }
 
 /* ══════════════════════════════════════════════════════════
