@@ -2064,6 +2064,109 @@ async function initWelcomeModal() {
 initWelcomeModal();
 
 /* ══════════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════════ */
+function showToast(message, duration = 3500) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-out');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+  }, duration);
+}
+
+/* ══════════════════════════════════════════════════════════
+   FEEDBACK MODAL
+   ══════════════════════════════════════════════════════════ */
+(function initFeedback() {
+  const openBtn       = document.getElementById('btn-open-feedback');
+  const feedbackModal = document.getElementById('feedback-modal');
+  const closeBtn      = document.getElementById('feedback-close');
+  const submitBtn     = document.getElementById('feedback-submit');
+  const textEl        = document.getElementById('feedback-text');
+  const nameEl        = document.getElementById('feedback-name');
+  const errEl         = document.getElementById('feedback-error');
+  const spinnerEl     = document.getElementById('feedback-spinner');
+  const labelEl       = document.getElementById('feedback-submit-label');
+
+  if (!feedbackModal) return;
+
+  let _lastFocused   = null;
+  let _removeTrapFb  = null;
+
+  function openFeedbackModal() {
+    _lastFocused = document.activeElement;
+    feedbackModal.classList.remove('hidden');
+    setTimeout(() => {
+      textEl?.focus();
+      _removeTrapFb = trapFocus(feedbackModal);
+    }, 80);
+  }
+
+  function closeFeedbackModal() {
+    feedbackModal.classList.add('hidden');
+    if (_removeTrapFb) { _removeTrapFb(); _removeTrapFb = null; }
+    _lastFocused?.focus();
+    if (textEl) textEl.value = '';
+    if (nameEl) nameEl.value = '';
+    errEl?.classList.add('hidden');
+  }
+
+  openBtn?.addEventListener('click', openFeedbackModal);
+  closeBtn?.addEventListener('click', closeFeedbackModal);
+  feedbackModal.addEventListener('click', e => {
+    if (e.target === feedbackModal) closeFeedbackModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !feedbackModal.classList.contains('hidden')) closeFeedbackModal();
+  });
+
+  async function submitFeedback() {
+    const text = textEl?.value.trim() ?? '';
+    const name = nameEl?.value.trim() ?? '';
+
+    if (!text) {
+      if (errEl) { errEl.textContent = '✍️ กรุณาเขียนข้อความก่อนนะ'; errEl.classList.remove('hidden'); }
+      textEl?.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    spinnerEl?.classList.remove('hidden');
+    if (labelEl) labelEl.textContent = 'กำลังส่ง...';
+    errEl?.classList.add('hidden');
+
+    const { error } = await sb.from('app_feedbacks').insert({
+      sender_name: name || 'ไม่ระบุชื่อ',
+      message:     text,
+    });
+
+    submitBtn.disabled = false;
+    spinnerEl?.classList.add('hidden');
+    if (labelEl) labelEl.textContent = '💡 ส่งข้อเสนอแนะ';
+
+    if (error) {
+      console.error('[Feedback]', error);
+      if (errEl) { errEl.textContent = 'ส่งไม่สำเร็จ กรุณาลองอีกครั้ง 🙏'; errEl.classList.remove('hidden'); }
+      return;
+    }
+
+    closeFeedbackModal();
+    showToast('✅ ส่งข้อเสนอแนะเรียบร้อย ขอบคุณครับ!');
+  }
+
+  submitBtn?.addEventListener('click', submitFeedback);
+})();
+
+/* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
 checkAdminSession().then(() => Promise.all([

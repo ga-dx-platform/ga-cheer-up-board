@@ -62,14 +62,17 @@
           <p class="logo-sub">แชร์ความรู้สึกดีๆ ให้กัน</p>
         </div>
       </div>
-      <button class="btn-add" id="openModal" aria-haspopup="dialog">
-        <!-- SVG plus/sparkle icon -->
-        <svg class="btn-add-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-          <path d="M10 4 L10 16 M4 10 L16 10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M16 5 L17 3.5 L18 5 L19.5 6 L18 7 L17 8.5 L16 7 L14.5 6 Z" fill="currentColor" opacity="0.85"/>
-        </svg>
-        เพิ่มข้อความ
-      </button>
+      <div class="topbar-actions">
+        <button id="btn-open-feedback" class="btn-ghost">💡 ส่งข้อเสนอแนะ</button>
+        <button class="btn-add" id="openModal" aria-haspopup="dialog">
+          <!-- SVG plus/sparkle icon -->
+          <svg class="btn-add-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <path d="M10 4 L10 16 M4 10 L16 10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M16 5 L17 3.5 L18 5 L19.5 6 L18 7 L17 8.5 L16 7 L14.5 6 Z" fill="currentColor" opacity="0.85"/>
+          </svg>
+          เพิ่มข้อความ
+        </button>
+      </div>
     </div>
   </header>
 
@@ -394,6 +397,41 @@
 
   <!-- Card focus / reading mode overlay -->
   <div id="focus-overlay" class="focus-overlay hidden" aria-modal="true" role="dialog" aria-label="อ่านข้อความ"></div>
+
+  <!-- ═══ Feedback Modal ═══════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="feedback-modal"
+       role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
+    <div class="modal-box feedback-box">
+      <div class="modal-head">
+        <h2 class="modal-title" id="feedback-modal-title">💡 ส่งข้อเสนอแนะถึงทีม GA</h2>
+        <button class="modal-close" id="feedback-close" aria-label="ปิด">✕</button>
+      </div>
+      <p class="feedback-subtitle">มีไอเดียอยากให้บอร์ดมีอะไรเพิ่ม หรือเจอปัญหาการใช้งาน แจ้งเราได้เลย!</p>
+
+      <div class="field-section">
+        <label class="field-label" for="feedback-text">
+          ข้อความ <span class="required">*</span>
+        </label>
+        <textarea id="feedback-text" class="form-textarea" rows="4" maxlength="1000"
+                  placeholder="เขียนข้อเสนอแนะหรือรายงานปัญหา... 💬"></textarea>
+      </div>
+
+      <div class="field-section">
+        <label class="field-label" for="feedback-name">
+          ชื่อของคุณ <span class="field-optional">(ไม่บังคับ)</span>
+        </label>
+        <input type="text" id="feedback-name" class="form-input" maxlength="60"
+               placeholder="ชื่อเล่น หรือชื่อจริง" autocomplete="nickname" />
+      </div>
+
+      <p class="form-error hidden" id="feedback-error" role="alert" aria-live="assertive"></p>
+
+      <button type="button" class="btn-submit" id="feedback-submit">
+        <span id="feedback-submit-label">💡 ส่งข้อเสนอแนะ</span>
+        <span class="spinner hidden" id="feedback-spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
