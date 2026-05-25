@@ -90,6 +90,12 @@
             <span class="toggle-track toggle-track--launch"></span>
           </div>
         </label>
+        <button type="button" class="action-btn" id="btn-open-feedbacks"
+                style="padding:0.5rem 1rem;font-size:0.85rem;background:#fff;border-color:#e5e7eb;color:#374151;">
+          📥 กล่องข้อเสนอแนะ
+          <span id="feedback-badge"
+                style="background:#ef4444;color:#fff;border-radius:9px;padding:2px 6px;font-size:0.7rem;margin-left:6px;display:none;">0</span>
+        </button>
       </div>
 
       <!-- ─── 2-Column Executive Dashboard Grid ────────────── -->
@@ -232,6 +238,19 @@
         <span id="broadcast-submit-label">📢 ประกาศเลย</span>
         <span class="spinner a-hidden" id="broadcast-spinner" aria-hidden="true"></span>
       </button>
+    </div>
+  </div>
+
+  <!-- ═══ Feedback Inbox Modal ════════════════════════════════ -->
+  <div class="broadcast-overlay a-hidden" id="feedback-inbox-modal"
+       role="dialog" aria-modal="true" aria-labelledby="feedback-inbox-title">
+    <div class="broadcast-box feedback-inbox-box">
+      <div class="broadcast-head">
+        <h2 class="broadcast-title" id="feedback-inbox-title">📥 กล่องรับข้อเสนอแนะ (Feedback Inbox)</h2>
+        <button type="button" class="broadcast-close" id="feedback-inbox-close" aria-label="ปิด">✕</button>
+      </div>
+      <p class="broadcast-hint">ข้อเสนอแนะและรายงานปัญหาที่พนักงานส่งมาจากบอร์ดสาธารณะ</p>
+      <div id="feedback-list" class="feedback-list" role="list"></div>
     </div>
   </div>
 
