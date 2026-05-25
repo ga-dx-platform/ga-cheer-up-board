@@ -1969,22 +1969,39 @@ mark.search-match {
 .focus-comment-submit:active:not(:disabled) { transform: scale(0.95); }
 .focus-comment-submit:disabled { opacity: .55; cursor: not-allowed; }
 
-/* ── Mobile: bottom-sheet stacking ──────────────────────── */
-@media (max-width: 680px) {
-  .focus-overlay.split-mode { padding: 0; align-items: flex-end; }
+/* ── Mobile: top-anchored full-height sheet ──────────────── */
+@media (max-width: 640px) {
+  .focus-overlay.split-mode {
+    padding: 1rem 0 0 0;
+    align-items: flex-start;
+  }
   .focus-split {
-    grid-template-columns: 1fr;
-    max-width: 100%; width: 100%;
-    max-height: 92dvh;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    height: 95dvh;
+    max-height: 95dvh;
     border-radius: 20px 20px 0 0;
+    margin: 0;
   }
   .focus-split-left {
     border-right: none;
     border-bottom: 1px solid rgba(0,0,0,0.07);
-    max-height: 42dvh; padding: 1.1rem 1.25rem;
+    flex-shrink: 0;
+    max-height: 40dvh;
+    overflow-y: auto;
+    padding: 1.1rem 1.25rem;
   }
-  .focus-split-right { max-height: 50dvh; }
+  .focus-split-right {
+    flex: 1;
+    overflow: hidden;
+    max-height: none;
+  }
   .focus-image { max-height: 160px; }
+  .focus-comment-input-wrap {
+    padding-bottom: calc(.875rem + env(safe-area-inset-bottom));
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
