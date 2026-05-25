@@ -20,6 +20,21 @@ const CAT = {
   others:      { label: 'อื่นๆ',             emoji: '🔮', cls: 'others' }
 };
 
+const AUDIT_STYLES = {
+  PINNED:               { label: '📌 ปักหมุด',           cls: 'green'  },
+  UNPINNED:             { label: '📌 เลิกปักหมุด',       cls: 'amber'  },
+  HIDDEN:               { label: '🙈 ซ่อน',              cls: 'red'    },
+  SHOWN:                { label: '👁 แสดง',               cls: 'green'  },
+  DELETED:              { label: '🗑 ลบข้อความ',          cls: 'red'    },
+  COMMENT_DELETED:      { label: '🗑 ลบคอมเมนต์',         cls: 'red'    },
+  BOARD_LOCKED:         { label: '🔴 ปิดรับข้อความ',      cls: 'red'    },
+  BOARD_UNLOCKED:       { label: '🟢 เปิดรับข้อความ',     cls: 'green'  },
+  FORCE_WELCOME_ON:     { label: '🚀 เปิด Launch Mode',   cls: 'amber'  },
+  FORCE_WELCOME_OFF:    { label: '✅ ปิด Launch Mode',    cls: 'amber'  },
+  ANNOUNCEMENT_SAVED:   { label: '📢 บันทึกประกาศ',       cls: 'amber'  },
+  ANNOUNCEMENT_CLEARED: { label: '✕ ล้างประกาศ',          cls: 'amber'  },
+};
+
 function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -56,6 +71,78 @@ function showToast(text) {
 }
 
 /* ══════════════════════════════════════════════════════════
+   AUDIT LOG
+   ══════════════════════════════════════════════════════════ */
+
+async function logAdminAction(actionType, targetId, details) {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    const adminEmail = user?.email ?? 'unknown';
+    await sb.from('admin_audit_logs').insert({
+      admin_email: adminEmail,
+      action_type: actionType,
+      target_id:   targetId ?? null,
+      details:     details  ?? null,
+    });
+  } catch (_) { /* audit is intentionally non-blocking */ }
+}
+
+function renderAuditItem(log) {
+  const style  = AUDIT_STYLES[log.action_type] ?? { label: log.action_type, cls: 'amber' };
+  const email  = esc(log.admin_email ?? 'unknown');
+  const detail = log.details ? esc(log.details) : '';
+  const ts     = thaiTime(log.created_at);
+  return `
+    <div class="audit-item audit-item--${style.cls}" role="listitem">
+      <span class="audit-pill audit-pill--${style.cls}">${style.label}</span>
+      <div class="audit-body">
+        <span class="audit-actor">${email}</span>
+        ${detail ? `<span class="audit-detail">${detail}</span>` : ''}
+      </div>
+      <span class="audit-ts">${ts}</span>
+    </div>`;
+}
+
+function renderAuditLogs(logs) {
+  const listEl = document.getElementById('audit-log-list');
+  if (!listEl) return;
+  if (logs.length === 0) {
+    listEl.innerHTML = '<div class="audit-empty">ยังไม่มีประวัติการใช้งาน</div>';
+    return;
+  }
+  listEl.innerHTML = logs.map(renderAuditItem).join('');
+}
+
+function prependAuditEntry(log) {
+  const listEl = document.getElementById('audit-log-list');
+  if (!listEl) return;
+  const emptyEl = listEl.querySelector('.audit-empty');
+  if (emptyEl) emptyEl.remove();
+  listEl.insertAdjacentHTML('afterbegin', renderAuditItem(log));
+}
+
+async function loadAuditLogs() {
+  const listEl = document.getElementById('audit-log-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="audit-empty">⏳ กำลังโหลด...</div>';
+  try {
+    const { data, error } = await sb
+      .from('admin_audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) {
+      console.warn('[Admin] audit_logs unavailable:', error.message);
+      listEl.innerHTML = '<div class="audit-empty">ยังไม่มีประวัติการใช้งาน</div>';
+      return;
+    }
+    renderAuditLogs(data ?? []);
+  } catch (_) {
+    listEl.innerHTML = '<div class="audit-empty">ยังไม่มีประวัติการใช้งาน</div>';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
    AUTH
    ══════════════════════════════════════════════════════════ */
 async function checkSession() {
@@ -79,6 +166,7 @@ function showDashboard() {
   loadBoardSettings();
   loadForceWelcomeSetting();
   loadAdminAnnouncement();
+  loadAuditLogs();
   subscribeRealtime();
 }
 
@@ -268,6 +356,7 @@ async function doPin(id, currentlyPinned) {
     const idx = allAdminMessages.findIndex(m => m.id === id);
     if (idx !== -1) allAdminMessages[idx].is_pinned = false;
     showToast('📌 เลิกปักหมุดแล้ว');
+    logAdminAction('UNPINNED', id, 'เลิกปักหมุดข้อความออกจาก MOTW');
 
   } else {
     // Step 1: Global DB reset — authoritative clear regardless of local state.
@@ -287,6 +376,7 @@ async function doPin(id, currentlyPinned) {
     const idx = allAdminMessages.findIndex(m => m.id === id);
     if (idx !== -1) allAdminMessages[idx].is_pinned = true;
     showToast('📌 ปักหมุดเป็น Message of the Week แล้ว');
+    logAdminAction('PINNED', id, 'ปักหมุดข้อความเป็น MOTW');
   }
 
   renderStats();
@@ -312,6 +402,11 @@ async function doToggleVisible(id, currentlyVisible) {
   }
 
   showToast(currentlyVisible ? '🙈 ซ่อนข้อความแล้ว' : '👁 แสดงข้อความแล้ว');
+  logAdminAction(
+    currentlyVisible ? 'HIDDEN' : 'SHOWN',
+    id,
+    currentlyVisible ? 'ซ่อนข้อความจากบอร์ด' : 'แสดงข้อความบนบอร์ด'
+  );
   renderStats();
   renderList();
 }
@@ -377,6 +472,7 @@ async function doDeleteComment(commentId, messageId) {
   if (error) { showToast('❌ ลบคอมเมนต์ไม่สำเร็จ'); return; }
 
   showToast('🗑 ลบคอมเมนต์แล้ว');
+  logAdminAction('COMMENT_DELETED', commentId, 'ลบคอมเมนต์จากข้อความ ' + messageId);
   fetchAdminComments(messageId);
 }
 
@@ -391,6 +487,7 @@ async function doDelete(id) {
 
   allAdminMessages = allAdminMessages.filter(m => m.id !== id);
   showToast('🗑 ลบข้อความแล้ว');
+  logAdminAction('DELETED', id, 'ลบข้อความออกจากระบบถาวร');
   renderStats();
   renderList();
 }
@@ -452,6 +549,13 @@ function subscribeRealtime() {
         renderStats();
         renderList();
       }
+    )
+    .subscribe();
+
+  sb.channel('admin-audit')
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'admin_audit_logs' },
+      ({ new: log }) => { prependAuditEntry(log); }
     )
     .subscribe();
 }
@@ -522,6 +626,11 @@ document.getElementById('toggle-force-welcome')?.addEventListener('change', asyn
   showToast(newState
     ? '🚀 เปิดโหมด Launch — Welcome แสดงทุกครั้ง'
     : '✅ อัปเดตสถานะโหมด Launch เรียบร้อย!');
+  logAdminAction(
+    newState ? 'FORCE_WELCOME_ON' : 'FORCE_WELCOME_OFF',
+    null,
+    newState ? 'เปิด Launch Mode — Welcome แสดงทุกครั้ง' : 'ปิด Launch Mode'
+  );
 });
 
 /* ── Lock toggle handler ── */
@@ -539,6 +648,11 @@ document.getElementById('board-lock-toggle')?.addEventListener('change', async e
     return;
   }
   showToast(newState ? '🔴 ปิดรับข้อความแล้ว' : '🟢 เปิดรับข้อความแล้ว');
+  logAdminAction(
+    newState ? 'BOARD_LOCKED' : 'BOARD_UNLOCKED',
+    null,
+    newState ? 'ปิดรับข้อความชั่วคราว' : 'เปิดรับข้อความอีกครั้ง'
+  );
 });
 
 /* ── Broadcast Modal ── */
@@ -670,6 +784,11 @@ async function saveAdminAnnouncement(text) {
   }
 
   showToast(text ? '📢 บันทึกประกาศแล้ว!' : '✅ ล้างประกาศแล้ว — แถบซ่อนอยู่');
+  logAdminAction(
+    text ? 'ANNOUNCEMENT_SAVED' : 'ANNOUNCEMENT_CLEARED',
+    null,
+    text ? 'บันทึกข้อความประกาศใหม่' : 'ล้างข้อความประกาศ'
+  );
 }
 
 function updateAapCharCount() {
