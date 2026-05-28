@@ -268,7 +268,7 @@ function renderCard(msg, idx, query = '') {
     </div>` : '';
 
   return `
-    <article class="${classes}" style="--r:${r}deg"
+    <article id="msg-${msg.id}" class="${classes}" style="--r:${r}deg"
              data-id="${msg.id}" data-category="${msg.category}"
              aria-label="${cardLabel}">
       ${newBadge}${popularBadge}${inlineAdminHtml}
@@ -1431,7 +1431,9 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
 
   // Prepend new card + reset filter to show it
   setCommentCount(data, getCommentCount(data));
-  allMessages.unshift(data);
+  if (!allMessages.find(m => m.id === data.id)) {
+    allMessages.unshift(data);
+  }
   setActiveFilter('all');
   wireReactions();
 
@@ -1469,6 +1471,7 @@ function subscribeRealtime() {
           renderGrid(allMessages); // was empty, need full render
           return;
         }
+        if (document.getElementById(`msg-${msg.id}`)) return; // already in DOM
         const tmp = document.createElement('div');
         tmp.innerHTML = renderCard(msg, 0, q).trim();
         const newCard = tmp.firstElementChild;
