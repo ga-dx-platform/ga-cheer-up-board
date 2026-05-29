@@ -134,34 +134,49 @@ const thaiVariations = {
   'บ้า':   ['บ่า', 'บ๊า', 'บ้าา', 'บร้า'],
 };
 
-const _censorRegex = (() => {
+// Thai profanity set for Segmenter exact-matching.
+// Includes defaultThaiProfanityList plus pure-Thai entries from thaiVariations.
+// Mixed Thai+ASCII obfuscations (e.g. 'ส@ส', 'ค.ว.ย') are intentionally excluded
+// because Intl.Segmenter won't produce them as tokens — they'd never match anyway.
+const _thaiProfanitySet = (() => {
+  const isAscii = s => /^[\x00-\x7F]+$/.test(s);
+  const set = new Set(defaultThaiProfanityList);
+  Object.entries(thaiVariations).forEach(([key, variants]) => {
+    set.add(key);
+    variants.forEach(v => { if (!isAscii(v)) set.add(v); });
+  });
+  return set;
+})();
+
+// Segmenter instance — reused across calls (construction is expensive).
+const _thaiSegmenter = new Intl.Segmenter('th', { granularity: 'word' });
+
+// ASCII-only regex: English profanity + Karaoke romanized Thai.
+// \b boundaries are safe for ASCII because spaces/punctuation delimit words.
+// Thai text never enters this pass (it was already handled by the Segmenter).
+const _asciiCensorRegex = (() => {
   const escRe      = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const isAlphaNum = s => /^[A-Za-z0-9]+$/.test(s);
   const isAscii    = s => /^[\x20-\x7E]+$/.test(s);
-
-  const thai = [], asciiWord = [], asciiSym = [];
+  const asciiWord  = [], asciiSym = [];
 
   const add = v => {
+    if (!isAscii(v)) return;
     const e = escRe(v);
-    if (!isAscii(v))        thai.push(e);      // Thai Unicode — no word boundaries
-    else if (isAlphaNum(v)) asciiWord.push(e); // Pure letters/digits — needs \b to avoid Scunthorpe
-    else                    asciiSym.push(e);  // Leet/symbol variants — special chars act as delimiters
+    if (isAlphaNum(v)) asciiWord.push(e);
+    else               asciiSym.push(e);
   };
 
-  [thaiVariations, englishVariations].forEach(map =>
-    Object.values(map).forEach(vs => vs.forEach(add))
-  );
-  // Karaoke (romanized Thai) — minimum 3 chars to avoid single-letter false positives
+  Object.values(englishVariations).forEach(vs => vs.forEach(add));
+  // Karaoke — minimum 3 chars to prevent single-letter false positives
   Object.values(thaiKaraokeMapping).forEach(vs =>
     vs.filter(v => v.length >= 3).forEach(add)
   );
-  [...defaultThaiProfanityList, ...defaultEnglishProfanityList].forEach(add);
+  defaultEnglishProfanityList.forEach(add);
 
   const dedup = arr => [...new Set(arr)].sort((a, b) => b.length - a.length);
 
   return {
-    thai:      thai.length      ? new RegExp(dedup(thai).join('|'), 'gi') : null,
-    // \b boundaries prevent "hee" matching inside "cheer", "hear" inside "cheer", etc.
     asciiWord: asciiWord.length ? new RegExp(`\\b(?:${dedup(asciiWord).join('|')})\\b`, 'gi') : null,
     asciiSym:  asciiSym.length  ? new RegExp(dedup(asciiSym).join('|'), 'gi') : null,
   };
@@ -169,11 +184,18 @@ const _censorRegex = (() => {
 
 function censorText(text) {
   if (!text) return text;
-  let out = String(text);
-  const { thai, asciiWord, asciiSym } = _censorRegex;
-  if (thai)      out = out.replace(thai,      m => '*'.repeat(m.length));
+
+  // Pass 1 — Thai: tokenise with Intl.Segmenter, then exact-match each token.
+  // Solves the Scunthorpe problem: 'กุ' never matches inside 'กุหลาบ' because
+  // the segmenter produces 'กุหลาบ' as one token, not 'กุ' + 'หลาบ'.
+  const segments = [..._thaiSegmenter.segment(String(text))];
+  let out = segments.map(s => _thaiProfanitySet.has(s.segment) ? '***' : s.segment).join('');
+
+  // Pass 2 — ASCII: \b-bounded regex for English words and Karaoke romanized Thai.
+  const { asciiWord, asciiSym } = _asciiCensorRegex;
   if (asciiWord) out = out.replace(asciiWord, m => '*'.repeat(m.length));
   if (asciiSym)  out = out.replace(asciiSym,  m => '*'.repeat(m.length));
+
   return out;
 }
 
