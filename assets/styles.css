@@ -828,7 +828,7 @@ mark.search-match {
 
 /* ── Card Grid ───────────────────────────────────────────── */
 .grid-divider {
-  grid-column: 1 / -1;
+  column-span: all;
   display: flex;
   align-items: center;
   margin: 1rem 0 0.5rem;
@@ -846,13 +846,19 @@ mark.search-match {
 }
 
 .card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: var(--gap);
-  align-items: start; /* cards don't stretch to match the tallest sibling */
+  display: block;
+  column-count: 4;
+  column-gap: 1.25rem;
+  width: 100%;
 }
-@media(max-width:700px) {
-  .card-grid { grid-template-columns: 1fr; }
+@media (max-width: 1200px) {
+  .card-grid { column-count: 3; }
+}
+@media (max-width: 800px) {
+  .card-grid { column-count: 2; }
+}
+@media (max-width: 640px) {
+  .card-grid { column-count: 1; }
 }
 
 /* ── Inline Admin Actions ────────────────────────────────── */
@@ -949,6 +955,12 @@ mark.search-match {
   backface-visibility: hidden;
   content-visibility: auto;
   contain-intrinsic-size: 0 320px;
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: 1.25rem;
 }
 
 /*
