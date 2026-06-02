@@ -792,7 +792,7 @@ async function loadCursorEffectSetting() {
     .select('cursor_effect_enabled')
     .eq('id', 1)
     .single();
-  if (error) { console.warn('[Admin] cursor_effect_enabled load', error); return; }
+  if (error) { console.warn('[Admin] cursor_effect_enabled load', error.message, error.hint); return; }
   applyCursorEffectUI(data?.cursor_effect_enabled ?? true);
 }
 
@@ -812,7 +812,7 @@ document.getElementById('toggle-cursor-effect')?.addEventListener('change', asyn
     .eq('id', 1);
 
   if (error) {
-    console.error('[Admin] cursor_effect toggle', error);
+    console.error('[Admin] cursor_effect toggle', error.message, error.hint);
     applyCursorEffectUI(!newState); // revert on failure
     showToast('❌ อัปเดตสถานะไม่สำเร็จ');
     return;
