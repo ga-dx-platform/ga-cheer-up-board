@@ -302,6 +302,7 @@ function showDashboard() {
   loadMessages();
   loadBoardSettings();
   loadForceWelcomeSetting();
+  loadCursorEffectSetting();
   loadAdminAnnouncement();
   loadAuditLogs();
   loadFeedbacks();
@@ -778,6 +779,48 @@ document.getElementById('toggle-force-welcome')?.addEventListener('change', asyn
     newState ? 'FORCE_WELCOME_ON' : 'FORCE_WELCOME_OFF',
     null,
     newState ? 'เปิด Launch Mode — Welcome แสดงทุกครั้ง' : 'ปิด Launch Mode'
+  );
+});
+
+/* ══════════════════════════════════════════════════════════
+   SITE SETTINGS — CURSOR EFFECT TOGGLE
+   ══════════════════════════════════════════════════════════ */
+
+async function loadCursorEffectSetting() {
+  const { data, error } = await sb
+    .from('site_settings')
+    .select('value_bool')
+    .eq('key', 'cursor_effect_enabled')
+    .single();
+  if (error) { console.warn('[Admin] cursor_effect_enabled load', error); return; }
+  applyCursorEffectUI(data?.value_bool ?? true);
+}
+
+function applyCursorEffectUI(active) {
+  const toggle = document.getElementById('toggle-cursor-effect');
+  if (toggle) toggle.checked = active;
+  if (toggle) toggle.setAttribute('aria-checked', String(active));
+}
+
+document.getElementById('toggle-cursor-effect')?.addEventListener('change', async e => {
+  const newState = e.target.checked;
+  applyCursorEffectUI(newState); // optimistic
+
+  const { error } = await sb
+    .from('site_settings')
+    .upsert({ key: 'cursor_effect_enabled', value_bool: newState }, { onConflict: 'key' });
+
+  if (error) {
+    console.error('[Admin] cursor_effect toggle', error);
+    applyCursorEffectUI(!newState); // revert on failure
+    showToast('❌ อัปเดตสถานะไม่สำเร็จ');
+    return;
+  }
+  showToast(newState ? '✨ เปิดเอฟเฟกต์เมาส์วิบวับแล้ว!' : '✅ ปิดเอฟเฟกต์เมาส์วิบวับแล้ว');
+  logAdminAction(
+    newState ? 'CURSOR_EFFECT_ON' : 'CURSOR_EFFECT_OFF',
+    null,
+    newState ? 'เปิดเอฟเฟกต์เมาส์วิบวับ' : 'ปิดเอฟเฟกต์เมาส์วิบวับ'
   );
 });
 

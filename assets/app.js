@@ -1631,13 +1631,17 @@ function subscribeRealtime() {
     )
     .subscribe();
 
-  // Site settings — admin announcement banner realtime
+  // Site settings — admin announcement banner + cursor effect realtime
   sb.channel('site-settings-watch')
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'site_settings' },
       ({ new: settings }) => {
         if (settings.key === 'admin_announcement') {
           applyAnnouncementBanner(settings.value_text);
+        }
+        if (settings.key === 'cursor_effect_enabled') {
+          if (settings.value_bool) window.cursorEffect.start();
+          else window.cursorEffect.stop();
         }
       }
     )
@@ -2053,6 +2057,21 @@ async function fetchAdminAnnouncement() {
   } catch (_) {}
 }
 
+async function fetchCursorEffectSetting() {
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('value_bool')
+      .eq('key', 'cursor_effect_enabled')
+      .single();
+    // Default to enabled if row doesn't exist yet
+    const enabled = (!error && data != null) ? (data.value_bool ?? true) : true;
+    if (enabled) window.cursorEffect.start();
+  } catch (_) {
+    window.cursorEffect.start(); // graceful fallback
+  }
+}
+
 /* ══════════════════════════════════════════════════════════
    WELCOME MODAL
    ══════════════════════════════════════════════════════════ */
@@ -2220,6 +2239,7 @@ const CursorFollower = (() => {
   let lastX     = -9999;
   let lastY     = -9999;
   let rafId     = null;
+  let _active   = false;
 
   function makeCircle(size, color) {
     const el = document.createElementNS(NS, 'circle');
@@ -2338,15 +2358,28 @@ const CursorFollower = (() => {
     particles = [];
   }
 
-  return { init, destroy };
+  function start() {
+    if (_active) return;
+    _active = true;
+    init();
+  }
+
+  function stop() {
+    if (!_active) return;
+    _active = false;
+    destroy();
+  }
+
+  return { init, destroy, start, stop };
 })();
 
 /* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
-CursorFollower.init();
+window.cursorEffect = CursorFollower;
 
 checkAdminSession().then(() => Promise.all([
   loadBoard().then(subscribeRealtime),
   fetchAdminAnnouncement(),
+  fetchCursorEffectSetting(),
 ]));
