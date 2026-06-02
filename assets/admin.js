@@ -789,11 +789,11 @@ document.getElementById('toggle-force-welcome')?.addEventListener('change', asyn
 async function loadCursorEffectSetting() {
   const { data, error } = await sb
     .from('site_settings')
-    .select('value_bool')
-    .eq('key', 'cursor_effect_enabled')
+    .select('cursor_effect_enabled')
+    .eq('id', 1)
     .single();
   if (error) { console.warn('[Admin] cursor_effect_enabled load', error); return; }
-  applyCursorEffectUI(data?.value_bool ?? true);
+  applyCursorEffectUI(data?.cursor_effect_enabled ?? true);
 }
 
 function applyCursorEffectUI(active) {
@@ -808,7 +808,8 @@ document.getElementById('toggle-cursor-effect')?.addEventListener('change', asyn
 
   const { error } = await sb
     .from('site_settings')
-    .upsert({ key: 'cursor_effect_enabled', value_bool: newState }, { onConflict: 'key' });
+    .update({ cursor_effect_enabled: newState })
+    .eq('id', 1);
 
   if (error) {
     console.error('[Admin] cursor_effect toggle', error);

@@ -1639,8 +1639,8 @@ function subscribeRealtime() {
         if (settings.key === 'admin_announcement') {
           applyAnnouncementBanner(settings.value_text);
         }
-        if (settings.key === 'cursor_effect_enabled') {
-          if (settings.value_bool) window.cursorEffect.start();
+        if (settings.cursor_effect_enabled !== undefined) {
+          if (settings.cursor_effect_enabled) window.cursorEffect.start();
           else window.cursorEffect.stop();
         }
       }
@@ -2061,11 +2061,10 @@ async function fetchCursorEffectSetting() {
   try {
     const { data, error } = await sb
       .from('site_settings')
-      .select('value_bool')
-      .eq('key', 'cursor_effect_enabled')
+      .select('cursor_effect_enabled')
+      .eq('id', 1)
       .single();
-    // Default to enabled if row doesn't exist yet
-    const enabled = (!error && data != null) ? (data.value_bool ?? true) : true;
+    const enabled = (!error && data != null) ? (data.cursor_effect_enabled ?? true) : true;
     if (enabled) window.cursorEffect.start();
   } catch (_) {
     window.cursorEffect.start(); // graceful fallback
@@ -2332,14 +2331,8 @@ const CursorFollower = (() => {
     spawnParticle(x, y);
   }
 
-  function handleMouseMove(e) {
-    onPointerMove(e.clientX, e.clientY);
-  }
-
-  function handleTouchMove(e) {
-    if (!e.touches.length) return;
-    onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
-  }
+  const handleMouseMove = (e) => onPointerMove(e.clientX, e.clientY);
+  const handleTouchMove = (e) => { if (e.touches.length) onPointerMove(e.touches[0].clientX, e.touches[0].clientY); };
 
   function init() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -2354,8 +2347,8 @@ const CursorFollower = (() => {
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('touchmove', handleTouchMove);
-    particles.forEach(p => p.el.remove());
     particles = [];
+    if (svgEl) svgEl.innerHTML = '';
   }
 
   function start() {
