@@ -2192,8 +2192,160 @@ function showToast(message, duration = 3500) {
 })();
 
 /* ══════════════════════════════════════════════════════════
+   CURSOR FOLLOWER  —  SVG particle trail
+   ══════════════════════════════════════════════════════════ */
+const CursorFollower = (() => {
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // Pastel glassmorphic palette
+  const COLORS = [
+    'rgba(255,182,193,0.75)',  // pastel pink
+    'rgba(173,216,230,0.75)',  // pastel sky blue
+    'rgba(255,255,153,0.72)',  // pastel butter yellow
+    'rgba(167,243,208,0.75)',  // pastel mint green
+    'rgba(221,160,221,0.75)',  // pastel lavender
+    'rgba(255,218,185,0.75)',  // pastel peach
+    'rgba(196,181,253,0.75)',  // pastel soft purple
+    'rgba(253,186,153,0.72)',  // pastel warm orange
+  ];
+
+  const SHAPES        = ['circle', 'square', 'triangle'];
+  const MAX_PARTICLES = 28;
+  const SPAWN_DIST_SQ = 14 * 14;  // squared to avoid sqrt in hot path
+  const SIZE_MIN      = 6;
+  const SIZE_MAX      = 18;
+
+  let svgEl     = null;
+  let particles = [];
+  let lastX     = -9999;
+  let lastY     = -9999;
+  let rafId     = null;
+
+  function makeCircle(size, color) {
+    const el = document.createElementNS(NS, 'circle');
+    el.setAttribute('r', size / 2);
+    el.setAttribute('fill', color);
+    return el;
+  }
+
+  function makeSquare(size, color) {
+    const half = size / 2;
+    const el   = document.createElementNS(NS, 'rect');
+    el.setAttribute('x', -half);
+    el.setAttribute('y', -half);
+    el.setAttribute('width',  size);
+    el.setAttribute('height', size);
+    el.setAttribute('fill', color);
+    el.setAttribute('transform', `rotate(${Math.random() * 60 - 30})`);
+    return el;
+  }
+
+  function makeTriangle(size, color) {
+    const h  = (size * Math.sqrt(3)) / 2;
+    const el = document.createElementNS(NS, 'polygon');
+    el.setAttribute('points',
+      `0,${-(h * 0.67)} ${-(size / 2)},${h * 0.33} ${size / 2},${h * 0.33}`);
+    el.setAttribute('fill', color);
+    el.setAttribute('transform', `rotate(${Math.random() * 60 - 30})`);
+    return el;
+  }
+
+  function spawnParticle(x, y) {
+    const color     = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const shapeType = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    const size      = SIZE_MIN + Math.random() * (SIZE_MAX - SIZE_MIN);
+
+    let inner;
+    if      (shapeType === 'circle')   inner = makeCircle(size, color);
+    else if (shapeType === 'square')   inner = makeSquare(size, color);
+    else                               inner = makeTriangle(size, color);
+
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('transform', `translate(${x},${y}) scale(0.5)`);
+    g.setAttribute('opacity', '0.85');
+    g.appendChild(inner);
+    svgEl.appendChild(g);
+
+    particles.push({
+      el:         g,
+      x,          y,
+      opacity:    0.85,
+      scale:      0.5,
+      fadeSpeed:  0.016 + Math.random() * 0.014,
+      scaleSpeed: 0.022 + Math.random() * 0.014,
+    });
+  }
+
+  function animate() {
+    for (const p of particles) {
+      p.opacity -= p.fadeSpeed;
+      p.scale   += p.scaleSpeed;
+      if (p.opacity < 0) p.opacity = 0;
+      p.el.setAttribute('opacity', p.opacity.toFixed(3));
+      p.el.setAttribute('transform',
+        `translate(${p.x},${p.y}) scale(${p.scale.toFixed(3)})`);
+    }
+    trim();
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function trim() {
+    let i = particles.length;
+    while (i--) {
+      if (particles[i].opacity <= 0) {
+        particles[i].el.remove();
+        particles.splice(i, 1);
+      }
+    }
+    // Hard cap — evict oldest if overflowing
+    while (particles.length > MAX_PARTICLES) {
+      particles.shift().el.remove();
+    }
+  }
+
+  function onPointerMove(x, y) {
+    const dx = x - lastX;
+    const dy = y - lastY;
+    if (dx * dx + dy * dy < SPAWN_DIST_SQ) return;
+    lastX = x;
+    lastY = y;
+    spawnParticle(x, y);
+  }
+
+  function handleMouseMove(e) {
+    onPointerMove(e.clientX, e.clientY);
+  }
+
+  function handleTouchMove(e) {
+    if (!e.touches.length) return;
+    onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+  }
+
+  function init() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    svgEl = document.getElementById('svg-follower-stage');
+    if (!svgEl) return;
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function destroy() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('touchmove', handleTouchMove);
+    particles.forEach(p => p.el.remove());
+    particles = [];
+  }
+
+  return { init, destroy };
+})();
+
+/* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
+CursorFollower.init();
+
 checkAdminSession().then(() => Promise.all([
   loadBoard().then(subscribeRealtime),
   fetchAdminAnnouncement(),
