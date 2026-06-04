@@ -5,6 +5,19 @@
 -- This script is idempotent — safe to run multiple times.
 -- ═══════════════════════════════════════════════════════════════════
 
+-- ── Allow authenticated (admin) users to SELECT all messages ───────
+-- CRITICAL for the Hide action. The public SELECT policy only exposes rows
+-- where is_visible = true, and that is the *only* SELECT policy that applies
+-- to the authenticated role. When an admin hides a message, the UPDATE's
+-- returned row (is_visible = false) is re-checked against the SELECT policies;
+-- with no authenticated policy allowing hidden rows, PostgreSQL raises
+-- 42501 "new row violates row-level security policy". This policy lets admins
+-- read every message (visible + hidden) and resolves that error.
+DROP POLICY IF EXISTS "authenticated_read_all_messages" ON cheer_up_messages;
+CREATE POLICY "authenticated_read_all_messages"
+  ON cheer_up_messages FOR SELECT TO authenticated
+  USING (true);
+
 -- ── Allow authenticated (admin) users to INSERT messages ───────────
 DROP POLICY IF EXISTS "authenticated_insert_messages" ON cheer_up_messages;
 CREATE POLICY "authenticated_insert_messages"

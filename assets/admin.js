@@ -3,29 +3,12 @@
 /* ══════════════════════════════════════════════════════════
    SUPABASE CLIENT
    ══════════════════════════════════════════════════════════ */
-// Browser Tracking Prevention (Edge/Safari) blocks localStorage access for
-// CDN-hosted scripts, breaking Supabase auth token persistence and refresh.
-// An in-memory adapter bypasses this; the trade-off is the session doesn't
-// survive a full page reload (admin must re-login after refreshing the tab).
-const _adminAuthStore = (() => {
-  const s = Object.create(null);
-  return {
-    getItem:    k      => s[k] ?? null,
-    setItem:    (k, v) => { s[k] = v; },
-    removeItem: k      => { delete s[k]; },
-  };
-})();
-
+// supabase.js is now served first-party from assets/, so browser Tracking
+// Prevention no longer blocks localStorage — the default persistent session
+// (survives page reloads) works fine.
 const sb = supabase.createClient(
   'https://adbdcfofguflyyrvczvq.supabase.co',
-  'sb_publishable_ERx_Z8GsAZCBRRL18HbwDw_4PWk2ahz',
-  {
-    auth: {
-      storage:          _adminAuthStore,
-      autoRefreshToken: true,
-      persistSession:   true,
-    }
-  }
+  'sb_publishable_ERx_Z8GsAZCBRRL18HbwDw_4PWk2ahz'
 );
 
 // Redirect to login whenever the session expires or the user signs out from
