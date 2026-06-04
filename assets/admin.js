@@ -289,7 +289,16 @@ async function loadAuditLogs() {
    AUTH
    ══════════════════════════════════════════════════════════ */
 async function checkSession() {
-  const { data: { session } } = await sb.auth.getSession();
+  // refreshSession() validates the stored token with the server and renews it
+  // if expired, preventing stale JWTs from causing 403s on subsequent writes.
+  // Falls back to getSession() on network error so the UI doesn't hard-fail.
+  let session;
+  try {
+    const { data, error } = await sb.auth.refreshSession();
+    session = error ? (await sb.auth.getSession()).data.session : data.session;
+  } catch (_) {
+    session = (await sb.auth.getSession()).data.session;
+  }
   if (session) {
     showDashboard();
   } else {
