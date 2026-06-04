@@ -8,6 +8,12 @@ const sb = supabase.createClient(
   'sb_publishable_ERx_Z8GsAZCBRRL18HbwDw_4PWk2ahz'
 );
 
+// Redirect to login whenever the session expires or the user signs out from
+// another tab — prevents subsequent writes from failing with 403.
+sb.auth.onAuthStateChange((event, _session) => {
+  if (event === 'SIGNED_OUT') showLogin();
+});
+
 /* ══════════════════════════════════════════════════════════
    CONSTANTS & UTILITIES
    ══════════════════════════════════════════════════════════ */
@@ -487,10 +493,18 @@ function setRowBusy(id, busy) {
 async function doPin(id, currentlyPinned) {
   setRowBusy(id, true);
 
+  const { data: { session: _pinSession } } = await sb.auth.getSession();
+  if (!_pinSession) {
+    showToast('❌ เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    setRowBusy(id, false);
+    showLogin();
+    return;
+  }
+
   if (currentlyPinned) {
     const { error } = await sb.from('cheer_up_messages')
       .update({ is_pinned: false }).eq('id', id);
-    if (error) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
+    if (error) { console.error('[Admin] doPin (unpin):', error.code, error.message); showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
 
     const idx = allAdminMessages.findIndex(m => m.id === id);
     if (idx !== -1) allAdminMessages[idx].is_pinned = false;
@@ -502,7 +516,7 @@ async function doPin(id, currentlyPinned) {
     const { error: unpinError } = await sb.from('cheer_up_messages')
       .update({ is_pinned: false })
       .eq('is_pinned', true);
-    if (unpinError) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
+    if (unpinError) { console.error('[Admin] doPin (unpin-all):', unpinError.code, unpinError.message); showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
 
     // Mirror the DB reset in local state so the UI is consistent before renderList()
     allAdminMessages.forEach(m => { m.is_pinned = false; });
@@ -510,7 +524,7 @@ async function doPin(id, currentlyPinned) {
     // Step 2: Pin the target message
     const { error: pinError } = await sb.from('cheer_up_messages')
       .update({ is_pinned: true }).eq('id', id);
-    if (pinError) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
+    if (pinError) { console.error('[Admin] doPin (pin):', pinError.code, pinError.message); showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
 
     const idx = allAdminMessages.findIndex(m => m.id === id);
     if (idx !== -1) allAdminMessages[idx].is_pinned = true;
@@ -526,11 +540,26 @@ async function doPin(id, currentlyPinned) {
 async function doToggleVisible(id, currentlyVisible) {
   setRowBusy(id, true);
 
+  // Verify the authenticated session is still valid before issuing the write.
+  // getSession() also silently refreshes the JWT if it is close to expiry.
+  const { data: { session: _visSession } } = await sb.auth.getSession();
+  if (!_visSession) {
+    showToast('❌ เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    setRowBusy(id, false);
+    showLogin();
+    return;
+  }
+
   const update = { is_visible: !currentlyVisible };
   if (currentlyVisible) update.is_pinned = false; // hiding a pinned message also unpins it
 
   const { error } = await sb.from('cheer_up_messages').update(update).eq('id', id);
-  if (error) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
+  if (error) {
+    console.error('[Admin] doToggleVisible:', error.code, error.message, error.details);
+    showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่');
+    setRowBusy(id, false);
+    return;
+  }
 
   const idx = allAdminMessages.findIndex(m => m.id === id);
   if (idx !== -1) {
@@ -619,8 +648,16 @@ async function doDelete(id) {
 
   setRowBusy(id, true);
 
+  const { data: { session: _delSession } } = await sb.auth.getSession();
+  if (!_delSession) {
+    showToast('❌ เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    setRowBusy(id, false);
+    showLogin();
+    return;
+  }
+
   const { error } = await sb.from('cheer_up_messages').delete().eq('id', id);
-  if (error) { showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
+  if (error) { console.error('[Admin] doDelete:', error.code, error.message); showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'); setRowBusy(id, false); return; }
 
   allAdminMessages = allAdminMessages.filter(m => m.id !== id);
   showToast('🗑 ลบข้อความแล้ว');
