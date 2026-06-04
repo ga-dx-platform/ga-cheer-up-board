@@ -3,9 +3,29 @@
 /* ══════════════════════════════════════════════════════════
    SUPABASE CLIENT
    ══════════════════════════════════════════════════════════ */
+// Browser Tracking Prevention (Edge/Safari) blocks localStorage access for
+// CDN-hosted scripts, breaking Supabase auth token persistence and refresh.
+// An in-memory adapter bypasses this; the trade-off is the session doesn't
+// survive a full page reload (admin must re-login after refreshing the tab).
+const _adminAuthStore = (() => {
+  const s = Object.create(null);
+  return {
+    getItem:    k      => s[k] ?? null,
+    setItem:    (k, v) => { s[k] = v; },
+    removeItem: k      => { delete s[k]; },
+  };
+})();
+
 const sb = supabase.createClient(
   'https://adbdcfofguflyyrvczvq.supabase.co',
-  'sb_publishable_ERx_Z8GsAZCBRRL18HbwDw_4PWk2ahz'
+  'sb_publishable_ERx_Z8GsAZCBRRL18HbwDw_4PWk2ahz',
+  {
+    auth: {
+      storage:          _adminAuthStore,
+      autoRefreshToken: true,
+      persistSession:   true,
+    }
+  }
 );
 
 // Redirect to login whenever the session expires or the user signs out from
@@ -289,16 +309,7 @@ async function loadAuditLogs() {
    AUTH
    ══════════════════════════════════════════════════════════ */
 async function checkSession() {
-  // refreshSession() validates the stored token with the server and renews it
-  // if expired, preventing stale JWTs from causing 403s on subsequent writes.
-  // Falls back to getSession() on network error so the UI doesn't hard-fail.
-  let session;
-  try {
-    const { data, error } = await sb.auth.refreshSession();
-    session = error ? (await sb.auth.getSession()).data.session : data.session;
-  } catch (_) {
-    session = (await sb.auth.getSession()).data.session;
-  }
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
     showDashboard();
   } else {
