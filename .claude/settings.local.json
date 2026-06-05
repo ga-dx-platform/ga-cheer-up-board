@@ -1,28 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/micky/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
-      "Bash(python scripts/search.py \"office engagement board social fun glassmorphism pastel lively\" --design-system -p \"GA Cheer Up Board\" -f markdown)",
-      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\")",
-      "Bash(Out-Null)",
-      "Bash(Write-Output \"Created directory structure\")",
-      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSize)",
-      "PowerShell(New-Item *)",
-      "PowerShell(python3 \"C:\\\\Users\\\\micky\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"social community engagement board team morale playful pastel glassmorphism\" --design-system -p \"GA Cheer Up Board\" -f markdown 2>&1)",
-      "PowerShell(Head 30 *)",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "Bash(git push *)",
-      "Bash(Select-String -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\\\\app.js\" -Pattern \"\\(compressImage|selectedImageBlob|clearSelectedImage|renderComment|fetchAndSubscribeComments|focus-split|closeFocusMode\\)\")",
-      "Bash(Select-Object LineNumber, Line)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\micky\\\\Project\\\\ga-equipment-control\\\\ga-equipment-control\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" | Where-Object { $_.Name -ne 'node_modules' } | Select-Object Name)",
-      "PowerShell(cmd /c \"dir C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board /a\")",
-      "Bash(Get-ChildItem \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\" -Filter \"styles.css\" -Recurse)",
-      "Bash(Select-Object FullName)",
-      "PowerShell(head *)",
-      "PowerShell($content = Get-Content \"C:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\\\\styles.css\" -Raw; $lines = $content -split \"`n\"; $i = 0; foreach \\($line in $lines\\) { $i++; if \\($line -match \"nudge-banner|card-grid|1100px|320px|1440px\"\\) { Write-Host \"$i : $line\" } })",
-      "Bash(node --check \"c:\\\\Users\\\\micky\\\\Project\\\\ga-cheer-up-board\\\\assets\\\\admin.js\")"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\micky\\\\Project\\\\ga-equipment-control\\\\ga-equipment-control\" -Recurse -Directory | Select-Object FullName | ForEach-Object {$_.FullName.Substring\\(60\\)} | Sort-Object)",
+      "Bash(node .claude/skills/impeccable/scripts/context.mjs)"
     ]
   }
 }
