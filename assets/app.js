@@ -228,7 +228,7 @@ function setCommentCount(msg, count) {
 function commentCounterHtml(msg) {
   const count = getCommentCount(msg);
   return `
-    <span class="comment-counter" data-comment-id="${msg.id}" aria-label="${count} comments">
+    <span class="comment-counter" data-comment-id="${msg.id}" aria-label="${count ? count + ' ความคิดเห็น' : 'แสดงความคิดเห็น'}">
       <svg class="comment-counter-icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.7-.8L3 20.5l1.4-4.7A8.2 8.2 0 0 1 3 11.5C3 6.9 7 3.1 12 3.1s9 3.8 9 8.4Z" />
       </svg>
@@ -671,6 +671,7 @@ function updateStats() {
   set('stat-thank', thank);
   set('stat-idea',  idea);
   set('stat-cheer', cheer);
+  document.getElementById('stats-bar')?.classList.remove('stat-loading');
 
   const tagline = getMilestoneTagline(total);
   const tagEl   = document.getElementById('stat-tagline');
@@ -689,7 +690,7 @@ function updateCardReactions(id, rxn) {
 
 function updateCommentCounter(id, count) {
   document.querySelectorAll(`[data-comment-id="${id}"]`).forEach(el => {
-    el.setAttribute('aria-label', `${count} comments`);
+    el.setAttribute('aria-label', count ? `${count} ความคิดเห็น` : 'แสดงความคิดเห็น');
   });
   document.querySelectorAll(`[data-comment-id="${id}"] .comment-count`).forEach(el => {
     el.textContent = count;
@@ -1121,6 +1122,9 @@ const charWrap  = charCount?.closest('.char-counter');
 const anonCheck = document.getElementById('f-anon');
 const senderSec = document.getElementById('sender-section');
 
+const LS_SENDER = 'ga_board_sender';
+const LS_EMOJI  = 'ga_board_emoji';
+
 /* ── Category tabs ───────────────────────────────────────── */
 document.querySelectorAll('.cat-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -1153,13 +1157,35 @@ contentEl?.addEventListener('input', () => {
   if (charCount) charCount.textContent = len;
   charWrap?.classList.toggle('warn', len >= 450 && len <= 500);
   charWrap?.classList.toggle('over', len > 500);
+  const hint = document.getElementById('content-hint');
+  if (hint && !hint.hidden) hint.hidden = true;
   updateLivePreview();
+});
+
+/* Soft empty-field nudge on blur (before submit) */
+contentEl?.addEventListener('blur', () => {
+  const hint = document.getElementById('content-hint');
+  if (hint) hint.hidden = contentEl.value.trim() !== '';
 });
 
 /* ── Anon toggle ─────────────────────────────────────────── */
 anonCheck?.addEventListener('change', () => {
-  if (senderSec) senderSec.style.display = anonCheck.checked ? 'none' : '';
+  const hint = document.getElementById('anon-hint');
+  const senderInput = document.getElementById('f-sender');
+  const isAnon = anonCheck.checked;
+  senderSec?.classList.toggle('anon-active', isAnon);
+  if (senderInput) senderInput.tabIndex = isAnon ? -1 : 0;
+  if (hint) hint.hidden = !isAnon;
   updateLivePreview();
+});
+
+/* ── Advanced options toggle ─────────────────────────────── */
+const advancedToggle = document.getElementById('advanced-toggle');
+const advancedFields = document.getElementById('advanced-fields');
+advancedToggle?.addEventListener('click', () => {
+  const expanded = advancedToggle.getAttribute('aria-expanded') === 'true';
+  advancedToggle.setAttribute('aria-expanded', String(!expanded));
+  advancedFields.hidden = expanded;
 });
 
 /* ── Image upload ────────────────────────────────────────── */
@@ -1212,6 +1238,7 @@ function showFormError(msg) {
   if (!el) return;
   el.textContent = msg;
   el.classList.remove('hidden');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function clearFormError() { document.getElementById('form-error')?.classList.add('hidden'); }
 
@@ -1233,9 +1260,10 @@ function resetForm() {
     t.setAttribute('aria-checked', def ? 'true' : 'false');
   });
 
-  selectedEmoji = '🌟';
+  const savedEmoji = localStorage.getItem(LS_EMOJI) || '🌟';
+  selectedEmoji = savedEmoji;
   document.querySelectorAll('.emoji-opt').forEach(b => {
-    const def = b.dataset.emoji === '🌟';
+    const def = b.dataset.emoji === savedEmoji;
     b.classList.toggle('selected', def);
     b.setAttribute('aria-pressed', def ? 'true' : 'false');
   });
@@ -1246,10 +1274,18 @@ function resetForm() {
 
   const senderEl    = document.getElementById('f-sender');
   const recipientEl = document.getElementById('f-recipient');
-  if (senderEl)    senderEl.value    = '';
+  if (senderEl)    senderEl.value    = localStorage.getItem(LS_SENDER) || '';
   if (recipientEl) recipientEl.value = '';
   if (anonCheck) anonCheck.checked = false;
-  if (senderSec) senderSec.style.display = '';
+  senderSec?.classList.remove('anon-active');
+  const senderInputReset = document.getElementById('f-sender');
+  if (senderInputReset) senderInputReset.tabIndex = 0;
+  const hint = document.getElementById('anon-hint');
+  if (hint) hint.hidden = true;
+  const contentHint = document.getElementById('content-hint');
+  if (contentHint) contentHint.hidden = true;
+  if (advancedToggle) advancedToggle.setAttribute('aria-expanded', 'false');
+  if (advancedFields) advancedFields.hidden = true;
 
   clearSelectedImage();
   clearFormError();
@@ -1458,6 +1494,10 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   }
   setActiveFilter('all');
   wireReactions();
+
+  // Persist preferences for next session
+  if (sender && !anon) localStorage.setItem(LS_SENDER, sender);
+  localStorage.setItem(LS_EMOJI, selectedEmoji);
 
   fireConfetti(selectedCategory);
   showSubmitSuccess(data);
@@ -1915,24 +1955,24 @@ document.getElementById('motw-container')?.addEventListener('click', e => {
   const ctaBtn     = document.getElementById('nudge-cta-btn');
   if (!banner) return;
 
-  const NUDGE_KEY = 'cheer-nudge-dismissed';
-  const today     = new Date().toDateString();
+  const NUDGE_KEY     = 'cheer-nudge-dismissed';
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
-  // Show nudge if user hasn't dismissed today and hasn't posted today
   const lastDismissed = localStorage.getItem(NUDGE_KEY);
-  if (lastDismissed === today) return;
+  if (lastDismissed && (Date.now() - Number(lastDismissed)) < THREE_DAYS_MS) return;
 
   // Delay slightly so board loads first
   setTimeout(() => banner.classList.remove('hidden'), 1200);
 
-  dismissBtn?.addEventListener('click', () => {
+  function dismissNudge() {
     banner.classList.add('hidden');
-    localStorage.setItem(NUDGE_KEY, today);
-  });
+    localStorage.setItem(NUDGE_KEY, String(Date.now()));
+  }
+
+  dismissBtn?.addEventListener('click', dismissNudge);
 
   ctaBtn?.addEventListener('click', () => {
-    banner.classList.add('hidden');
-    localStorage.setItem(NUDGE_KEY, today);
+    dismissNudge();
     document.getElementById('openModal')?.click();
   });
 })();
@@ -2099,14 +2139,28 @@ async function initWelcomeModal() {
 
   setTimeout(() => modal.classList.remove('hidden'), 800);
 
-  cta.addEventListener('click', () => {
+  function closeWelcome() {
     modal.classList.add('hidden');
-    // Only persist to localStorage when not in force mode
     if (!forceWelcome) localStorage.setItem('cheer-welcome-seen', 'true');
+  }
+
+  cta.addEventListener('click', () => {
+    closeWelcome();
     fireConfetti('thank_you');
+  });
+
+  document.getElementById('welcome-close')?.addEventListener('click', closeWelcome);
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeWelcome();
   });
 }
 initWelcomeModal();
+
+document.getElementById('btn-about')?.addEventListener('click', () => {
+  const modal = document.getElementById('welcome-modal');
+  if (modal) modal.classList.remove('hidden');
+});
 
 /* ══════════════════════════════════════════════════════════
    TOAST

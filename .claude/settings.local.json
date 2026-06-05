@@ -5,7 +5,14 @@
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
       "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\micky\\\\Project\\\\ga-equipment-control\\\\ga-equipment-control\" -Recurse -Directory | Select-Object FullName | ForEach-Object {$_.FullName.Substring\\(60\\)} | Sort-Object)",
-      "Bash(node .claude/skills/impeccable/scripts/context.mjs)"
+      "Bash(node .claude/skills/impeccable/scripts/context.mjs)",
+      "Bash(node .claude/skills/impeccable/scripts/critique-storage.mjs slug \"index.html\")",
+      "Bash(set \"IMPECCABLE_CRITIQUE_META={\\\\\"target\\\\\":\\\\\"index.html\\\\\",\\\\\"total_score\\\\\":24,\\\\\"p0_count\\\\\":1,\\\\\"p1_count\\\\\":2}\")",
+      "Bash(node .claude/skills/impeccable/scripts/critique-storage.mjs write index-html .impeccable/critique/tmp-index-html-body.md)",
+      "Bash(node .claude/skills/impeccable/scripts/critique-storage.mjs trend index-html 5)",
+      "Bash(del .impeccable\\\\critique\\\\tmp-index-html-body.md)",
+      "Skill(impeccable)",
+      "Bash(node *)"
     ]
   }
 }

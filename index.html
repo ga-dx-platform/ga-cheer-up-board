@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GA Cheer Up Board — กระดานส่งกำลังใจ</title>
-  <meta property="og:title"       content="GA Cheer Up Board — กระดานส่งกำลังใจ" />
-  <meta property="og:description" content="แชร์ความรู้สึกดีๆ ให้กัน — กระดานข้อความกำลังใจสำหรับทีม GA ✨" />
+  <title>GA Cheer Up Board · กระดานส่งกำลังใจ</title>
+  <meta property="og:title"       content="GA Cheer Up Board · กระดานส่งกำลังใจ" />
+  <meta property="og:description" content="แชร์ความรู้สึกดีๆ ให้กัน กระดานข้อความกำลังใจสำหรับทีม GA ✨" />
   <meta property="og:type"        content="website" />
 
   <!-- Google Fonts: Kanit -->
@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
 
   <!-- Custom design system -->
-  <link rel="stylesheet" href="assets/styles.css?v=11" />
+  <link rel="stylesheet" href="assets/styles.css?v=18" />
 </head>
 
 <body>
@@ -89,15 +89,15 @@
   <main class="main-wrap" id="main-content">
 
     <!-- ─── Daily Nudge Banner ──────────────────────────────── -->
-    <div class="nudge-banner hidden" id="nudge-banner" role="complementary" aria-label="ส่งกำลังใจวันนี้">
+    <div class="nudge-banner hidden" id="nudge-banner" role="region" aria-label="ส่งกำลังใจวันนี้">
       <div class="nudge-inner">
         <span class="nudge-emoji" aria-hidden="true">💬</span>
         <div class="nudge-text">
-          <strong class="nudge-title">วันนี้ยังไม่ได้ส่งกำลังใจเลยนะ!</strong>
-          <span class="nudge-sub">บอกเพื่อนร่วมทีมว่าคุณซาบซึ้งใจแค่ไหน ✨</span>
+          <strong class="nudge-title">มีอะไรอยากบอกทีมวันนี้ไหม?</strong>
+          <span class="nudge-sub">ขอบคุณ ให้กำลังใจ หรือแชร์ไอเดียดีๆ ให้ทีม ✨</span>
         </div>
-        <button class="nudge-cta" id="nudge-cta-btn" aria-label="เพิ่มข้อความตอนนี้เลย">✨ เพิ่มเลย</button>
-        <button class="nudge-dismiss" id="nudge-dismiss" aria-label="ปิดแจ้งเตือน">✕</button>
+        <button class="nudge-cta" id="nudge-cta-btn" aria-label="เขียนข้อความถึงทีม">เขียนข้อความ</button>
+        <button class="nudge-dismiss" id="nudge-dismiss" aria-label="ปิด ไม่เป็นไร">✕</button>
       </div>
     </div>
 
@@ -105,8 +105,9 @@
     <div class="hero-section">
       <h2 class="hero-title">ส่งต่อพลังบวกให้กัน</h2>
       <p class="hero-subtitle">พื้นที่แชร์ไอเดีย ส่งกำลังใจ และขอบคุณทีม GA</p>
+      <button class="btn-about" id="btn-about" aria-label="เกี่ยวกับบอร์ดนี้">บอร์ดนี้คืออะไร?</button>
       <!-- Stats sit directly below subtitle, no gap -->
-      <div class="stats-bar" id="stats-bar" role="status" aria-live="polite">
+      <div class="stats-bar stat-loading" id="stats-bar" role="status" aria-live="polite">
         <span class="stat-item">💌 <span id="stat-total">—</span> ข้อความ</span>
         <span class="stat-sep" aria-hidden="true">·</span>
         <span class="stat-item">💝 <span id="stat-thank">—</span> ขอบคุณ</span>
@@ -193,6 +194,7 @@
   <div class="modal-overlay hidden" id="welcome-modal"
        role="dialog" aria-modal="true" aria-labelledby="welcome-title">
     <div class="modal-box welcome-box">
+      <button class="modal-close welcome-close" id="welcome-close" aria-label="ปิด">✕</button>
       <div class="welcome-header">
         <span class="welcome-icon" aria-hidden="true">🎉</span>
         <h2 class="welcome-title" id="welcome-title">ยินดีต้อนรับสู่<br>GA Cheer Up Board!</h2>
@@ -216,8 +218,15 @@
         <li class="feature-row">
           <span class="feature-icon" aria-hidden="true">💬</span>
           <div class="feature-text">
-            <strong>พูดคุยกัน</strong>
-            <span>คลิกที่การ์ดเพื่อขยายอ่านเต็มๆ และร่วมคอมเมนต์</span>
+            <strong>คอมเมนต์ได้เลย</strong>
+            <span>คลิกที่การ์ดเพื่ออ่านเต็มๆ และแสดงความคิดเห็น</span>
+          </div>
+        </li>
+        <li class="feature-row">
+          <span class="feature-icon" aria-hidden="true">🙈</span>
+          <div class="feature-text">
+            <strong>โพสต์แบบไม่ระบุชื่อ</strong>
+            <span>ติ๊กช่อง "ไม่ระบุชื่อ" ในฟอร์ม ถ้าอยากโพสต์แบบส่วนตัว</span>
           </div>
         </li>
       </ul>
@@ -270,91 +279,109 @@
           </div>
         </div>
 
-        <!-- 2 · Avatar emoji ─────────────────────────── -->
-        <div class="field-section">
-          <p class="field-label">อีโมจิประจำตัว</p>
-          <div class="emoji-picker" role="group" aria-label="เลือกอีโมจิ">
-            <button type="button" class="emoji-opt selected" data-emoji="🌟" aria-pressed="true">🌟</button>
-            <button type="button" class="emoji-opt" data-emoji="🦋" aria-pressed="false">🦋</button>
-            <button type="button" class="emoji-opt" data-emoji="🌸" aria-pressed="false">🌸</button>
-            <button type="button" class="emoji-opt" data-emoji="🤗" aria-pressed="false">🤗</button>
-            <button type="button" class="emoji-opt" data-emoji="☀️" aria-pressed="false">☀️</button>
-            <button type="button" class="emoji-opt" data-emoji="💪" aria-pressed="false">💪</button>
-            <button type="button" class="emoji-opt" data-emoji="🌈" aria-pressed="false">🌈</button>
-            <button type="button" class="emoji-opt" data-emoji="🎵" aria-pressed="false">🎵</button>
-            <button type="button" class="emoji-opt" data-emoji="🏆" aria-pressed="false">🏆</button>
-            <button type="button" class="emoji-opt" data-emoji="☕" aria-pressed="false">☕</button>
-            <button type="button" class="emoji-opt" data-emoji="🌱" aria-pressed="false">🌱</button>
-            <button type="button" class="emoji-opt" data-emoji="🎀" aria-pressed="false">🎀</button>
-            <button type="button" class="emoji-opt" data-emoji="🦄" aria-pressed="false">🦄</button>
-            <button type="button" class="emoji-opt" data-emoji="🍀" aria-pressed="false">🍀</button>
-            <button type="button" class="emoji-opt" data-emoji="🎉" aria-pressed="false">🎉</button>
-            <button type="button" class="emoji-opt" data-emoji="🌊" aria-pressed="false">🌊</button>
-            <button type="button" class="emoji-opt" data-emoji="🚀" aria-pressed="false">🚀</button>
-            <button type="button" class="emoji-opt" data-emoji="🎯" aria-pressed="false">🎯</button>
-            <button type="button" class="emoji-opt" data-emoji="🎨" aria-pressed="false">🎨</button>
-            <button type="button" class="emoji-opt" data-emoji="🤖" aria-pressed="false">🤖</button>
-            <button type="button" class="emoji-opt" data-emoji="🎂" aria-pressed="false">🎂</button>
-            <button type="button" class="emoji-opt" data-emoji="🎆" aria-pressed="false">🎆</button>
-            <button type="button" class="emoji-opt" data-emoji="🍔" aria-pressed="false">🍔</button>
-            <button type="button" class="emoji-opt" data-emoji="🔥" aria-pressed="false">🔥</button>
-            <button type="button" class="emoji-opt" data-emoji="👑" aria-pressed="false">👑</button>
-            <button type="button" class="emoji-opt" data-emoji="👻" aria-pressed="false">👻</button>
-            <button type="button" class="emoji-opt" data-emoji="🎮" aria-pressed="false">🎮</button>
-          </div>
-        </div>
-
-        <!-- 3 · Recipient (optional) ────────────────── -->
-        <div class="field-section">
-          <label class="field-label" for="f-recipient">
-            ส่งถึง <span class="field-optional">(ไม่บังคับ)</span>
-          </label>
-          <div class="recipient-wrap">
-            <span class="recipient-at" aria-hidden="true">👤</span>
-            <input type="text" id="f-recipient" class="form-input recipient-input" maxlength="60"
-                   placeholder="ชื่อเพื่อนร่วมทีม..." autocomplete="off" />
-          </div>
-        </div>
-
-        <!-- 4 · Message ──────────────────────────────── -->
+        <!-- 2 · Message ──────────────────────────────── -->
         <div class="field-section">
           <label class="field-label" for="f-content">
             ข้อความ <span class="required">*</span>
           </label>
           <textarea id="f-content" class="form-textarea" rows="4" maxlength="500"
                     placeholder="เขียนสิ่งที่อยากบอก... 💬"></textarea>
+          <p class="field-hint" id="content-hint" aria-live="polite" hidden>กรุณาเขียนข้อความก่อนส่งนะ ✍️</p>
           <div class="char-counter" aria-live="polite" aria-atomic="true"><span id="char-count">0</span>/500</div>
         </div>
 
-        <!-- 4.5 · Image (optional) ─────────────────────── -->
-        <div class="field-section">
-          <p class="field-label">รูปภาพ <span class="field-optional">(ไม่บังคับ)</span></p>
-          <div class="img-upload-row">
-            <button type="button" id="img-upload-btn" class="img-upload-btn" aria-label="เลือกรูปภาพ">
-              <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" aria-hidden="true" focusable="false">
-                <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
-                <circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.6"/>
-                <path d="M7 5V4a2 2 0 0 1 6 0v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-              📷 เพิ่มรูปภาพ
-            </button>
-            <input type="file" id="f-image" accept="image/*" style="display:none"
-                   tabindex="-1" aria-hidden="true" />
+        <!-- 3 · Identity (anon first, then name) ─────── -->
+        <div class="field-section identity-block">
+          <label class="anon-row">
+            <input type="checkbox" id="f-anon" />
+            <span>โพสต์แบบไม่ระบุชื่อ 🙈</span>
+          </label>
+          <div id="sender-section" class="sender-name-row">
+            <label class="field-label" for="f-sender">ชื่อของคุณ <span class="field-optional">(ไม่บังคับ)</span></label>
+            <input type="text" id="f-sender" class="form-input" maxlength="60"
+                   placeholder="ชื่อเล่น หรือชื่อจริง" autocomplete="nickname" />
+            <p class="anon-hint" id="anon-hint" aria-live="polite" hidden>ชื่อจะไม่แสดงบนบอร์ด ✓</p>
           </div>
         </div>
 
-        <!-- 4 · Sender name ──────────────────────────── -->
-        <div class="field-section" id="sender-section">
-          <label class="field-label" for="f-sender">ชื่อของคุณ</label>
-          <input type="text" id="f-sender" class="form-input" maxlength="60"
-                 placeholder="ชื่อเล่น หรือชื่อจริง" autocomplete="nickname" />
-        </div>
+        <!-- 4 · Advanced options toggle ─────────────── -->
+        <button type="button" id="advanced-toggle" class="advanced-toggle"
+                aria-expanded="false" aria-controls="advanced-fields">
+          <svg class="advanced-chevron" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"
+               width="12" height="12" aria-hidden="true" focusable="false">
+            <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          ปรับแต่งเพิ่มเติม
+        </button>
 
-        <!-- 5 · Anonymous checkbox ───────────────────── -->
-        <label class="anon-row">
-          <input type="checkbox" id="f-anon" />
-          <span>โพสต์แบบไม่ระบุชื่อ 🙈</span>
-        </label>
+        <!-- 5 · Advanced fields (collapsed by default) ─ -->
+        <div id="advanced-fields" class="advanced-fields" hidden>
+
+          <!-- Avatar emoji ─────────────────────────────── -->
+          <div class="field-section">
+            <p class="field-label">อีโมจิประจำตัว</p>
+            <div class="emoji-picker" role="group" aria-label="เลือกอีโมจิ">
+              <button type="button" class="emoji-opt selected" data-emoji="🌟" aria-pressed="true">🌟</button>
+              <button type="button" class="emoji-opt" data-emoji="🦋" aria-pressed="false">🦋</button>
+              <button type="button" class="emoji-opt" data-emoji="🌸" aria-pressed="false">🌸</button>
+              <button type="button" class="emoji-opt" data-emoji="🤗" aria-pressed="false">🤗</button>
+              <button type="button" class="emoji-opt" data-emoji="☀️" aria-pressed="false">☀️</button>
+              <button type="button" class="emoji-opt" data-emoji="💪" aria-pressed="false">💪</button>
+              <button type="button" class="emoji-opt" data-emoji="🌈" aria-pressed="false">🌈</button>
+              <button type="button" class="emoji-opt" data-emoji="🎵" aria-pressed="false">🎵</button>
+              <button type="button" class="emoji-opt" data-emoji="🏆" aria-pressed="false">🏆</button>
+              <button type="button" class="emoji-opt" data-emoji="☕" aria-pressed="false">☕</button>
+              <button type="button" class="emoji-opt" data-emoji="🌱" aria-pressed="false">🌱</button>
+              <button type="button" class="emoji-opt" data-emoji="🎀" aria-pressed="false">🎀</button>
+              <button type="button" class="emoji-opt" data-emoji="🦄" aria-pressed="false">🦄</button>
+              <button type="button" class="emoji-opt" data-emoji="🍀" aria-pressed="false">🍀</button>
+              <button type="button" class="emoji-opt" data-emoji="🎉" aria-pressed="false">🎉</button>
+              <button type="button" class="emoji-opt" data-emoji="🌊" aria-pressed="false">🌊</button>
+              <button type="button" class="emoji-opt" data-emoji="🚀" aria-pressed="false">🚀</button>
+              <button type="button" class="emoji-opt" data-emoji="🎯" aria-pressed="false">🎯</button>
+              <button type="button" class="emoji-opt" data-emoji="🎨" aria-pressed="false">🎨</button>
+              <button type="button" class="emoji-opt" data-emoji="🤖" aria-pressed="false">🤖</button>
+              <button type="button" class="emoji-opt" data-emoji="🎂" aria-pressed="false">🎂</button>
+              <button type="button" class="emoji-opt" data-emoji="🎆" aria-pressed="false">🎆</button>
+              <button type="button" class="emoji-opt" data-emoji="🍔" aria-pressed="false">🍔</button>
+              <button type="button" class="emoji-opt" data-emoji="🔥" aria-pressed="false">🔥</button>
+              <button type="button" class="emoji-opt" data-emoji="👑" aria-pressed="false">👑</button>
+              <button type="button" class="emoji-opt" data-emoji="👻" aria-pressed="false">👻</button>
+              <button type="button" class="emoji-opt" data-emoji="🎮" aria-pressed="false">🎮</button>
+            </div>
+          </div>
+
+          <!-- Recipient (optional) ─────────────────────── -->
+          <div class="field-section">
+            <label class="field-label" for="f-recipient">
+              ส่งถึง <span class="field-optional">(ไม่บังคับ)</span>
+            </label>
+            <div class="recipient-wrap">
+              <span class="recipient-at" aria-hidden="true">👤</span>
+              <input type="text" id="f-recipient" class="form-input recipient-input" maxlength="60"
+                     placeholder="ชื่อเพื่อนร่วมทีม..." autocomplete="off" />
+            </div>
+          </div>
+
+          <!-- Image upload ─────────────────────────────── -->
+          <div class="field-section">
+            <p class="field-label">รูปภาพ <span class="field-optional">(ไม่บังคับ)</span></p>
+            <div class="img-upload-row">
+              <button type="button" id="img-upload-btn" class="img-upload-btn" aria-label="เลือกรูปภาพ">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" aria-hidden="true" focusable="false">
+                  <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                  <circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M7 5V4a2 2 0 0 1 6 0v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+                📷 เพิ่มรูปภาพ
+              </button>
+              <input type="file" id="f-image" accept="image/*" style="display:none"
+                     tabindex="-1" aria-hidden="true" />
+            </div>
+          </div>
+
+        </div>
 
         <!-- 6 · Error ────────────────────────────────── -->
         <p class="form-error hidden" id="form-error" role="alert" aria-live="assertive"></p>
