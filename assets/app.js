@@ -1405,10 +1405,10 @@ function fireConfetti(category) {
     cheer_up:  ['#8AD9B0', '#4BBE82', '#D4F4E2'],
   };
   const colors = palettes[category] ?? palettes.thank_you;
-  const end    = Date.now() + 2400;
+  const end    = Date.now() + 1200;
   (function frame() {
-    confetti({ particleCount: 4, angle: 60,  spread: 70, origin: { x: 0 }, colors });
-    confetti({ particleCount: 4, angle: 120, spread: 70, origin: { x: 1 }, colors });
+    confetti({ particleCount: 2, angle: 60,  spread: 70, origin: { x: 0 }, colors });
+    confetti({ particleCount: 2, angle: 120, spread: 70, origin: { x: 1 }, colors });
     if (Date.now() < end) requestAnimationFrame(frame);
   })();
 }
@@ -2330,6 +2330,8 @@ const CursorFollower = (() => {
   let particles = [];
   let lastX     = -9999;
   let lastY     = -9999;
+  let pendingX  = null;
+  let pendingY  = null;
   let rafId     = null;
   let _active   = false;
 
@@ -2389,6 +2391,18 @@ const CursorFollower = (() => {
   }
 
   function animate() {
+    // Consume pending position — at most one spawn per frame, no DOM work in handler
+    if (pendingX !== null) {
+      const dx = pendingX - lastX;
+      const dy = pendingY - lastY;
+      if (dx * dx + dy * dy >= SPAWN_DIST_SQ) {
+        lastX = pendingX;
+        lastY = pendingY;
+        spawnParticle(lastX, lastY);
+      }
+      pendingX = pendingY = null;
+    }
+
     for (const p of particles) {
       p.opacity -= p.fadeSpeed;
       p.scale   += p.scaleSpeed;
@@ -2398,7 +2412,17 @@ const CursorFollower = (() => {
         `translate(${p.x},${p.y}) scale(${p.scale.toFixed(3)})`);
     }
     trim();
-    rafId = requestAnimationFrame(animate);
+
+    // Self-cancel when idle — eliminates the always-running 60 fps loop
+    if (particles.length > 0 || pendingX !== null) {
+      rafId = requestAnimationFrame(animate);
+    } else {
+      rafId = null;
+    }
+  }
+
+  function scheduleRaf() {
+    if (!rafId) rafId = requestAnimationFrame(animate);
   }
 
   function trim() {
@@ -2416,12 +2440,10 @@ const CursorFollower = (() => {
   }
 
   function onPointerMove(x, y) {
-    const dx = x - lastX;
-    const dy = y - lastY;
-    if (dx * dx + dy * dy < SPAWN_DIST_SQ) return;
-    lastX = x;
-    lastY = y;
-    spawnParticle(x, y);
+    // Record position only — no DOM work in the event handler
+    pendingX = x;
+    pendingY = y;
+    scheduleRaf();
   }
 
   const handleMouseMove = (e) => onPointerMove(e.clientX, e.clientY);
@@ -2433,7 +2455,7 @@ const CursorFollower = (() => {
     if (!svgEl) return;
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    rafId = requestAnimationFrame(animate);
+    // rAF starts on first pointer move, not unconditionally at init
   }
 
   function destroy() {
@@ -2441,6 +2463,7 @@ const CursorFollower = (() => {
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('touchmove', handleTouchMove);
     particles = [];
+    pendingX = pendingY = null;
     if (svgEl) svgEl.innerHTML = '';
   }
 
