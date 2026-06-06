@@ -685,9 +685,7 @@ function checkMilestone(total) {
   bar.classList.add('milestone-pop');
   bar.addEventListener('animationend', () => bar.classList.remove('milestone-pop'), { once: true });
 
-  if (!isFirstEver && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    fireConfetti('thank_you');
-  }
+  if (!isFirstEver) fireConfetti('thank_you');
 }
 
 function updateStats() {
@@ -1397,20 +1395,45 @@ function updateLivePreview() {
 }
 
 /* ── Confetti ────────────────────────────────────────────── */
+let _confettiFiring = false;
+
 function fireConfetti(category) {
   if (typeof confetti !== 'function') return;
+  if (_confettiFiring) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  _confettiFiring = true;
   const palettes = {
     thank_you: ['#FFB8A0', '#FF8A70', '#FFD97A'],
     idea:      ['#9DC0FF', '#5B8DEF', '#B8A0FF'],
     cheer_up:  ['#8AD9B0', '#4BBE82', '#D4F4E2'],
   };
   const colors = palettes[category] ?? palettes.thank_you;
-  const end    = Date.now() + 1200;
-  (function frame() {
-    confetti({ particleCount: 2, angle: 60,  spread: 70, origin: { x: 0 }, colors });
-    confetti({ particleCount: 2, angle: 120, spread: 70, origin: { x: 1 }, colors });
-    if (Date.now() < end) requestAnimationFrame(frame);
-  })();
+  const end = Date.now() + 1200;
+  const promises = [];
+
+  function frame() {
+    promises.push(
+      confetti({ particleCount: 2, angle: 60,  spread: 70, origin: { x: 0 }, colors }),
+      confetti({ particleCount: 2, angle: 120, spread: 70, origin: { x: 1 }, colors }),
+    );
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    } else {
+      // Stop the worker as soon as all particles settle, or after 4s at the latest
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        confetti.reset();
+        _confettiFiring = false;
+      };
+      Promise.all(promises).then(finish);
+      setTimeout(finish, 4000);
+    }
+  }
+
+  frame();
 }
 
 /* ── Submit success interstitial ─────────────────────────── */
