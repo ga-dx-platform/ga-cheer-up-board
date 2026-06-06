@@ -2474,8 +2474,13 @@ const CursorFollower = (() => {
 
   function init() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    svgEl = document.getElementById('svg-follower-stage');
-    if (!svgEl) return;
+    const container = document.createElement('div');
+    container.id = 'svg-follower-container';
+    container.setAttribute('aria-hidden', 'true');
+    svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgEl.id = 'svg-follower-stage';
+    container.appendChild(svgEl);
+    document.body.insertBefore(container, document.body.firstChild);
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     // rAF starts on first pointer move, not unconditionally at init
@@ -2487,7 +2492,10 @@ const CursorFollower = (() => {
     window.removeEventListener('touchmove', handleTouchMove);
     particles = [];
     pendingX = pendingY = null;
-    if (svgEl) svgEl.innerHTML = '';
+    if (svgEl) {
+      svgEl.parentElement?.remove();
+      svgEl = null;
+    }
   }
 
   function start() {
