@@ -833,7 +833,7 @@ async function loadCursorEffectSetting() {
     .eq('id', 1)
     .single();
   if (error) { console.warn('[Admin] cursor_effect_enabled load', error.message, error.hint); return; }
-  applyCursorEffectUI(data?.cursor_effect_enabled ?? true);
+  applyCursorEffectUI(data?.cursor_effect_enabled ?? false);
 }
 
 function applyCursorEffectUI(active) {

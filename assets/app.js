@@ -2142,11 +2142,11 @@ async function fetchCursorEffectSetting() {
       .eq('id', 1)
       .single();
     if (error) console.warn('[App] cursor_effect_enabled load', error.message, error.hint);
-    const enabled = (!error && data != null) ? (data.cursor_effect_enabled ?? true) : true;
+    const enabled = (!error && data != null) ? (data.cursor_effect_enabled ?? false) : false;
     if (enabled) window.cursorEffect.start();
   } catch (err) {
     console.warn('[App] cursor_effect_enabled catch', err.message);
-    window.cursorEffect.start(); // graceful fallback
+    // default-off: do not start on fetch failure
   }
 }
 
