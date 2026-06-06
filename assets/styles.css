@@ -400,9 +400,7 @@ body::after {
   margin-bottom: .65rem;
   padding: .6rem .85rem;
   border-radius: 18px;
-  background: rgba(255,255,255,0.38);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  background: rgba(255,255,255,0.72);
   border: 1px solid rgba(255,255,255,0.72);
   box-shadow: var(--glass-inset), 0 2px 10px rgba(0,0,0,0.05);
 }
@@ -430,9 +428,7 @@ body::after {
   padding: .85rem 1.25rem;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.72);
-  background: rgba(255,255,255,0.42);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255,255,255,0.76);
   box-shadow: var(--glass-inset), 0 2px 12px rgba(0,0,0,0.06);
   font-family: var(--font); font-size: var(--fs-sm); font-weight: 600;
   color: var(--color-text-secondary);
@@ -476,9 +472,7 @@ body::after {
   border: 1px solid rgba(255,255,255,0.72);
   border-top: none;
   border-radius: 0 0 18px 18px;
-  background: rgba(255,255,255,0.28);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255,255,255,0.62);
   overflow: hidden;
 }
 .digest-body[aria-expanded="true"] {
@@ -500,8 +494,7 @@ body::after {
 .nudge-banner {
   margin-bottom: 1.5rem;
   border-radius: 20px;
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(32px) saturate(180%); -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background: rgba(255,255,255,0.82);
   border: 1.5px solid rgba(249,115,22,0.28);
   box-shadow: var(--glass-inset), 0 4px 20px rgba(249,115,22,0.10);
   animation: nudge-slide-in .45s var(--spring);
@@ -639,9 +632,7 @@ body::after {
 
 .motw-card {
   position:relative; width:100%;
-  background: rgba(255,255,255,0.76) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
+  background: rgba(255,255,255,0.88) !important;
   border: 1px solid rgba(255,255,255,0.25) !important;
   border-top: 1px solid rgba(255,255,255,0.85) !important;
   border-left: 1px solid rgba(255,255,255,0.55) !important;
@@ -856,11 +847,10 @@ body::after {
 .search-input {
   width: 100%;
   font-family: var(--font); font-size: var(--fs-base); font-weight: 400; color: var(--color-text);
-  background: rgba(255,255,255,0.52);
+  background: rgba(255,255,255,0.80);
   border: 1.5px solid rgba(255,255,255,0.72);
   border-radius: 99px;
   padding: .62rem 2.6rem .62rem 2.55rem;
-  backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: var(--glass-inset), 0 2px 12px rgba(0,0,0,0.06);
   transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
@@ -901,8 +891,7 @@ mark.search-match {
   min-height: 44px;
   padding:.45rem 1.1rem; border-radius:99px;
   border:1px solid rgba(255,255,255,0.70);
-  background:rgba(255,255,255,0.28);
-  backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%);
+  background:rgba(255,255,255,0.62);
   font-family:var(--font); font-size:var(--fs-sm); font-weight:500; color: var(--color-ui);
   cursor:pointer;
   transition: background .22s ease, color .22s ease, transform .22s var(--spring), box-shadow .22s ease, border-color .22s ease;
@@ -957,9 +946,7 @@ mark.search-match {
   right: 0.6rem;
   display: flex;
   gap: 0.15rem;
-  background: rgba(255,255,255,0.88);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  backdrop-filter: blur(14px) saturate(160%);
+  background: rgba(255,255,255,0.96);
   border: 1px solid rgba(255,255,255,0.80);
   border-radius: 99px;
   padding: 0.18rem 0.28rem;
@@ -1010,9 +997,7 @@ mark.search-match {
 .card {
   position:relative; border-radius:20px;
   padding:1.2rem 1.3rem 1rem;
-  background: rgba(255,255,255,0.70) !important;
-  backdrop-filter: blur(20px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+  background: rgba(255,255,255,0.82) !important;
   border: 1px solid rgba(255,255,255,0.25) !important;
   border-top: 1px solid rgba(255,255,255,0.90) !important;
   border-left: 1px solid rgba(255,255,255,0.58) !important;
@@ -1306,10 +1291,9 @@ mark.search-match {
 /* Textarea & input */
 .form-textarea, .form-input {
   width:100%; font-family:var(--font); font-size:var(--fs-base); font-weight:400; color: var(--color-text);
-  background:rgba(255,255,255,.58); border:1.5px solid rgba(200,200,220,.55); border-radius:14px;
+  background:rgba(255,255,255,.88); border:1.5px solid rgba(200,200,220,.55); border-radius:14px;
   padding:.65rem .875rem;
   transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;
-  backdrop-filter:blur(6px);
 }
 .form-textarea { resize:vertical; min-height:90px; }
 .form-textarea:focus, .form-input:focus { outline:none; border-color: var(--color-accent-dark); box-shadow:0 0 0 3px rgba(234,88,12,.12); background:rgba(255,255,255,.82); }
@@ -1381,9 +1365,7 @@ mark.search-match {
 .success-panel {
   position: absolute; inset: 0;
   border-radius: 28px;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(255,255,255,0.98);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 0.6rem; padding: 2rem 1.5rem;
   z-index: 10;
@@ -1456,8 +1438,7 @@ mark.search-match {
 
 .digest-card {
   display: flex; gap: 1.5rem; flex-wrap: wrap;
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+  background: rgba(255,255,255,0.82);
   border: 1px solid rgba(255,255,255,0.80);
   border-top: 1px solid rgba(255,255,255,0.95);
   border-radius: 22px;
@@ -1787,8 +1768,7 @@ mark.search-match {
   padding: .35rem .9rem;
   border-radius: 99px;
   border: 1px solid rgba(255,255,255,0.55);
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.35);
   color: rgba(255,255,255,0.90);
   font-size: var(--fs-sm);
   font-family: var(--font);
@@ -2044,9 +2024,7 @@ mark.search-match {
 }
 
 .focus-comment {
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.92);
   border: 1px solid rgba(255,255,255,0.80);
   border-radius: 14px;
   padding: .65rem .875rem;
@@ -2071,9 +2049,7 @@ mark.search-match {
 .focus-comment-input-wrap {
   padding: .75rem 1rem .875rem;
   border-top: 1px solid rgba(0,0,0,0.07);
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.80);
   flex-shrink: 0;
   display: flex; flex-direction: column; gap: .4rem;
 }
@@ -2088,9 +2064,7 @@ mark.search-match {
   width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
   border: none; border-radius: 50%; cursor: pointer;
-  background: rgba(255,255,255,0.62);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.88);
   border: 1.5px solid rgba(255,255,255,0.75);
   box-shadow: 0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.92);
   transition: transform .18s var(--spring), box-shadow .18s ease, background .14s ease;
@@ -2108,10 +2082,9 @@ mark.search-match {
   width: 100%;
   font-family: var(--font); font-size: var(--fs-xs);
   font-weight: 400; color: var(--color-text);
-  background: rgba(255,255,255,0.62);
+  background: rgba(255,255,255,0.88);
   border: 1.5px solid rgba(200,200,220,.55);
   border-radius: 99px; padding: .38rem .875rem;
-  backdrop-filter: blur(6px);
   transition: border-color .2s ease, box-shadow .2s ease;
 }
 .focus-comment-name::placeholder { color: var(--color-text-muted); }
@@ -2126,10 +2099,10 @@ mark.search-match {
   flex: 1;
   font-family: var(--font); font-size: var(--fs-sm);
   font-weight: 400; color: var(--color-text);
-  background: rgba(255,255,255,0.62);
+  background: rgba(255,255,255,0.88);
   border: 1.5px solid rgba(200,200,220,.55);
   border-radius: 14px; padding: .55rem .875rem;
-  resize: none; backdrop-filter: blur(6px);
+  resize: none;
   transition: border-color .2s ease, box-shadow .2s ease;
   min-height: 56px; max-height: 120px; overflow-y: auto;
 }
@@ -2242,8 +2215,6 @@ mark.search-match {
       rgba(251,191,36,0.20)  0%,
       rgba(167,139,250,0.16) 55%,
       rgba(251,191,36,0.14)  100%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  backdrop-filter: blur(32px) saturate(180%);
   border-bottom: 1px solid rgba(251,191,36,0.38);
   /* Static base shadow — never animates, zero repaints */
   box-shadow:
@@ -2330,12 +2301,10 @@ mark.search-match {
   padding: .5rem 1.1rem;
   font-family: var(--font); font-size: .84rem; font-weight: 600;
   color: var(--color-text-muted);
-  background: rgba(255,255,255,0.52);
+  background: rgba(255,255,255,0.80);
   border: 1.5px solid rgba(255,255,255,0.72);
   border-radius: 99px;
   cursor: pointer;
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
   box-shadow: var(--glass-inset), 0 2px 8px rgba(0,0,0,0.05);
   transition: background .22s ease, color .22s ease,
               transform .22s var(--spring), box-shadow .22s ease;
