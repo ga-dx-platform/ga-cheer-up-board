@@ -22,6 +22,24 @@ const CAT = {
 
 const ROTS = [0.6, -0.8, 0.4, -0.5, 0.7, -0.6, 0.5, -0.4, 0.8, -0.7, 0.3, -0.9];
 
+const CAT_PLACEHOLDERS = {
+  thank_you:   'บอกเล่าสิ่งที่เขาทำให้คุณรู้สึกขอบคุณ... 💝',
+  cheer_up:    'เขียนคำให้กำลังใจที่คุณอยากบอก... 🌈',
+  idea:        'แชร์ไอเดียของคุณให้ทีมรู้ด้วยกัน... 💡',
+  want_to_say: 'มีอะไรอยากบอกทีม บอกมาเลย... 📢',
+  help:        'บอกว่าต้องการความช่วยเหลือด้านไหน... 🙋‍♀️',
+  others:      'เขียนอะไรก็ได้ที่อยากแบ่งปัน... 🔮',
+};
+
+const SUCCESS_COPY = {
+  thank_you:   { icon: '💝', title: 'ขอบคุณที่ส่งความรู้สึกดีๆ!',  sub: 'ข้อความของคุณถึงทีมแล้ว ✨' },
+  cheer_up:    { icon: '🌈', title: 'กำลังใจส่งถึงแล้ว!',           sub: 'ทีมจะรู้สึกได้ถึงพลังบวก 💪' },
+  idea:        { icon: '💡', title: 'แชร์ไอเดียสำเร็จ!',            sub: 'ไอเดียของคุณอยู่บนกระดานแล้ว 🚀' },
+  want_to_say: { icon: '📢', title: 'บอกทีมสำเร็จแล้ว!',            sub: 'การ์ดของคุณอยู่บนกระดานแล้ว 🎉' },
+  help:        { icon: '🙋‍♀️', title: 'ขอความช่วยเหลือสำเร็จ!',     sub: 'ทีมจะเห็นข้อความของคุณเลย 🤝' },
+  others:      { icon: '✨', title: 'แชร์สำเร็จแล้ว!',              sub: 'การ์ดของคุณอยู่บนกระดานแล้ว 🎉' },
+};
+
 /* ══════════════════════════════════════════════════════════
    UTILITIES
    ══════════════════════════════════════════════════════════ */
@@ -655,8 +673,10 @@ function getMilestoneTagline(total) {
 }
 
 function checkMilestone(total) {
-  const seen = parseInt(localStorage.getItem(MILESTONE_KEY) || '0', 10);
-  const hit  = MILESTONES.filter(m => m <= total && m > seen).pop();
+  const rawSeen    = localStorage.getItem(MILESTONE_KEY);
+  const isFirstEver = rawSeen === null;
+  const seen       = parseInt(rawSeen ?? '0', 10);
+  const hit        = MILESTONES.filter(m => m <= total && m > seen).pop();
   if (!hit) return;
   localStorage.setItem(MILESTONE_KEY, String(hit));
 
@@ -664,6 +684,10 @@ function checkMilestone(total) {
   if (!bar) return;
   bar.classList.add('milestone-pop');
   bar.addEventListener('animationend', () => bar.classList.remove('milestone-pop'), { once: true });
+
+  if (!isFirstEver && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    fireConfetti('thank_you');
+  }
 }
 
 function updateStats() {
@@ -1141,6 +1165,8 @@ document.querySelectorAll('.cat-tab').forEach(tab => {
     tab.setAttribute('aria-checked', 'true');
     selectedCategory = tab.dataset.cat;
     updateLivePreview();
+    const ta = document.getElementById('f-content');
+    if (ta) ta.placeholder = CAT_PLACEHOLDERS[selectedCategory] ?? 'เขียนสิ่งที่อยากบอก... 💬';
   });
 });
 
@@ -1393,6 +1419,7 @@ function showSubmitSuccess(msg) {
   if (!box) { closeModal(); resetForm(); return; }
 
   const cat    = CAT[msg.category] ?? CAT.cheer_up;
+  const copy   = SUCCESS_COPY[msg.category] ?? { icon: '✅', title: 'ส่งสำเร็จแล้ว!', sub: 'การ์ดของคุณอยู่บนกระดานแล้วนะ 🎉' };
   const sender = (msg.is_anonymous || !msg.sender_name || msg.sender_name === 'Anonymous')
     ? 'ไม่ระบุชื่อ' : msg.sender_name;
 
@@ -1402,9 +1429,9 @@ function showSubmitSuccess(msg) {
   panel.setAttribute('role', 'status');
   panel.setAttribute('aria-live', 'assertive');
   panel.innerHTML = `
-    <div class="success-icon" aria-hidden="true">✅</div>
-    <h2 class="success-title">ส่งสำเร็จแล้ว!</h2>
-    <p class="success-sub">การ์ดของคุณอยู่บนกระดานแล้วนะ 🎉</p>
+    <div class="success-icon" aria-hidden="true">${copy.icon}</div>
+    <h2 class="success-title">${copy.title}</h2>
+    <p class="success-sub">${copy.sub}</p>
     <article class="card success-preview-card" style="--r:0deg" data-category="${msg.category}">
       <div class="card-head">
         <span class="card-avatar" aria-hidden="true">${esc(msg.avatar_emoji ?? '🌟')}</span>
@@ -2442,3 +2469,10 @@ checkAdminSession().then(() => Promise.all([
   fetchAdminAnnouncement(),
   fetchCursorEffectSetting(),
 ]));
+
+/* ── Console egg ─────────────────────────────────────────── */
+console.log(
+  '%c💖 GA Cheer Up Board %c\nส่งต่อพลังบวกให้กัน — เพราะคำขอบคุณเปลี่ยนวันของใครสักคนได้',
+  'background: linear-gradient(135deg, #f97316, #ec4899); color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 700;',
+  'color: #9d4edd; font-style: italic;'
+);
