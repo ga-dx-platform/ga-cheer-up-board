@@ -372,10 +372,8 @@ body::after {
   text-decoration-color: rgba(95,107,122,0.35);
   transition: color .18s ease, text-decoration-color .18s ease;
 }
-.btn-about:hover {
-  color: var(--color-text-secondary);
-  text-decoration-color: rgba(107,114,128,0.55);
-}
+.btn-about:hover  { color: var(--color-text-secondary); text-decoration-color: rgba(107,114,128,0.55); }
+.btn-about:active { opacity: 0.65; transition-duration: .08s; }
 .btn-about::before { content: 'ℹ️ '; font-style: normal; }
 
 /* Welcome modal close button */
@@ -535,7 +533,8 @@ body::after {
   box-shadow: 0 3px 12px rgba(249,115,22,.32);
   transition: transform .22s var(--spring), box-shadow .22s ease;
 }
-.nudge-cta:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 6px 18px rgba(249,115,22,.42); }
+.nudge-cta:hover  { transform: translateY(-2px) scale(1.04); box-shadow: 0 6px 18px rgba(249,115,22,.42); }
+.nudge-cta:active { transform: scale(0.94); transition-duration: .06s; }
 
 .nudge-dismiss {
   flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;
@@ -657,6 +656,11 @@ body::after {
   overflow:hidden;
   cursor: pointer;
   transition:transform .35s var(--ease-out),box-shadow .35s ease;
+  animation: motw-reveal .52s var(--ease-soft) backwards;
+}
+@keyframes motw-reveal {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .motw-card::before {
   content:''; position:absolute; inset:0;
@@ -756,6 +760,13 @@ body::after {
   78%  { transform: scale(1.18); }
   100% { transform: scale(1.1); }
 }
+@keyframes count-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.count-bump { animation: count-bump .32s var(--spring); }
 .rxn-btn.reacted { background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.35); color:#c2410c; }
 
 .comment-counter {
@@ -894,7 +905,7 @@ mark.search-match {
   backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%);
   font-family:var(--font); font-size:var(--fs-sm); font-weight:500; color: var(--color-ui);
   cursor:pointer;
-  transition: background .22s ease, color .22s ease, transform .22s var(--spring), box-shadow .22s ease;
+  transition: background .22s ease, color .22s ease, transform .22s var(--spring), box-shadow .22s ease, border-color .22s ease;
   white-space:nowrap;
   box-shadow: var(--glass-inset), 0 2px 8px rgba(0,0,0,0.05);
 }
@@ -1204,6 +1215,15 @@ mark.search-match {
   background: rgba(255,255,255,0.82);
   transform: translateX(3px);
 }
+@keyframes feature-row-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.feature-row               { animation: feature-row-in .38s var(--ease-soft) backwards; }
+.feature-row:nth-child(1)  { animation-delay: .22s; }
+.feature-row:nth-child(2)  { animation-delay: .30s; }
+.feature-row:nth-child(3)  { animation-delay: .38s; }
+.feature-row:nth-child(4)  { animation-delay: .46s; }
 .feature-icon {
   font-size: 1.6rem;
   flex-shrink: 0;
@@ -1394,6 +1414,17 @@ mark.search-match {
 .spinner { width:18px;height:18px; border:2.5px solid rgba(255,255,255,.38); border-top-color:#fff; border-radius:50%; animation:spin .65s linear infinite; flex-shrink:0; }
 @keyframes spin { to{transform:rotate(360deg)} }
 .spinner.hidden { display:none; }
+
+@keyframes field-shake {
+  0%   { transform: translateX(0); }
+  18%  { transform: translateX(-6px); }
+  36%  { transform: translateX(6px); }
+  54%  { transform: translateX(-4px); }
+  72%  { transform: translateX(4px); }
+  90%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+.field-shake { animation: field-shake .42s var(--ease-snappy); }
 
 /* ── Skeleton shimmer ────────────────────────────────────── */
 @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
@@ -1702,6 +1733,14 @@ mark.search-match {
   max-width: 650px;
   width: 90%;
   gap: .5rem;
+  opacity: 0;
+  transform: scale(.96) translateY(20px);
+  transition: opacity .38s var(--ease-soft), transform .38s var(--ease-soft);
+}
+.focus-overlay:not(.hidden) .focus-wrapper {
+  opacity: 1;
+  transform: none;
+  transition-delay: .06s;
 }
 
 /* Card sitting inside the overlay — fills the wrapper */

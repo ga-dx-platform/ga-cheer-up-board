@@ -619,7 +619,13 @@ function wireReactions() {
       btn.classList.add('reacted');
       spawnParticles(btn, btn.dataset.type);
       reactedSet.add(key);
-      if (countEl) countEl.textContent = current + 1;
+      if (countEl) {
+        countEl.textContent = current + 1;
+        countEl.classList.remove('count-bump');
+        void countEl.offsetWidth;
+        countEl.classList.add('count-bump');
+        countEl.addEventListener('animationend', () => countEl.classList.remove('count-bump'), { once: true });
+      }
 
       const { error } = await sb.rpc('increment_reaction', {
         message_id:    btn.dataset.id,
@@ -1238,6 +1244,10 @@ function showFormError(msg) {
   if (!el) return;
   el.textContent = msg;
   el.classList.remove('hidden');
+  el.classList.remove('field-shake');
+  void el.offsetWidth;
+  el.classList.add('field-shake');
+  el.addEventListener('animationend', () => el.classList.remove('field-shake'), { once: true });
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function clearFormError() { document.getElementById('form-error')?.classList.add('hidden'); }
