@@ -78,7 +78,9 @@ button, a, label { touch-action: manipulation; }
   --cat-blue:  rgba(59,130,246,0.50);
   --cat-mint:  rgba(16,185,129,0.50);
 
-  --font:        'Kanit','Noto Sans Thai',sans-serif;
+  --font-heading: 'Mali', cursive;
+  --font-body:    'Mitr', 'Noto Sans Thai', sans-serif;
+  --font:         var(--font-body);
   --header-h:    70px;
   --content-max: 1600px;
   --gap:         1.5rem;
@@ -136,12 +138,23 @@ button, a, label { touch-action: manipulation; }
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: var(--font);
+  font-family: var(--font-body);
   font-weight: 400;
   color: var(--color-text);
   min-height: 100dvh;
   overflow-x: hidden;
   background: var(--color-bg);
+}
+
+h1, h2, h3,
+.logo-title,
+.hero-title,
+.modal-title,
+.welcome-title,
+.motw-card-label,
+.featured-title,
+.board-title {
+  font-family: var(--font-heading);
 }
 
 /* ── Aurora Mesh Gradient Background ────────────────────── */
