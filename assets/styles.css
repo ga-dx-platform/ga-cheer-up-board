@@ -416,7 +416,7 @@ body::after {
   height: 250px;
   pointer-events: none;
 }
-.shape { position: absolute; }
+.shape { position: absolute; opacity: 0.6; }
 
 @keyframes spin-slow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes spin-rev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
@@ -426,26 +426,26 @@ body::after {
 @keyframes morph{0%,100%{border-radius:40% 60% 60% 40%/40% 40% 60% 60%}50%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}}
 
 /* LEFT cluster — positioned with right:%, growing outward from title */
-.l1{width:58px;height:58px;background:#FF6B9D;border-radius:16px;top:24px;right:8%;animation:spin-slow 9s linear infinite;opacity:.82}
-.l2{width:44px;height:44px;background:#4ECDC4;border-radius:50%;top:8px;right:30%;animation:float-y 3.2s ease-in-out infinite;opacity:.88}
-.l3{width:40px;height:40px;background:#FFE66D;top:96px;right:46%;animation:float-y2 2.8s ease-in-out infinite;opacity:.85;clip-path:polygon(50% 0%,100% 100%,0% 100%)}
-.l4{width:52px;height:52px;background:#A78BFA;top:150px;right:14%;animation:morph 4.5s ease-in-out infinite;opacity:.8}
-.l5{width:30px;height:30px;background:#FF9F43;border-radius:50%;top:104px;right:22%;animation:pulse-s 2.6s ease-in-out infinite;opacity:.9}
-.l6{width:22px;height:22px;background:#26de81;top:176px;right:40%;animation:spin-rev 5s linear infinite;clip-path:polygon(50% 0%,0% 100%,100% 100%);opacity:.78}
-.l7{width:18px;height:18px;background:#fd9644;border-radius:4px;top:58px;right:18%;animation:spin-slow 6s linear infinite;opacity:.72}
-.l8{width:26px;height:26px;background:#45aaf2;border-radius:50%;top:200px;right:28%;animation:float-y 3.6s ease-in-out infinite;opacity:.8}
-.l9{width:16px;height:16px;background:#fd79a8;border-radius:4px;top:130px;right:36%;animation:spin-rev 7s linear infinite;opacity:.7}
+.l1{width:58px;height:58px;background:#FFB3C6;border-radius:16px;top:24px;right:8%;animation:spin-slow 9s linear infinite}
+.l2{width:44px;height:44px;background:#A8F0D4;border-radius:50%;top:8px;right:30%;animation:float-y 3.2s ease-in-out infinite}
+.l3{width:40px;height:40px;background:#FFD4A3;top:96px;right:46%;animation:float-y2 2.8s ease-in-out infinite;clip-path:polygon(50% 0%,100% 100%,0% 100%)}
+.l4{width:52px;height:52px;background:#A8D4FF;top:150px;right:14%;animation:morph 4.5s ease-in-out infinite}
+.l5{width:30px;height:30px;background:#FFD4A3;border-radius:50%;top:104px;right:22%;animation:pulse-s 2.6s ease-in-out infinite}
+.l6{width:22px;height:22px;background:#A8F0D4;top:176px;right:40%;animation:spin-rev 5s linear infinite;clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+.l7{width:18px;height:18px;background:#FFB3C6;border-radius:4px;top:58px;right:18%;animation:spin-slow 6s linear infinite}
+.l8{width:26px;height:26px;background:#A8D4FF;border-radius:50%;top:200px;right:28%;animation:float-y 3.6s ease-in-out infinite}
+.l9{width:16px;height:16px;background:#FFB3C6;border-radius:4px;top:130px;right:36%;animation:spin-rev 7s linear infinite}
 
 /* RIGHT cluster — mirror: same numbers but left:% instead of right:%, animations swapped */
-.r1{width:58px;height:58px;background:#FF6B9D;border-radius:16px;top:24px;left:8%;animation:spin-rev 9s linear infinite;opacity:.82}
-.r2{width:44px;height:44px;background:#4ECDC4;border-radius:50%;top:8px;left:30%;animation:float-y2 3.2s ease-in-out infinite;opacity:.88}
-.r3{width:40px;height:40px;background:#FFE66D;top:96px;left:46%;animation:float-y 2.8s ease-in-out infinite;opacity:.85;clip-path:polygon(50% 0%,100% 100%,0% 100%)}
-.r4{width:52px;height:52px;background:#A78BFA;top:150px;left:14%;animation:morph 4.5s ease-in-out infinite;opacity:.8}
-.r5{width:30px;height:30px;background:#FF9F43;border-radius:50%;top:104px;left:22%;animation:pulse-s 2.6s ease-in-out infinite;opacity:.9}
-.r6{width:22px;height:22px;background:#26de81;top:176px;left:40%;animation:spin-slow 5s linear infinite;clip-path:polygon(50% 0%,0% 100%,100% 100%);opacity:.78}
-.r7{width:18px;height:18px;background:#fd9644;border-radius:4px;top:58px;left:18%;animation:spin-rev 6s linear infinite;opacity:.72}
-.r8{width:26px;height:26px;background:#45aaf2;border-radius:50%;top:200px;left:28%;animation:float-y2 3.6s ease-in-out infinite;opacity:.8}
-.r9{width:16px;height:16px;background:#fd79a8;border-radius:4px;top:130px;left:36%;animation:spin-slow 7s linear infinite;opacity:.7}
+.r1{width:58px;height:58px;background:#FFB3C6;border-radius:16px;top:24px;left:8%;animation:spin-rev 9s linear infinite}
+.r2{width:44px;height:44px;background:#A8F0D4;border-radius:50%;top:8px;left:30%;animation:float-y2 3.2s ease-in-out infinite}
+.r3{width:40px;height:40px;background:#FFD4A3;top:96px;left:46%;animation:float-y 2.8s ease-in-out infinite;clip-path:polygon(50% 0%,100% 100%,0% 100%)}
+.r4{width:52px;height:52px;background:#A8D4FF;top:150px;left:14%;animation:morph 4.5s ease-in-out infinite}
+.r5{width:30px;height:30px;background:#FFD4A3;border-radius:50%;top:104px;left:22%;animation:pulse-s 2.6s ease-in-out infinite}
+.r6{width:22px;height:22px;background:#A8F0D4;top:176px;left:40%;animation:spin-slow 5s linear infinite;clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+.r7{width:18px;height:18px;background:#FFB3C6;border-radius:4px;top:58px;left:18%;animation:spin-rev 6s linear infinite}
+.r8{width:26px;height:26px;background:#A8D4FF;border-radius:50%;top:200px;left:28%;animation:float-y2 3.6s ease-in-out infinite}
+.r9{width:16px;height:16px;background:#FFB3C6;border-radius:4px;top:130px;left:36%;animation:spin-slow 7s linear infinite}
 
 /* Responsive — hide shapes on mobile, collapse grid to 1 col */
 @media (max-width:767px) {
