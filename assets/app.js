@@ -1139,6 +1139,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
    ══════════════════════════════════════════════════════════ */
 
 /* ── Form state ──────────────────────────────────────────── */
+let isSubmitting       = false;
 let selectedCategory   = 'thank_you';
 let selectedEmoji      = '🌟';
 let selectedImageBlob  = null;
@@ -1485,6 +1486,8 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
   e.preventDefault();
   clearFormError();
 
+  if (isSubmitting) return;
+
   const content   = contentEl?.value.trim() ?? '';
   const sender    = document.getElementById('f-sender')?.value.trim()    ?? '';
   const recipient = document.getElementById('f-recipient')?.value.trim() ?? '';
@@ -1501,66 +1504,69 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
     return;
   }
 
+  isSubmitting = true;
   setSubmitting(true);
 
-  // Upload image to storage first (if one was selected)
-  let imageUrl = null;
-  if (selectedImageBlob) {
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-    const { data: uploadData, error: uploadErr } = await sb.storage
-      .from('message-images')
-      .upload(fileName, selectedImageBlob, { contentType: 'image/jpeg', upsert: false });
-    if (uploadErr) {
-      setSubmitting(false);
-      showFormError('อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองอีกครั้ง 🙏');
+  try {
+    // Upload image to storage first (if one was selected)
+    let imageUrl = null;
+    if (selectedImageBlob) {
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { data: uploadData, error: uploadErr } = await sb.storage
+        .from('message-images')
+        .upload(fileName, selectedImageBlob, { contentType: 'image/jpeg', upsert: false });
+      if (uploadErr) {
+        showFormError('อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองอีกครั้ง 🙏');
+        return;
+      }
+      const { data: urlData } = sb.storage.from('message-images').getPublicUrl(uploadData.path);
+      imageUrl = urlData.publicUrl;
+    }
+
+    const censoredContent = censorText(content);
+
+    const payload = {
+      category:     selectedCategory,
+      content:      censoredContent,
+      sender_name:  anon || !sender ? 'ไม่ระบุชื่อ' : sender,
+      is_anonymous: anon,
+      avatar_emoji: selectedEmoji,
+      reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
+      is_visible:   true,
+      is_pinned:    false,
+      ...(recipient  ? { recipient_name: recipient }   : {}),
+      ...(imageUrl   ? { image_url: imageUrl }          : {}),
+    };
+    const { data, error } = await sb
+      .from('cheer_up_messages')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Submit]', error);
+      showFormError('ส่งไม่สำเร็จ กรุณาลองอีกครั้ง 🙏');
       return;
     }
-    const { data: urlData } = sb.storage.from('message-images').getPublicUrl(uploadData.path);
-    imageUrl = urlData.publicUrl;
+
+    // Prepend new card + reset filter to show it
+    setCommentCount(data, getCommentCount(data));
+    if (!allMessages.find(m => m.id === data.id)) {
+      allMessages.unshift(data);
+    }
+    setActiveFilter('all');
+    wireReactions();
+
+    // Persist preferences for next session
+    if (sender && !anon) localStorage.setItem(LS_SENDER, sender);
+    localStorage.setItem(LS_EMOJI, selectedEmoji);
+
+    fireConfetti(selectedCategory);
+    showSubmitSuccess(data);
+  } finally {
+    isSubmitting = false;
+    setSubmitting(false);
   }
-
-  const censoredContent = censorText(content);
-
-  const payload = {
-    category:     selectedCategory,
-    content:      censoredContent,
-    sender_name:  anon || !sender ? 'ไม่ระบุชื่อ' : sender,
-    is_anonymous: anon,
-    avatar_emoji: selectedEmoji,
-    reactions:    { thumbs_up: 0, heart: 0, clap: 0 },
-    is_visible:   true,
-    is_pinned:    false,
-    ...(recipient  ? { recipient_name: recipient }   : {}),
-    ...(imageUrl   ? { image_url: imageUrl }          : {}),
-  };
-  const { data, error } = await sb
-    .from('cheer_up_messages')
-    .insert(payload)
-    .select()
-    .single();
-
-  setSubmitting(false);
-
-  if (error) {
-    console.error('[Submit]', error);
-    showFormError('ส่งไม่สำเร็จ กรุณาลองอีกครั้ง 🙏');
-    return;
-  }
-
-  // Prepend new card + reset filter to show it
-  setCommentCount(data, getCommentCount(data));
-  if (!allMessages.find(m => m.id === data.id)) {
-    allMessages.unshift(data);
-  }
-  setActiveFilter('all');
-  wireReactions();
-
-  // Persist preferences for next session
-  if (sender && !anon) localStorage.setItem(LS_SENDER, sender);
-  localStorage.setItem(LS_EMOJI, selectedEmoji);
-
-  fireConfetti(selectedCategory);
-  showSubmitSuccess(data);
 });
 
 /* ══════════════════════════════════════════════════════════
