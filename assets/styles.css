@@ -78,8 +78,8 @@ button, a, label { touch-action: manipulation; }
   --cat-blue:  rgba(59,130,246,0.50);
   --cat-mint:  rgba(16,185,129,0.50);
 
-  --font-heading: 'Mali', cursive;
-  --font-body:    'Mitr', 'Noto Sans Thai', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+  --font-body:    'Sarabun', sans-serif;
   --font:         var(--font-body);
   --header-h:    70px;
   --content-max: 1600px;
@@ -149,12 +149,17 @@ body {
 h1, h2, h3,
 .logo-title,
 .hero-title,
+.hero-tagline,
 .modal-title,
 .welcome-title,
 .motw-card-label,
 .featured-title,
-.board-title {
+.board-title,
+.section-title,
+.admin-section-header,
+.week-message-title {
   font-family: var(--font-heading);
+  font-weight: 800;
 }
 
 /* ── Aurora Mesh Gradient Background ────────────────────── */
@@ -1152,7 +1157,7 @@ mark.search-match {
 }
 
 .modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.modal-title { font-size:var(--fs-xl); font-weight:700; color:var(--color-text-strong); text-wrap:balance; letter-spacing:-0.02em; }
+.modal-title { font-size:var(--fs-xl); font-weight:800; color:var(--color-text-strong); text-wrap:balance; letter-spacing:-0.02em; }
 .modal-close { width:34px;height:34px; border-radius:50%; border:1.5px solid rgba(0,0,0,.1); background:rgba(0,0,0,.04); cursor:pointer; font-size:.9rem; display:flex;align-items:center;justify-content:center; transition:background .18s ease, transform .22s var(--spring), color .18s ease; color: var(--color-ui); }
 .modal-close:hover { background:rgba(0,0,0,.09); transform:rotate(90deg) scale(1.1); }
 

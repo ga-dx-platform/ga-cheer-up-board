@@ -1058,17 +1058,17 @@ const doughnutCenterText = {
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle    = '#111827';
-    ctx.font         = `700 ${(sz * 0.14).toFixed(0)}px Mitr, sans-serif`;
+    ctx.font         = `700 ${(sz * 0.14).toFixed(0)}px Sarabun, sans-serif`;
     ctx.fillText(total, width / 2, height / 2 - sz * 0.06);
     ctx.fillStyle = '#9ca3af';
-    ctx.font      = `400 ${(sz * 0.075).toFixed(0)}px Mitr, sans-serif`;
+    ctx.font      = `400 ${(sz * 0.075).toFixed(0)}px Sarabun, sans-serif`;
     ctx.fillText('ทั้งหมด', width / 2, height / 2 + sz * 0.1);
     ctx.restore();
   }
 };
 
 if (typeof Chart !== 'undefined') {
-  Chart.defaults.font.family = 'Mitr, sans-serif';
+  Chart.defaults.font.family = 'Sarabun, sans-serif';
 }
 
 let _categoryChart = null;
