@@ -266,7 +266,7 @@ function renderCard(msg, idx, query = '') {
 
   const rxn      = msg.reactions ?? {};
   const totalRxn = (rxn.thumbs_up ?? 0) + (rxn.heart ?? 0) + (rxn.clap ?? 0);
-  const isNew    = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
+  const isRecent = (Date.now() - new Date(msg.created_at).getTime()) < 86_400_000;
 
   // Tier system: 🌟 bronze (5+) · 💎 silver (10+) · 👑 gold (20+)
   const tier = totalRxn >= 20 ? 'gold'
@@ -274,9 +274,17 @@ function renderCard(msg, idx, query = '') {
              : totalRxn >= 5  ? 'bronze'
              : null;
 
+  const seenStatus  = _seenStatuses.get(msg.id);
+  const unseenBadge = seenStatus === 'new'
+    ? `<span class="badge-unread badge-unread-new" aria-label="ข้อความใหม่">✨ ใหม่</span>`
+    : seenStatus === 'newComments'
+      ? `<span class="badge-unread badge-unread-comments" aria-label="มีคอมเมนต์ใหม่">💬 คอมเมนต์ใหม่</span>`
+      : '';
+
   const classes = ['card',
-    tier   ? `is-popular tier-${tier}` : '',
-    isNew  ? 'is-new'                  : '',
+    tier        ? `is-popular tier-${tier}` : '',
+    isRecent && !unseenBadge ? 'is-new'     : '',
+    unseenBadge ? 'has-unread'              : '',
   ].filter(Boolean).join(' ');
 
   const TIER_BADGE = {
@@ -285,8 +293,8 @@ function renderCard(msg, idx, query = '') {
     gold:   { icon: '👑', label: 'ตำนาน!'         },
   };
 
-  // New badge only shows on non-popular cards; popular badge takes precedence
-  const newBadge = (isNew && !tier)
+  // Age-based NEW badge: suppressed when unseen badge is showing (avoid double padding)
+  const newBadge = (isRecent && !tier && !unseenBadge)
     ? `<span class="badge-new" aria-label="ข้อความใหม่">✨ NEW</span>`
     : '';
 
@@ -311,7 +319,7 @@ function renderCard(msg, idx, query = '') {
     <article id="msg-${msg.id}" class="${classes}" style="--r:${r}deg"
              data-id="${msg.id}" data-category="${msg.category}"
              aria-label="${cardLabel}">
-      ${newBadge}${popularBadge}${inlineAdminHtml}
+      ${unseenBadge}${newBadge}${popularBadge}${inlineAdminHtml}
       <div class="card-head">
         <span class="card-avatar" aria-hidden="true">${esc(avatar)}</span>
         <span class="card-badge badge-${cat.cls}">${cat.emoji} ${cat.label}</span>
@@ -547,6 +555,87 @@ function renderError(err) {
 }
 
 /* ══════════════════════════════════════════════════════════
+   SEEN-SINCE-LAST-VISIT STORE
+   ══════════════════════════════════════════════════════════ */
+const SeenStore = (() => {
+  const KEY = 'cheerboard_seen';
+  let _data = null;
+
+  function _load() {
+    if (_data) return;
+    try {
+      const raw = localStorage.getItem(KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      _data = (parsed && typeof parsed === 'object' && 'posts' in parsed)
+        ? parsed
+        : { initialized: false, posts: {} };
+    } catch (_) {
+      _data = { initialized: false, posts: {} };
+    }
+  }
+
+  let _saveTimer = null;
+  function _persist() {
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(() => {
+      try { localStorage.setItem(KEY, JSON.stringify(_data)); } catch (_) {}
+    }, 200);
+  }
+
+  function isInitialized() { _load(); return !!_data.initialized; }
+
+  /**
+   * processPage(posts) — run over ALL visible posts fetched at load time.
+   * First visit: baseline every post as seen, set initialized=true, return 'seen' for all.
+   * Return visit: compare against stored state → 'new' | 'newComments' | 'seen'.
+   */
+  function processPage(posts) {
+    _load();
+    const statuses = new Map();
+    const firstVisit = !_data.initialized;
+
+    if (firstVisit) {
+      _data.posts = {};
+      posts.forEach(p => {
+        _data.posts[p.id] = { commentCount: getCommentCount(p) };
+        statuses.set(p.id, 'seen');
+      });
+      _data.initialized = true;
+      _persist();
+    } else {
+      posts.forEach(p => {
+        const prev = _data.posts[p.id];
+        if (!prev) {
+          statuses.set(p.id, 'new');
+        } else if (getCommentCount(p) > prev.commentCount) {
+          statuses.set(p.id, 'newComments');
+        } else {
+          statuses.set(p.id, 'seen');
+        }
+      });
+    }
+    return { statuses };
+  }
+
+  function markSeen(id, commentCount) {
+    _load();
+    _data.posts[id] = { commentCount: Number(commentCount) || 0 };
+    _persist();
+  }
+
+  function pruneIfComplete(currentIdSet) {
+    _load();
+    if (!_data.initialized) return;
+    Object.keys(_data.posts).forEach(id => {
+      if (!currentIdSet.has(id)) delete _data.posts[id];
+    });
+    _persist();
+  }
+
+  return { isInitialized, processPage, markSeen, pruneIfComplete };
+})();
+
+/* ══════════════════════════════════════════════════════════
    BOARD STATE & RENDERING
    ══════════════════════════════════════════════════════════ */
 let allMessages  = [];
@@ -557,6 +646,59 @@ let boardLocked  = false;
 let isAdmin      = false;
 const reactedSet   = new Set(); // key: `${msgId}:${type}`
 const localComments = new Set();
+
+/* ── "New since last visit" runtime state ────────────────── */
+let _seenStatuses = new Map(); // post id → 'new' | 'newComments' | 'seen'
+let _unseenCount  = 0;
+
+function _countUnseen() {
+  let n = 0;
+  _seenStatuses.forEach(s => { if (s === 'new' || s === 'newComments') n++; });
+  return n;
+}
+
+function updateNewBanner(count) {
+  const banner = document.getElementById('new-posts-banner');
+  if (!banner) return;
+  if (count <= 0) { banner.classList.add('hidden'); return; }
+  const countEl = document.getElementById('new-posts-count');
+  if (countEl) countEl.textContent = count;
+  banner.classList.remove('hidden');
+}
+
+const _seenObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const card = entry.target;
+    const id   = card.dataset.id;
+    if (!id || _seenStatuses.get(id) === 'seen') return;
+
+    const badge = card.querySelector('.badge-unread');
+    if (badge) {
+      badge.classList.add('badge-unread-fade');
+      badge.addEventListener('animationend', () => {
+        badge.remove();
+        card.classList.remove('has-unread');
+      }, { once: true });
+    } else {
+      card.classList.remove('has-unread');
+    }
+
+    const curMsg = allMessages.find(m => m.id === id) ?? {};
+    SeenStore.markSeen(id, getCommentCount(curMsg));
+    _seenStatuses.set(id, 'seen');
+    _unseenCount = Math.max(0, _unseenCount - 1);
+    updateNewBanner(_unseenCount);
+    _seenObserver.unobserve(card);
+  });
+}, { threshold: 0.5 });
+
+/* Banner dismiss — wire once on DOMContentLoaded */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('new-posts-dismiss')?.addEventListener('click', () => {
+    document.getElementById('new-posts-banner')?.classList.add('hidden');
+  });
+});
 
 // Infinite scroll pagination
 let currentOffset = 0;
@@ -612,6 +754,10 @@ function observeCards() {
     if (!card.dataset.observed) {
       card.dataset.observed = '1';
       _cardObserver.observe(card);
+    }
+    if (!card.dataset.seenObserved && card.dataset.id) {
+      card.dataset.seenObserved = '1';
+      _seenObserver.observe(card);
     }
   });
 }
@@ -956,7 +1102,7 @@ async function loadBoard() {
   board.innerHTML  = skelCard().repeat(4);
   board.classList.remove('board-empty');
 
-  const [{ data, error }, { data: settingsData }] = await Promise.all([
+  const [{ data, error }, { data: settingsData }, { data: allPostsData }] = await Promise.all([
     sb.from('cheer_up_messages')
       .select('*, comments(count)')
       .eq('is_visible', true)
@@ -964,6 +1110,8 @@ async function loadBoard() {
       .order('created_at', { ascending: false })
       .range(0, PAGE_SIZE - 1),
     sb.from('board_settings').select('is_locked').eq('id', 1).single(),
+    // Lightweight all-posts fetch for seen-tracking baseline (id + comment count only)
+    sb.from('cheer_up_messages').select('id, comments(count)').eq('is_visible', true),
   ]);
 
   applyMaintenanceMode(settingsData?.is_locked ?? false);
@@ -1003,6 +1151,15 @@ async function loadBoard() {
   }
 
   allMessages = regular;
+
+  // Init seen-since-last-visit tracking against the full post list
+  const { statuses } = SeenStore.processPage(allPostsData ?? []);
+  _seenStatuses = statuses;
+  _unseenCount  = _countUnseen();
+  updateNewBanner(_unseenCount);
+  // Prune stale ids from local store (deleted/hidden posts)
+  const currentIds = new Set((allPostsData ?? []).map(p => p.id));
+  SeenStore.pruneIfComplete(currentIds);
 
   // Weekly Digest
   const digestSec = document.getElementById('digest-section');
@@ -1554,6 +1711,9 @@ document.getElementById('submit-form')?.addEventListener('submit', async e => {
     if (!allMessages.find(m => m.id === data.id)) {
       allMessages.unshift(data);
     }
+    // Own post — mark seen immediately so no unread badge appears
+    _seenStatuses.set(data.id, 'seen');
+    SeenStore.markSeen(data.id, 0);
     setActiveFilter('all');
     wireReactions();
 
@@ -1580,6 +1740,12 @@ function subscribeRealtime() {
         if (!msg.is_visible) return;
         if (allMessages.find(m => m.id === msg.id)) return; // already optimistically added
         setCommentCount(msg, 0);
+        // External post — flag as new before rendering so badge appears immediately
+        if (!_seenStatuses.has(msg.id)) {
+          _seenStatuses.set(msg.id, 'new');
+          _unseenCount++;
+          updateNewBanner(_unseenCount);
+        }
         allMessages.unshift(msg);
         updateStats();
 
@@ -1607,6 +1773,10 @@ function subscribeRealtime() {
           board.prepend(newCard);
           wireReactions();
           _cardObserver.observe(newCard);
+          if (newCard.dataset.id) {
+            newCard.dataset.seenObserved = '1';
+            _seenObserver.observe(newCard);
+          }
         }
       }
     )
