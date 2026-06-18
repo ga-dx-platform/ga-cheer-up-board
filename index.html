@@ -65,15 +65,19 @@
         </div>
       </div>
       <div class="topbar-actions">
-        <a href="gallery.html" class="btn-ghost">📸 แกลเลอรีกิจกรรม</a>
-        <button id="btn-open-feedback" class="btn-ghost">💡 ส่งข้อเสนอแนะ</button>
-        <button class="btn-add" id="openModal" aria-haspopup="dialog">
+        <a href="gallery.html" class="btn-ghost" aria-label="แกลเลอรีกิจกรรม">
+          <span class="btn-ico" aria-hidden="true">📸</span><span class="btn-label">แกลเลอรีกิจกรรม</span>
+        </a>
+        <button id="btn-open-feedback" class="btn-ghost" aria-label="ส่งข้อเสนอแนะ">
+          <span class="btn-ico" aria-hidden="true">💡</span><span class="btn-label">ส่งข้อเสนอแนะ</span>
+        </button>
+        <button class="btn-add" id="openModal" aria-haspopup="dialog" aria-label="เพิ่มข้อความ">
           <!-- SVG plus/sparkle icon -->
           <svg class="btn-add-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
             <path d="M10 4 L10 16 M4 10 L16 10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
             <path d="M16 5 L17 3.5 L18 5 L19.5 6 L18 7 L17 8.5 L16 7 L14.5 6 Z" fill="currentColor" opacity="0.85"/>
           </svg>
-          เพิ่มข้อความ
+          <span class="btn-label">เพิ่มข้อความ</span>
         </button>
       </div>
     </div>
