@@ -42,6 +42,15 @@ const AUDIT_STYLES = {
   FORCE_WELCOME_OFF:    { label: '✅ ปิด Launch Mode',    cls: 'amber'  },
   ANNOUNCEMENT_SAVED:   { label: '📢 บันทึกประกาศ',       cls: 'amber'  },
   ANNOUNCEMENT_CLEARED: { label: '✕ ล้างประกาศ',          cls: 'amber'  },
+  ALBUM_CREATED:        { label: '🆕 สร้างอัลบั้ม',        cls: 'green'  },
+  ALBUM_UPDATED:        { label: '✏️ แก้อัลบั้ม',          cls: 'amber'  },
+  ALBUM_DELETED:        { label: '🗑 ลบอัลบั้ม',           cls: 'red'    },
+  PHOTO_UPLOADED:       { label: '🖼 อัปโหลดรูป',          cls: 'green'  },
+  PHOTO_DELETED:        { label: '🗑 ลบรูป',               cls: 'red'    },
+  COVER_SET:            { label: '⭐ ตั้งรูปหน้าปก',        cls: 'amber'  },
+  GALLERY_PIN_ON:       { label: '🔒 เปิด PIN แกลเลอรี',   cls: 'amber'  },
+  GALLERY_PIN_OFF:      { label: '🔓 ปิด PIN แกลเลอรี',    cls: 'amber'  },
+  GALLERY_PIN_SET:      { label: '🔑 ตั้ง PIN แกลเลอรี',   cls: 'amber'  },
 };
 
 function esc(s) {
@@ -315,6 +324,8 @@ function showDashboard() {
   loadAdminAnnouncement();
   loadAuditLogs();
   loadFeedbacks();
+  loadGallery();
+  loadGalleryConfig();
   subscribeRealtime();
 }
 
@@ -1300,3 +1311,560 @@ document.addEventListener('keydown', e => {
    BOOT
    ══════════════════════════════════════════════════════════ */
 checkSession();
+
+/* ══════════════════════════════════════════════════════════
+   GA ACTIVITY GALLERY — ADMIN
+   ══════════════════════════════════════════════════════════ */
+const GALLERY_BUCKET = 'gallery';
+const GALLERY_FULL_MAXW  = 1600;
+const GALLERY_THUMB_MAXW = 400;
+const GALLERY_JPEG_Q     = 0.8;
+const GALLERY_FREE_BYTES = 1024 * 1024 * 1024;        // 1 GB free tier
+const GALLERY_WARN_BYTES = 800 * 1024 * 1024;         // warn near 800 MB
+const GALLERY_AVG_BYTES  = 360 * 1024;                // est. full+thumb per photo
+
+let galleryAlbums = [];   // [{...album, photos:[...]}]
+
+/* ── SHA-256 helper (view-PIN hashing only; uploads use Auth) ── */
+async function gallerySha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function galleryPublicUrl(path) {
+  return sb.storage.from(GALLERY_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+function galleryThaiDate(d) {
+  if (!d) return '';
+  try { return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  catch { return ''; }
+}
+
+/* ── Image processing: EXIF-correct resize + JPEG compress ──
+   createImageBitmap(..., {imageOrientation:'from-image'}) bakes in the
+   correct rotation so sideways phone photos come out upright. ── */
+async function galleryProcessImage(file, maxW, quality) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (_) {
+    bitmap = await createImageBitmap(file); // fallback (orientation may be ignored)
+  }
+  let { width, height } = bitmap;
+  if (width > maxW) { height = Math.round(height * maxW / width); width = maxW; }
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  if (bitmap.close) bitmap.close();
+  return await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+}
+
+/* ══════════════════════════════════════════════════════════
+   LOAD + RENDER
+   ══════════════════════════════════════════════════════════ */
+async function loadGallery() {
+  const wrap = document.getElementById('gallery-albums');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="audit-empty">⏳ กำลังโหลดแกลเลอรี...</div>';
+  try {
+    const { data: albums, error: aErr } = await sb
+      .from('albums')
+      .select('id, name, event_date, description, cover_photo_id, created_at')
+      .order('created_at', { ascending: false });
+    if (aErr) throw aErr;
+
+    const { data: photos, error: pErr } = await sb
+      .from('photos')
+      .select('id, album_id, storage_path, thumb_path, caption, sort_order, created_at')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (pErr) throw pErr;
+
+    const byAlbum = new Map();
+    (photos ?? []).forEach(p => {
+      if (!byAlbum.has(p.album_id)) byAlbum.set(p.album_id, []);
+      byAlbum.get(p.album_id).push(p);
+    });
+
+    galleryAlbums = (albums ?? []).map(a => ({ ...a, photos: byAlbum.get(a.id) ?? [] }));
+    renderGalleryAlbums();
+    updateStorageEstimate();
+  } catch (err) {
+    console.error('[Admin] loadGallery', err);
+    wrap.innerHTML = '<div class="audit-empty">โหลดแกลเลอรีไม่สำเร็จ — รัน supabase_gallery.sql แล้วหรือยัง?</div>';
+  }
+}
+
+function updateStorageEstimate() {
+  const totalPhotos = galleryAlbums.reduce((n, a) => n + a.photos.length, 0);
+  const bytes = totalPhotos * GALLERY_AVG_BYTES;
+  const mb = bytes / (1024 * 1024);
+  const label = document.getElementById('gap-storage');
+  const fill  = document.getElementById('gap-storage-fill');
+  if (label) {
+    const near = bytes >= GALLERY_WARN_BYTES;
+    label.textContent = `💾 ~${mb < 1024 ? mb.toFixed(1) + ' MB' : (mb / 1024).toFixed(2) + ' GB'} / 1 GB`;
+    label.classList.toggle('gap-storage--warn', near);
+    label.title = `ประมาณการจาก ${totalPhotos} รูป (เฉลี่ย ~${Math.round(GALLERY_AVG_BYTES/1024)} KB/รูป)`;
+  }
+  if (fill) {
+    const pct = Math.min(100, (bytes / GALLERY_FREE_BYTES) * 100);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('gap-storage-fill--warn', bytes >= GALLERY_WARN_BYTES);
+  }
+  if (bytes >= GALLERY_WARN_BYTES) {
+    showToast('⚠️ พื้นที่ Storage ใกล้เต็ม 1 GB แล้ว');
+  }
+}
+
+function renderGalleryAlbums() {
+  const wrap = document.getElementById('gallery-albums');
+  if (!wrap) return;
+  if (galleryAlbums.length === 0) {
+    wrap.innerHTML = `
+      <div class="gap-empty">
+        <div style="font-size:2.5rem">📸</div>
+        <p>ยังไม่มีอัลบั้ม — กด “+ สร้างอัลบั้ม” เพื่อเริ่มเก็บความทรงจำดีๆ</p>
+      </div>`;
+    return;
+  }
+  wrap.innerHTML = galleryAlbums.map(renderGalleryAlbumCard).join('');
+  wireGalleryAlbumActions();
+}
+
+function renderGalleryAlbumCard(a) {
+  const cover = a.cover_photo_id
+    ? a.photos.find(p => p.id === a.cover_photo_id)
+    : a.photos[0];
+  const coverHtml = cover
+    ? `<img class="gap-album-cover" src="${esc(galleryPublicUrl(cover.thumb_path))}" alt=""
+            onerror="this.style.display='none'"/>`
+    : `<div class="gap-album-cover gap-album-cover--empty">📷</div>`;
+  const dateStr = a.event_date ? galleryThaiDate(a.event_date) : galleryThaiDate(a.created_at);
+
+  const photosHtml = a.photos.length === 0
+    ? `<div class="gap-photos-empty">ยังไม่มีรูปในอัลบั้มนี้ — กด “อัปโหลดรูป” ด้านบน</div>`
+    : a.photos.map(p => {
+        const isCover = p.id === a.cover_photo_id;
+        return `
+          <div class="gap-photo${isCover ? ' is-cover' : ''}" data-photo="${p.id}" data-album="${a.id}">
+            <img src="${esc(galleryPublicUrl(p.thumb_path))}" alt="${esc(p.caption || '')}" loading="lazy"
+                 onerror="this.closest('.gap-photo').classList.add('is-broken');this.remove();"/>
+            ${isCover ? '<span class="gap-photo-coverbadge">⭐ ปก</span>' : ''}
+            <div class="gap-photo-actions">
+              <button type="button" class="gap-mini-btn" data-act="cover" data-photo="${p.id}" data-album="${a.id}" title="ตั้งเป็นปก">⭐</button>
+              <button type="button" class="gap-mini-btn gap-mini-btn--del" data-act="delphoto" data-photo="${p.id}" data-album="${a.id}" title="ลบรูป">🗑</button>
+            </div>
+          </div>`;
+      }).join('');
+
+  return `
+    <div class="gap-album" data-album="${a.id}">
+      <div class="gap-album-head">
+        ${coverHtml}
+        <div class="gap-album-info">
+          <h3 class="gap-album-name">${esc(a.name)}</h3>
+          <p class="gap-album-sub">${esc(dateStr)} · ${a.photos.length} รูป</p>
+          ${a.description ? `<p class="gap-album-desc">${esc(a.description)}</p>` : ''}
+        </div>
+        <div class="gap-album-actions">
+          <button type="button" class="action-btn" data-act="upload" data-album="${a.id}">⬆️ อัปโหลดรูป</button>
+          <button type="button" class="action-btn" data-act="edit" data-album="${a.id}">✏️ แก้ไข</button>
+          <button type="button" class="action-btn btn-del" data-act="delalbum" data-album="${a.id}">🗑 ลบ</button>
+        </div>
+      </div>
+      <input type="file" class="gap-file-input a-hidden" data-album="${a.id}" accept="image/*" multiple />
+      <div class="gap-progress a-hidden" data-album="${a.id}"></div>
+      <div class="gap-photos">${photosHtml}</div>
+    </div>`;
+}
+
+function wireGalleryAlbumActions() {
+  const wrap = document.getElementById('gallery-albums');
+  if (!wrap) return;
+
+  wrap.querySelectorAll('[data-act="upload"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelector(`.gap-file-input[data-album="${btn.dataset.album}"]`)?.click();
+    });
+  });
+  wrap.querySelectorAll('.gap-file-input').forEach(inp => {
+    inp.addEventListener('change', e => handleGalleryUpload(inp.dataset.album, e.target.files, inp));
+  });
+  wrap.querySelectorAll('[data-act="edit"]').forEach(btn => {
+    btn.addEventListener('click', () => openAlbumModal(btn.dataset.album));
+  });
+  wrap.querySelectorAll('[data-act="delalbum"]').forEach(btn => {
+    btn.addEventListener('click', () => deleteAlbum(btn.dataset.album));
+  });
+  wrap.querySelectorAll('[data-act="cover"]').forEach(btn => {
+    btn.addEventListener('click', () => setAlbumCover(btn.dataset.album, btn.dataset.photo));
+  });
+  wrap.querySelectorAll('[data-act="delphoto"]').forEach(btn => {
+    btn.addEventListener('click', () => deletePhoto(btn.dataset.album, btn.dataset.photo));
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   ALBUM CREATE / EDIT MODAL
+   ══════════════════════════════════════════════════════════ */
+let editingAlbumId = null;
+
+function openAlbumModal(albumId) {
+  editingAlbumId = albumId ?? null;
+  const modal = document.getElementById('album-modal');
+  const title = document.getElementById('album-modal-title');
+  const nameI = document.getElementById('album-name');
+  const dateI = document.getElementById('album-date');
+  const descI = document.getElementById('album-description');
+  const errEl = document.getElementById('album-modal-error');
+  errEl?.classList.add('a-hidden');
+
+  if (albumId) {
+    const a = galleryAlbums.find(x => x.id === albumId);
+    title.textContent = '✏️ แก้ไขอัลบั้ม';
+    nameI.value = a?.name ?? '';
+    dateI.value = a?.event_date ?? '';
+    descI.value = a?.description ?? '';
+  } else {
+    title.textContent = '🆕 สร้างอัลบั้มใหม่';
+    nameI.value = ''; dateI.value = ''; descI.value = '';
+  }
+  modal.classList.remove('a-hidden');
+  nameI.focus();
+}
+
+function closeAlbumModal() {
+  document.getElementById('album-modal')?.classList.add('a-hidden');
+  editingAlbumId = null;
+}
+
+async function saveAlbum() {
+  const nameI = document.getElementById('album-name');
+  const dateI = document.getElementById('album-date');
+  const descI = document.getElementById('album-description');
+  const errEl = document.getElementById('album-modal-error');
+  const btn   = document.getElementById('album-save-btn');
+  const label = document.getElementById('album-save-label');
+  const spin  = document.getElementById('album-save-spinner');
+
+  const name = nameI.value.trim();
+  if (!name) {
+    errEl.textContent = 'กรุณาใส่ชื่ออัลบั้ม';
+    errEl.classList.remove('a-hidden');
+    return;
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'); showLogin(); return; }
+
+  btn.disabled = true; label.textContent = 'กำลังบันทึก...'; spin?.classList.remove('a-hidden');
+  const payload = {
+    name,
+    event_date:  dateI.value || null,
+    description: descI.value.trim() || null,
+  };
+
+  try {
+    if (editingAlbumId) {
+      const { error } = await sb.from('albums').update(payload).eq('id', editingAlbumId);
+      if (error) throw error;
+      showToast('✅ บันทึกอัลบั้มแล้ว');
+      logAdminAction('ALBUM_UPDATED', editingAlbumId, `แก้ไขอัลบั้ม “${name}”`);
+    } else {
+      const { error } = await sb.from('albums').insert(payload);
+      if (error) throw error;
+      showToast('🆕 สร้างอัลบั้มแล้ว');
+      logAdminAction('ALBUM_CREATED', null, `สร้างอัลบั้ม “${name}”`);
+    }
+    closeAlbumModal();
+    await loadGallery();
+  } catch (err) {
+    console.error('[Admin] saveAlbum', err);
+    errEl.textContent = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+    errEl.classList.remove('a-hidden');
+  } finally {
+    btn.disabled = false; label.textContent = 'บันทึก'; spin?.classList.add('a-hidden');
+  }
+}
+
+async function deleteAlbum(albumId) {
+  const a = galleryAlbums.find(x => x.id === albumId);
+  if (!a) return;
+  if (!confirm(`ลบอัลบั้ม “${a.name}” และรูปทั้งหมด ${a.photos.length} รูป?\nการลบนี้กู้คืนไม่ได้`)) return;
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ'); showLogin(); return; }
+
+  try {
+    // 1. Remove every storage object (full + thumb) so nothing is orphaned.
+    const paths = [];
+    a.photos.forEach(p => { paths.push(p.storage_path); paths.push(p.thumb_path); });
+    if (paths.length) {
+      const { error: sErr } = await sb.storage.from(GALLERY_BUCKET).remove(paths);
+      if (sErr) console.warn('[Admin] deleteAlbum storage', sErr.message);
+    }
+    // 2. Delete the album row (photos cascade-delete via FK).
+    const { error } = await sb.from('albums').delete().eq('id', albumId);
+    if (error) throw error;
+    showToast('🗑 ลบอัลบั้มแล้ว');
+    logAdminAction('ALBUM_DELETED', albumId, `ลบอัลบั้ม “${a.name}” (${a.photos.length} รูป)`);
+    await loadGallery();
+  } catch (err) {
+    console.error('[Admin] deleteAlbum', err);
+    showToast('❌ ลบอัลบั้มไม่สำเร็จ');
+  }
+}
+
+async function setAlbumCover(albumId, photoId) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ'); showLogin(); return; }
+  try {
+    const { error } = await sb.from('albums').update({ cover_photo_id: photoId }).eq('id', albumId);
+    if (error) throw error;
+    const a = galleryAlbums.find(x => x.id === albumId);
+    if (a) a.cover_photo_id = photoId;
+    renderGalleryAlbums();
+    showToast('⭐ ตั้งรูปหน้าปกแล้ว');
+    logAdminAction('COVER_SET', albumId, 'ตั้งรูปหน้าปกอัลบั้ม');
+  } catch (err) {
+    console.error('[Admin] setAlbumCover', err);
+    showToast('❌ ตั้งหน้าปกไม่สำเร็จ');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   UPLOAD (multi-file, client compress + thumbnail, per-file progress)
+   ══════════════════════════════════════════════════════════ */
+async function handleGalleryUpload(albumId, fileList, inputEl) {
+  const files = Array.from(fileList || []);
+  if (files.length === 0) return;
+  if (inputEl) inputEl.value = ''; // allow re-selecting same files later
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'); showLogin(); return; }
+
+  const a = galleryAlbums.find(x => x.id === albumId);
+  const progWrap = document.querySelector(`.gap-progress[data-album="${albumId}"]`);
+  if (progWrap) { progWrap.classList.remove('a-hidden'); progWrap.innerHTML = ''; }
+
+  let sortBase = a ? a.photos.length : 0;
+  let okCount = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const row = document.createElement('div');
+    row.className = 'gap-prog-row';
+    row.innerHTML = `<span class="gap-prog-name">${esc(file.name)}</span><span class="gap-prog-status">⏳ กำลังประมวลผล...</span>`;
+    progWrap?.appendChild(row);
+    const statusEl = row.querySelector('.gap-prog-status');
+
+    // ── validate ──
+    if (!file.type.startsWith('image/')) {
+      statusEl.textContent = '❌ ไม่ใช่ไฟล์รูปภาพ';
+      statusEl.classList.add('gap-prog--err');
+      continue;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      statusEl.textContent = '❌ ไฟล์ใหญ่เกิน 50 MB';
+      statusEl.classList.add('gap-prog--err');
+      continue;
+    }
+
+    try {
+      const id = crypto.randomUUID();
+      const fullPath  = `${albumId}/${id}.jpg`;
+      const thumbPath = `${albumId}/thumb_${id}.jpg`;
+
+      statusEl.textContent = '🗜 กำลังบีบอัด...';
+      const fullBlob  = await galleryProcessImage(file, GALLERY_FULL_MAXW,  GALLERY_JPEG_Q);
+      const thumbBlob = await galleryProcessImage(file, GALLERY_THUMB_MAXW, GALLERY_JPEG_Q);
+      if (!fullBlob || !thumbBlob) throw new Error('compress failed');
+
+      statusEl.textContent = '⬆️ กำลังอัปโหลด...';
+      const up1 = await sb.storage.from(GALLERY_BUCKET)
+        .upload(fullPath, fullBlob, { contentType: 'image/jpeg', upsert: false });
+      if (up1.error) throw up1.error;
+      const up2 = await sb.storage.from(GALLERY_BUCKET)
+        .upload(thumbPath, thumbBlob, { contentType: 'image/jpeg', upsert: false });
+      if (up2.error) {
+        // roll back the full image so we don't orphan it
+        await sb.storage.from(GALLERY_BUCKET).remove([fullPath]).catch(() => {});
+        throw up2.error;
+      }
+
+      const { error: insErr } = await sb.from('photos').insert({
+        album_id:     albumId,
+        storage_path: fullPath,
+        thumb_path:   thumbPath,
+        caption:      null,
+        sort_order:   sortBase + i,
+      });
+      if (insErr) {
+        await sb.storage.from(GALLERY_BUCKET).remove([fullPath, thumbPath]).catch(() => {});
+        throw insErr;
+      }
+
+      statusEl.textContent = '✅ สำเร็จ';
+      statusEl.classList.add('gap-prog--ok');
+      okCount++;
+    } catch (err) {
+      console.error('[Admin] upload', file.name, err);
+      statusEl.textContent = '❌ อัปโหลดไม่สำเร็จ';
+      statusEl.classList.add('gap-prog--err');
+    }
+  }
+
+  if (okCount > 0) {
+    showToast(`🖼 อัปโหลด ${okCount} รูปสำเร็จ`);
+    logAdminAction('PHOTO_UPLOADED', albumId, `อัปโหลด ${okCount} รูปเข้าอัลบั้ม “${a?.name ?? ''}”`);
+  }
+  setTimeout(() => loadGallery(), 900);
+}
+
+/* ══════════════════════════════════════════════════════════
+   DELETE PHOTO (row + storage full & thumb)
+   ══════════════════════════════════════════════════════════ */
+async function deletePhoto(albumId, photoId) {
+  const a = galleryAlbums.find(x => x.id === albumId);
+  const p = a?.photos.find(x => x.id === photoId);
+  if (!p) return;
+  if (!confirm('ลบรูปนี้? การลบนี้กู้คืนไม่ได้')) return;
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ'); showLogin(); return; }
+
+  try {
+    const { error: sErr } = await sb.storage.from(GALLERY_BUCKET).remove([p.storage_path, p.thumb_path]);
+    if (sErr) console.warn('[Admin] deletePhoto storage', sErr.message);
+
+    // If this was the album cover, clear the reference first.
+    if (a.cover_photo_id === photoId) {
+      await sb.from('albums').update({ cover_photo_id: null }).eq('id', albumId).catch(() => {});
+    }
+
+    const { error } = await sb.from('photos').delete().eq('id', photoId);
+    if (error) throw error;
+
+    showToast('🗑 ลบรูปแล้ว');
+    logAdminAction('PHOTO_DELETED', photoId, `ลบรูปจากอัลบั้ม “${a?.name ?? ''}”`);
+    await loadGallery();
+  } catch (err) {
+    console.error('[Admin] deletePhoto', err);
+    showToast('❌ ลบรูปไม่สำเร็จ');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   VIEW-PIN CONFIG
+   ══════════════════════════════════════════════════════════ */
+async function loadGalleryConfig() {
+  try {
+    const { data, error } = await sb
+      .from('gallery_config')
+      .select('view_pin_enabled, view_pin_hash')
+      .eq('id', 1)
+      .single();
+    if (error) { console.warn('[Admin] gallery_config', error.message); return; }
+    applyGalleryPinUI(data?.view_pin_enabled ?? false, !!data?.view_pin_hash);
+  } catch (_) { /* table may not exist yet */ }
+}
+
+function applyGalleryPinUI(enabled, hasHash) {
+  const toggle = document.getElementById('gallery-pin-toggle');
+  const label  = document.getElementById('gallery-pin-label');
+  if (toggle) { toggle.checked = enabled; toggle.setAttribute('aria-checked', String(enabled)); }
+  if (label)  label.textContent = enabled ? '🔒 ต้องใส่ PIN ตอนดู' : '🔓 ดูได้ทุกคน (ในลิงก์)';
+  const setBtn = document.getElementById('gallery-set-pin-btn');
+  if (setBtn) setBtn.textContent = hasHash ? '🔑 เปลี่ยน PIN' : '🔑 ตั้ง PIN';
+}
+
+async function toggleGalleryPin(enabled) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ'); showLogin(); return; }
+
+  // Need a hash before enabling.
+  if (enabled) {
+    const { data } = await sb.from('gallery_config').select('view_pin_hash').eq('id', 1).single();
+    if (!data?.view_pin_hash) {
+      showToast('⚠️ กรุณาตั้ง PIN ก่อนเปิดใช้งาน');
+      applyGalleryPinUI(false, false);
+      openViewPinModal();
+      return;
+    }
+  }
+
+  const { error } = await sb.from('gallery_config')
+    .upsert({ id: 1, view_pin_enabled: enabled }, { onConflict: 'id' });
+  if (error) {
+    console.error('[Admin] toggleGalleryPin', error);
+    showToast('❌ อัปเดตไม่สำเร็จ');
+    loadGalleryConfig();
+    return;
+  }
+  applyGalleryPinUI(enabled, true);
+  showToast(enabled ? '🔒 เปิดให้ต้องใส่ PIN ตอนดูแล้ว' : '🔓 ปิด PIN — ดูได้ทุกคนในลิงก์');
+  logAdminAction(enabled ? 'GALLERY_PIN_ON' : 'GALLERY_PIN_OFF', null,
+    enabled ? 'เปิดใช้ PIN สำหรับการดูแกลเลอรี' : 'ปิด PIN การดูแกลเลอรี');
+}
+
+function openViewPinModal() {
+  const modal = document.getElementById('viewpin-modal');
+  const input = document.getElementById('viewpin-input');
+  const errEl = document.getElementById('viewpin-error');
+  if (input) input.value = '';
+  errEl?.classList.add('a-hidden');
+  modal?.classList.remove('a-hidden');
+  input?.focus();
+}
+
+function closeViewPinModal() {
+  document.getElementById('viewpin-modal')?.classList.add('a-hidden');
+}
+
+async function saveViewPin() {
+  const input = document.getElementById('viewpin-input');
+  const errEl = document.getElementById('viewpin-error');
+  const pin = (input?.value ?? '').trim();
+  if (pin.length < 4) {
+    errEl.textContent = 'PIN ต้องมีอย่างน้อย 4 ตัว';
+    errEl.classList.remove('a-hidden');
+    return;
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('❌ เซสชันหมดอายุ'); showLogin(); return; }
+
+  try {
+    const hash = await gallerySha256Hex(pin);
+    const { error } = await sb.from('gallery_config')
+      .upsert({ id: 1, view_pin_hash: hash }, { onConflict: 'id' });
+    if (error) throw error;
+    closeViewPinModal();
+    applyGalleryPinUI(document.getElementById('gallery-pin-toggle')?.checked ?? false, true);
+    showToast('🔑 ตั้ง PIN เรียบร้อย');
+    logAdminAction('GALLERY_PIN_SET', null, 'ตั้ง/เปลี่ยน PIN การดูแกลเลอรี');
+  } catch (err) {
+    console.error('[Admin] saveViewPin', err);
+    errEl.textContent = 'บันทึก PIN ไม่สำเร็จ กรุณาลองใหม่';
+    errEl.classList.remove('a-hidden');
+  }
+}
+
+/* ── Gallery admin event wiring ── */
+document.getElementById('gallery-new-album-btn')?.addEventListener('click', () => openAlbumModal(null));
+document.getElementById('album-modal-close')?.addEventListener('click', closeAlbumModal);
+document.getElementById('album-save-btn')?.addEventListener('click', saveAlbum);
+document.getElementById('album-modal')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAlbumModal();
+});
+document.getElementById('gallery-pin-toggle')?.addEventListener('change', e => toggleGalleryPin(e.target.checked));
+document.getElementById('gallery-set-pin-btn')?.addEventListener('click', openViewPinModal);
+document.getElementById('viewpin-close')?.addEventListener('click', closeViewPinModal);
+document.getElementById('viewpin-save-btn')?.addEventListener('click', saveViewPin);
+document.getElementById('viewpin-modal')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeViewPinModal();
+});

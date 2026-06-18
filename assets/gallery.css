@@ -1,0 +1,215 @@
+/* ══════════════════════════════════════════════════════════
+   GA Activity Gallery — gallery.css
+   Builds on assets/styles.css design tokens (pastel + glass).
+   ══════════════════════════════════════════════════════════ */
+
+.gallery-body { min-height: 100vh; }
+
+.gallery-main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: calc(var(--header-h) + 1.5rem) 1.25rem 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* utility shared with admin */
+.a-hidden { display: none !important; }
+
+/* ── Breadcrumb ─────────────────────────────────────────── */
+.gallery-crumb {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.crumb-back {
+  font-family: var(--font-body); font-size: var(--fs-sm); font-weight: 500;
+  color: var(--color-accent-dark);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px; padding: 0.45rem 1rem; cursor: pointer;
+  transition: transform .2s var(--ease-fluid), box-shadow .2s var(--ease-fluid);
+  box-shadow: var(--glass-shadow);
+}
+.crumb-back:hover { transform: translateY(-1px); box-shadow: var(--glass-shadow-lift); }
+.crumb-sep      { color: var(--color-text-muted); }
+.crumb-current  { font-size: var(--fs-sm); font-weight: 500; color: var(--color-text-secondary); }
+
+/* ── Album header (inside an album) ─────────────────────── */
+.album-header { margin-bottom: 1.5rem; }
+.album-header-title {
+  font-family: var(--font-heading); font-size: var(--fs-2xl); font-weight: 600;
+  color: var(--color-text-strong); margin: 0 0 0.35rem;
+}
+.album-header-meta {
+  font-size: var(--fs-sm); font-weight: 400; color: var(--color-text-muted); margin: 0 0 0.5rem;
+}
+.album-header-desc {
+  font-size: var(--fs-base); font-weight: 300; color: var(--color-text-secondary);
+  margin: 0; max-width: 60ch; line-height: 1.7;
+}
+
+/* ── Content states ─────────────────────────────────────── */
+.gallery-loading,
+.gallery-empty {
+  text-align: center; padding: 4rem 1rem; color: var(--color-text-muted);
+  font-size: var(--fs-base);
+}
+.gallery-empty-emoji { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+.gallery-empty-title {
+  font-family: var(--font-heading); font-size: var(--fs-lg);
+  color: var(--color-text-secondary); margin: 0 0 0.4rem;
+}
+.gallery-empty-sub { font-size: var(--fs-sm); color: var(--color-text-muted); margin: 0; }
+
+/* ── Album grid (cover cards) ───────────────────────────── */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--gap);
+}
+.album-card {
+  display: flex; flex-direction: column;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px; overflow: hidden; cursor: pointer;
+  box-shadow: var(--glass-shadow); text-align: left;
+  transition: transform .25s var(--ease-fluid), box-shadow .25s var(--ease-fluid);
+  padding: 0; font-family: var(--font-body);
+}
+.album-card:hover { transform: translateY(-4px); box-shadow: var(--glass-shadow-lift); }
+.album-cover {
+  aspect-ratio: 4 / 3; width: 100%; object-fit: cover; display: block;
+  background: linear-gradient(135deg, var(--peach-200), var(--sky-200));
+}
+.album-cover--empty {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem; color: rgba(255,255,255,0.85);
+}
+.album-card-body { padding: 1rem 1.1rem 1.2rem; }
+.album-card-name {
+  font-family: var(--font-heading); font-size: var(--fs-md); font-weight: 500;
+  color: var(--color-text-strong); margin: 0 0 0.3rem; line-height: 1.35;
+}
+.album-card-meta {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  font-size: var(--fs-xs); color: var(--color-text-muted);
+}
+.album-card-count {
+  background: var(--cat-peach); color: #fff; font-weight: 600;
+  border-radius: 999px; padding: 1px 9px; font-size: var(--fs-2xs);
+}
+
+/* ── Photo grid (thumbnails) ────────────────────────────── */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+.photo-cell {
+  position: relative; aspect-ratio: 1 / 1; border-radius: 16px;
+  overflow: hidden; cursor: pointer; background: var(--glass-bg);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  transition: transform .2s var(--ease-fluid), box-shadow .2s var(--ease-fluid);
+}
+.photo-cell:hover { transform: scale(1.02); box-shadow: var(--glass-shadow-lift); }
+.photo-cell img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  opacity: 0; transition: opacity .4s var(--ease-fluid);
+}
+.photo-cell img.is-loaded { opacity: 1; }
+.photo-cell.is-broken::after {
+  content: '🖼️'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; opacity: 0.5;
+}
+
+/* ── PIN gate ───────────────────────────────────────────── */
+.pin-gate {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+  background: rgba(30,20,50,0.45); backdrop-filter: blur(10px);
+}
+.pin-gate-card {
+  background: var(--glass-bg-strong); border: 1px solid var(--glass-border);
+  border-radius: 26px; box-shadow: var(--glass-shadow-lift);
+  padding: 2.25rem 2rem; max-width: 360px; width: 100%; text-align: center;
+}
+.pin-gate-emoji { font-size: 2.75rem; display: block; margin-bottom: 0.75rem; }
+.pin-gate-title {
+  font-family: var(--font-heading); font-size: var(--fs-lg); font-weight: 600;
+  color: var(--color-text-strong); margin: 0 0 0.35rem;
+}
+.pin-gate-sub { font-size: var(--fs-sm); color: var(--color-text-muted); margin: 0 0 1.25rem; }
+.pin-gate-input {
+  text-align: center; letter-spacing: 0.4em; font-size: var(--fs-lg);
+  margin-bottom: 0.85rem;
+}
+.pin-gate-btn { width: 100%; }
+.pin-gate-link {
+  display: inline-block; margin-top: 1rem; font-size: var(--fs-sm);
+  color: var(--color-text-muted); text-decoration: none;
+}
+.pin-gate-link:hover { color: var(--color-text-secondary); }
+
+/* ── Lightbox ───────────────────────────────────────────── */
+.lightbox {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(15,10,30,0.88); backdrop-filter: blur(6px);
+  padding: 1rem;
+}
+.lb-stage {
+  position: relative; max-width: 92vw; max-height: 88vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.lb-img {
+  max-width: 92vw; max-height: 80vh; object-fit: contain;
+  border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  opacity: 0; transition: opacity .3s var(--ease-fluid);
+}
+.lb-img.is-loaded { opacity: 1; }
+.lb-caption {
+  color: #fff; font-family: var(--font-body); font-size: var(--fs-sm);
+  margin: 0.85rem 0 0; text-align: center; max-width: 70ch;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.lb-counter {
+  color: rgba(255,255,255,0.7); font-size: var(--fs-xs); margin: 0.35rem 0 0;
+}
+.lb-close {
+  position: fixed; top: 1.1rem; right: 1.25rem; z-index: 2;
+  width: 44px; height: 44px; border-radius: 999px;
+  background: rgba(255,255,255,0.16); color: #fff; border: none;
+  font-size: 1.4rem; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s var(--ease-fluid);
+}
+.lb-close:hover { background: rgba(255,255,255,0.3); }
+.lb-nav {
+  position: fixed; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 52px; height: 52px; border-radius: 999px;
+  background: rgba(255,255,255,0.14); color: #fff; border: none;
+  font-size: 2rem; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s var(--ease-fluid);
+}
+.lb-nav:hover { background: rgba(255,255,255,0.28); }
+.lb-prev { left: 1rem; }
+.lb-next { right: 1rem; }
+.lb-spinner {
+  position: absolute; width: 38px; height: 38px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.25); border-top-color: #fff;
+  animation: lb-spin 0.8s linear infinite;
+}
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  .lb-nav { width: 44px; height: 44px; font-size: 1.6rem; }
+  .lb-prev { left: 0.4rem; }
+  .lb-next { right: 0.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .album-card, .photo-cell, .lb-img, .photo-cell img { transition: none; }
+  .lb-spinner { animation: none; }
+}

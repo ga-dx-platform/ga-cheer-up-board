@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GA Activity Gallery · แกลเลอรีกิจกรรมแผนก</title>
+
+  <!-- Internal-only: keep out of search engines -->
+  <meta name="robots" content="noindex,nofollow" />
+
+  <!-- Google Fonts: Mali (headings) + Mitr (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600&family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Shared design system + gallery styles -->
+  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/gallery.css" />
+</head>
+<body class="gallery-body">
+
+  <a href="#gallery-main" class="sr-only">ข้ามไปเนื้อหาหลัก</a>
+
+  <!-- ═══ Ambient orbs ════════════════════════════════════════ -->
+  <div class="orb orb-peach"  aria-hidden="true"></div>
+  <div class="orb orb-blue"   aria-hidden="true"></div>
+  <div class="orb orb-mint"   aria-hidden="true"></div>
+  <div class="orb orb-butter" aria-hidden="true"></div>
+
+  <!-- ═══ Sticky Header ═══════════════════════════════════════ -->
+  <header id="site-header" role="banner">
+    <div class="header-inner">
+      <div class="logo-group">
+        <span class="logo-mark" aria-hidden="true">
+          <svg class="logo-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="lg-cam" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"   stop-color="#f97316"/>
+                <stop offset="55%"  stop-color="#ec4899"/>
+                <stop offset="100%" stop-color="#8b5cf6"/>
+              </linearGradient>
+            </defs>
+            <rect x="6" y="12" width="28" height="20" rx="5" fill="url(#lg-cam)"/>
+            <path d="M15 12 L17 8 L23 8 L25 12 Z" fill="url(#lg-cam)"/>
+            <circle cx="20" cy="22" r="6" fill="#fdf8ff"/>
+            <circle cx="20" cy="22" r="3.2" fill="url(#lg-cam)"/>
+            <path d="M31 8 L32 6 L33 8 L35 9 L33 10 L32 12 L31 10 L29 9 Z" fill="#fbbf24" opacity="0.95"/>
+          </svg>
+        </span>
+        <div class="logo-text">
+          <h1 class="logo-title">GA Activity Gallery</h1>
+          <p class="logo-sub">แกลเลอรีรูปกิจกรรมแผนก ✨</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a href="index.html" class="btn-ghost">← กลับสู่บอร์ด</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="gallery-main" class="gallery-main">
+
+    <!-- ─── Breadcrumb / back-to-albums (shown inside an album) ─── -->
+    <nav id="gallery-breadcrumb" class="gallery-crumb a-hidden" aria-label="เส้นทาง">
+      <button type="button" id="crumb-back" class="crumb-back">← อัลบั้มทั้งหมด</button>
+      <span class="crumb-sep" aria-hidden="true">/</span>
+      <span id="crumb-album" class="crumb-current"></span>
+    </nav>
+
+    <!-- ─── Album header (inside an album) ─── -->
+    <header id="album-header" class="album-header a-hidden">
+      <h2 id="album-title" class="album-header-title"></h2>
+      <p id="album-meta" class="album-header-meta"></p>
+      <p id="album-desc" class="album-header-desc"></p>
+    </header>
+
+    <!-- ─── Loading / content region ─── -->
+    <div id="gallery-content" class="gallery-content" aria-live="polite">
+      <div class="gallery-loading">⏳ กำลังโหลด...</div>
+    </div>
+
+  </main>
+
+  <!-- ═══ PIN gate overlay (only if view_pin_enabled) ═════════ -->
+  <div id="pin-gate" class="pin-gate a-hidden" role="dialog" aria-modal="true" aria-labelledby="pin-gate-title">
+    <div class="pin-gate-card">
+      <span class="pin-gate-emoji" aria-hidden="true">🔒</span>
+      <h2 class="pin-gate-title" id="pin-gate-title">แกลเลอรีสำหรับทีมเท่านั้น</h2>
+      <p class="pin-gate-sub">กรุณาใส่ PIN เพื่อดูรูปกิจกรรม</p>
+      <form id="pin-gate-form" novalidate>
+        <input type="password" id="pin-gate-input" class="form-input pin-gate-input"
+               inputmode="numeric" autocomplete="off"
+               placeholder="• • • •" aria-label="PIN" />
+        <p class="form-error a-hidden" id="pin-gate-error" role="alert" aria-live="assertive"></p>
+        <button type="submit" class="btn-submit pin-gate-btn">เข้าดูแกลเลอรี</button>
+      </form>
+      <a href="index.html" class="pin-gate-link">← กลับสู่บอร์ด</a>
+    </div>
+  </div>
+
+  <!-- ═══ Lightbox ════════════════════════════════════════════ -->
+  <div id="lightbox" class="lightbox a-hidden" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ">
+    <button type="button" class="lb-close" id="lb-close" aria-label="ปิด">✕</button>
+    <button type="button" class="lb-nav lb-prev" id="lb-prev" aria-label="รูปก่อนหน้า">‹</button>
+    <div class="lb-stage">
+      <div class="lb-spinner" id="lb-spinner" aria-hidden="true"></div>
+      <img id="lb-img" class="lb-img" alt="" />
+      <p id="lb-caption" class="lb-caption"></p>
+      <p id="lb-counter" class="lb-counter"></p>
+    </div>
+    <button type="button" class="lb-nav lb-next" id="lb-next" aria-label="รูปถัดไป">›</button>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/gallery.js"></script>
+</body>
+</html>

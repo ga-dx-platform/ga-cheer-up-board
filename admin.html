@@ -61,6 +61,7 @@
         </div>
         <div class="admin-header-actions">
           <a href="index.html" class="btn-ghost">← ดูบอร์ด</a>
+          <a href="gallery.html" class="btn-ghost">📸 แกลเลอรี</a>
           <button class="btn-signout" id="signout-btn">ออกจากระบบ</button>
         </div>
       </div>
@@ -226,6 +227,34 @@
 
       </div><!-- /dashboard-grid -->
 
+      <!-- ─── GA Activity Gallery management ───────────────── -->
+      <section class="gallery-admin-panel" role="region" aria-label="แกลเลอรีกิจกรรม">
+        <div class="gap-head">
+          <div class="gap-title-group">
+            <span class="gap-icon" aria-hidden="true">📸</span>
+            <div>
+              <h2 class="gap-title">แกลเลอรีกิจกรรม</h2>
+              <p class="gap-hint">จัดการอัลบั้มและรูปภาพกิจกรรมของแผนก — รูปถูกบีบอัดฝั่งเบราว์เซอร์ก่อนอัปโหลด</p>
+            </div>
+          </div>
+          <div class="gap-head-actions">
+            <span class="gap-storage" id="gap-storage" title="ประมาณการพื้นที่ที่ใช้">💾 ~0 MB / 1 GB</span>
+            <label class="lock-toggle-wrap" for="gallery-pin-toggle">
+              <span class="lock-label" id="gallery-pin-label">🔓 ดูได้ทุกคน (ในลิงก์)</span>
+              <div class="toggle-switch">
+                <input type="checkbox" id="gallery-pin-toggle" class="toggle-input"
+                       role="switch" aria-checked="false" aria-label="ต้องใส่ PIN ตอนดูแกลเลอรี" />
+                <span class="toggle-track"></span>
+              </div>
+            </label>
+            <button type="button" class="action-btn" id="gallery-set-pin-btn">🔑 ตั้ง PIN</button>
+            <button type="button" class="btn-submit gap-new-btn" id="gallery-new-album-btn">+ สร้างอัลบั้ม</button>
+          </div>
+        </div>
+        <div class="gap-storage-bar" aria-hidden="true"><div id="gap-storage-fill" class="gap-storage-fill"></div></div>
+        <div id="gallery-albums" class="gap-albums"></div>
+      </section>
+
     </main>
   </div>
 
@@ -261,6 +290,55 @@
       </div>
       <p class="broadcast-hint">ข้อเสนอแนะและรายงานปัญหาที่พนักงานส่งมาจากบอร์ดสาธารณะ</p>
       <div id="feedback-list" class="feedback-list" role="list"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Album Create / Edit Modal ══════════════════════════ -->
+  <div class="broadcast-overlay a-hidden" id="album-modal"
+       role="dialog" aria-modal="true" aria-labelledby="album-modal-title">
+    <div class="broadcast-box">
+      <div class="broadcast-head">
+        <h2 class="broadcast-title" id="album-modal-title">🆕 สร้างอัลบั้มใหม่</h2>
+        <button type="button" class="broadcast-close" id="album-modal-close" aria-label="ปิด">✕</button>
+      </div>
+      <div class="field-section">
+        <label class="field-label" for="album-name">ชื่ออัลบั้ม <span class="required">*</span></label>
+        <input type="text" id="album-name" class="form-input" maxlength="120"
+               placeholder="เช่น งานเลี้ยงปีใหม่ GA 2026 🎉" />
+      </div>
+      <div class="field-section">
+        <label class="field-label" for="album-date">วันที่กิจกรรม</label>
+        <input type="date" id="album-date" class="form-input" />
+      </div>
+      <div class="field-section">
+        <label class="field-label" for="album-description">รายละเอียด</label>
+        <textarea id="album-description" class="form-textarea" rows="3" maxlength="500"
+                  placeholder="เล่าเรื่องราวของกิจกรรมนี้สั้นๆ..."></textarea>
+      </div>
+      <p class="form-error a-hidden" id="album-modal-error" role="alert" aria-live="assertive"></p>
+      <button type="button" class="btn-submit" id="album-save-btn">
+        <span id="album-save-label">บันทึก</span>
+        <span class="spinner a-hidden" id="album-save-spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ View-PIN Modal ═════════════════════════════════════ -->
+  <div class="broadcast-overlay a-hidden" id="viewpin-modal"
+       role="dialog" aria-modal="true" aria-labelledby="viewpin-title">
+    <div class="broadcast-box">
+      <div class="broadcast-head">
+        <h2 class="broadcast-title" id="viewpin-title">🔑 ตั้ง / เปลี่ยน PIN การดูแกลเลอรี</h2>
+        <button type="button" class="broadcast-close" id="viewpin-close" aria-label="ปิด">✕</button>
+      </div>
+      <p class="broadcast-hint">PIN นี้ใช้สำหรับเปิดดูแกลเลอรีฝั่งผู้ชม (เก็บเป็น hash เท่านั้น) — แยกจากรหัสผ่านแอดมิน</p>
+      <div class="field-section">
+        <label class="field-label" for="viewpin-input">PIN ใหม่ <span class="required">*</span></label>
+        <input type="text" id="viewpin-input" class="form-input" inputmode="numeric"
+               maxlength="20" autocomplete="off" placeholder="อย่างน้อย 4 ตัว" />
+      </div>
+      <p class="form-error a-hidden" id="viewpin-error" role="alert" aria-live="assertive"></p>
+      <button type="button" class="btn-submit" id="viewpin-save-btn">บันทึก PIN</button>
     </div>
   </div>
 
