@@ -2246,6 +2246,7 @@ mark.search-match {
 .badge-want_to_say { background: rgba(139, 92, 246, 0.15); color: #6d28d9; border: 1px solid rgba(139, 92, 246, 0.30); }
 .badge-help        { background: rgba(245, 158, 11, 0.15);  color: #b45309; border: 1px solid rgba(245, 158, 11, 0.30); }
 .badge-others      { background: rgba(107, 114, 128, 0.15); color: #374151; border: 1px solid rgba(107, 114, 128, 0.30); }
+.badge-album       { background: rgba(168, 85, 247, 0.16);  color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.34); }
 
 .cat-tab-want_to_say.active { background: linear-gradient(145deg, rgba(216, 180, 254, 0.9), rgba(192, 132, 252, 0.75)); border-color: rgba(139, 92, 246, 0.45); color: #6d28d9; box-shadow: 0 3px 10px rgba(139, 92, 246, 0.18); }
 .cat-tab-help.active        { background: linear-gradient(145deg, rgba(253, 230, 138, 0.9), rgba(252, 211, 77, 0.75));  border-color: rgba(245, 158, 11, 0.45);  color: #b45309; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.18); }
@@ -2587,4 +2588,138 @@ mark.search-match {
 @keyframes badge-fade-out {
   from { opacity: 1; transform: scale(1); }
   to   { opacity: 0; transform: scale(.7) translateY(-6px); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   GA ACTIVITY GALLERY — FEED INTEGRATION (index board)
+   A: horizontal spotlight under MOTW · C: album cards in grid
+   Pastel purple accent, built on the existing .card system.
+   ══════════════════════════════════════════════════════════ */
+
+/* ── A · Spotlight section + low horizontal card ── */
+.album-spotlight-section {
+  max-width: 760px;
+  margin: 0.75rem auto 1.5rem;
+  padding: 0 0.25rem;
+}
+a.card.album-spotlight {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;                 /* lighter than MOTW's 24px */
+  border-top: 2.5px solid rgba(168, 85, 247, 0.45) !important;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+/* Tone down the generic card hover lift — spotlight stays calmer than MOTW */
+a.card.album-spotlight:hover { translate: 0 -3px; scale: 1; }
+a.card.album-spotlight::after { content: none; }   /* no ⤢ expand hint */
+
+.album-spot-thumbs {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.album-spot-thumb {
+  width: 46px; height: 46px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(255,255,255,0.7);
+}
+.album-spot-thumb--empty {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+}
+.album-spot-body {
+  display: flex; flex-direction: column; gap: 1px;
+  min-width: 0; flex: 1;
+}
+.album-spot-tag {
+  font-family: var(--font-body);
+  font-size: var(--fs-2xs);
+  font-weight: 700; letter-spacing: .04em;
+  color: #7e22ce;
+}
+.album-spot-name {
+  font-family: var(--font-heading);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--color-text-strong);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.album-spot-meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+.album-spot-chevron {
+  flex-shrink: 0;
+  font-size: 1.6rem; line-height: 1;
+  color: rgba(168, 85, 247, 0.7);
+  font-family: var(--font-body);
+}
+
+@media (max-width: 560px) {
+  .album-spot-thumb { width: 40px; height: 40px; }
+  .album-spot-thumbs .album-spot-thumb:nth-child(3) { display: none; }
+}
+
+/* ── C · Album card inside the post grid (sized like a post) ── */
+a.card.card-album {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-top: 2.5px solid rgba(168, 85, 247, 0.45) !important;
+}
+a.card.card-album::after { content: none; }       /* swap ⤢ for the CTA chip */
+.card-album .card-album-name {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  color: var(--color-text-strong);
+}
+.card-album .card-album-cta {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: #7e22ce;
+  white-space: nowrap;
+}
+.card-image--album-empty {
+  display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 4 / 3;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, rgba(216,180,254,0.55), rgba(191,219,254,0.55));
+  color: rgba(255,255,255,0.95);
+}
+
+/* ── C · "See all albums" trailing card ── */
+a.card.card-seeall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  min-height: 150px;
+  border-top: 2.5px solid rgba(168, 85, 247, 0.45) !important;
+  background: linear-gradient(160deg, rgba(216,180,254,0.28), rgba(255,255,255,0.82)) !important;
+}
+a.card.card-seeall::after { content: none; }
+.seeall-emoji { font-size: 2rem; }
+.seeall-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--color-text-strong);
+}
+.seeall-cta {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #7e22ce;
 }
