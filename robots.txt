@@ -1,0 +1,5 @@
+# GA Cheer Up Board — robots
+# The activity gallery is internal-only (team). Keep it out of search engines.
+User-agent: *
+Disallow: /gallery.html
+Disallow: /admin.html
