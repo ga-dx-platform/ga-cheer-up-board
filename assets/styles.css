@@ -2591,135 +2591,189 @@ mark.search-match {
 }
 
 /* ══════════════════════════════════════════════════════════
-   GA ACTIVITY GALLERY — FEED INTEGRATION (index board)
-   A: horizontal spotlight under MOTW · C: album cards in grid
-   Pastel purple accent, built on the existing .card system.
+   GA ACTIVITY GALLERY — RESPONSIVE ALBUM BAND (index feed)
+   A single band under MOTW that adapts its layout to the album count.
+   Pastel-purple accent on the existing card aesthetic, but deliberately
+   SHORTER and lighter than MOTW: radius-lg, 0.5px border, one thin shadow,
+   gentle hover. Layout is driven by data-count / .scroll on .album-band.
    ══════════════════════════════════════════════════════════ */
 
-/* ── A · Spotlight section + low horizontal card ── */
-.album-spotlight-section {
+.album-band-section {
   max-width: 760px;
   margin: 0.75rem auto 1.5rem;
   padding: 0 0.25rem;
 }
-a.card.album-spotlight {
+
+/* Grid for 1–4 albums; flex+scroll when there are more (or on narrow
+   screens for the 3/4-column layouts — see the media query below). */
+.album-band {
+  display: grid;
+  gap: 0.6rem;
+}
+.album-band[data-count="1"] { grid-template-columns: 1fr; }
+.album-band[data-count="2"] { grid-template-columns: repeat(2, 1fr); }
+.album-band[data-count="3"] { grid-template-columns: repeat(3, 1fr); }
+.album-band[data-count="4"] { grid-template-columns: repeat(4, 1fr); }
+
+.album-band.scroll {
   display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 16px;                 /* lighter than MOTW's 24px */
-  border-top: 2.5px solid rgba(168, 85, 247, 0.45) !important;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;             /* room for the scrollbar */
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.album-band.scroll .album-band-card {
+  flex: 0 0 130px;                    /* fixed-width vertical tiles */
+  scroll-snap-align: start;
+}
+
+/* ── Shared card chrome — light, low, board-consistent ── */
+.album-band-card {
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  margin-bottom: 0;
+  background: rgba(255, 255, 255, 0.82);
+  border: 0.5px solid rgba(168, 85, 247, 0.22);
+  border-top: 2px solid rgba(168, 85, 247, 0.45);
+  border-radius: 16px;               /* radius-lg · lighter than MOTW 24px */
+  box-shadow: 0 2px 6px rgba(20, 10, 60, 0.07);   /* single thin shadow */
+  overflow: hidden;
+  transition: translate .2s var(--ease-fluid);
 }
-/* Tone down the generic card hover lift — spotlight stays calmer than MOTW */
-a.card.album-spotlight:hover { translate: 0 -3px; scale: 1; }
-a.card.album-spotlight::after { content: none; }   /* no ⤢ expand hint */
+.album-band-card:hover { translate: 0 -2px; }     /* gentle, not MOTW-style */
 
-.album-spot-thumbs {
-  display: inline-flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-.album-spot-thumb {
-  width: 46px; height: 46px;
-  border-radius: 10px;
-  object-fit: cover;
-  background: rgba(168, 85, 247, 0.12);
-  border: 1px solid rgba(255,255,255,0.7);
-}
-.album-spot-thumb--empty {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 1.4rem;
-}
-.album-spot-body {
-  display: flex; flex-direction: column; gap: 1px;
-  min-width: 0; flex: 1;
-}
-.album-spot-tag {
+.aband-tag {
   font-family: var(--font-body);
   font-size: var(--fs-2xs);
   font-weight: 700; letter-spacing: .04em;
   color: #7e22ce;
 }
-.album-spot-name {
+.aband-name {
   font-family: var(--font-heading);
-  font-size: var(--fs-base);
   font-weight: 500;
   color: var(--color-text-strong);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
 }
-.album-spot-meta {
+.aband-meta,
+.aband-count {
   font-size: var(--fs-xs);
   color: var(--color-text-muted);
 }
-.album-spot-chevron {
+
+/* ── Row card (1 album): thumbs · body · chevron ── */
+.aband-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+}
+.aband-thumbs {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.aband-thumb {
+  width: 42px; height: 42px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+.aband-thumb--empty {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+.aband-rowbody {
+  display: flex; flex-direction: column; gap: 1px;
+  min-width: 0; flex: 1;
+}
+.aband-row .aband-name {
+  font-size: var(--fs-base);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.aband-chevron {
   flex-shrink: 0;
   font-size: 1.6rem; line-height: 1;
   color: rgba(168, 85, 247, 0.7);
   font-family: var(--font-body);
 }
 
-@media (max-width: 560px) {
-  .album-spot-thumb { width: 40px; height: 40px; }
-  .album-spot-thumbs .album-spot-thumb:nth-child(3) { display: none; }
+/* ── Tile card (2–4 columns / scroll): cover · body ── */
+.aband-tile {
+  display: flex;
+  flex-direction: column;
 }
-
-/* ── C · Album card inside the post grid (sized like a post) ── */
-a.card.card-album {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  border-top: 2.5px solid rgba(168, 85, 247, 0.45) !important;
+.aband-cover {
+  display: block;
+  width: 100%;
+  height: 64px;                      /* default (3–4 columns) */
+  overflow: hidden;
+  background: rgba(168, 85, 247, 0.12);
 }
-a.card.card-album::after { content: none; }       /* swap ⤢ for the CTA chip */
-.card-album .card-album-name {
-  font-family: var(--font-heading);
-  font-weight: 500;
-  color: var(--color-text-strong);
+.aband-cover-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
 }
-.card-album .card-album-cta {
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: #7e22ce;
-  white-space: nowrap;
-}
-.card-image--album-empty {
+.aband-cover--empty {
   display: flex; align-items: center; justify-content: center;
-  aspect-ratio: 4 / 3;
-  font-size: 2.5rem;
+  font-size: 1.6rem;
   background: linear-gradient(135deg, rgba(216,180,254,0.55), rgba(191,219,254,0.55));
-  color: rgba(255,255,255,0.95);
+  color: rgba(255, 255, 255, 0.95);
+}
+.album-band[data-count="2"] .aband-cover { height: 80px; }   /* 2-up is roomier */
+.album-band.scroll .aband-cover        { height: 90px; }
+
+.aband-tilebody {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 0.5rem 0.6rem 0.6rem;
+  min-width: 0;
+}
+.aband-tile .aband-name {
+  font-size: var(--fs-sm);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ── C · "See all albums" trailing card ── */
-a.card.card-seeall {
+/* ── "See all" trailing tile (scroll mode only) ── */
+.aband-seeall {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
   text-align: center;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  min-height: 150px;
-  border-top: 2.5px solid rgba(168, 85, 247, 0.45) !important;
-  background: linear-gradient(160deg, rgba(216,180,254,0.28), rgba(255,255,255,0.82)) !important;
+  padding: 0.6rem;
+  background: linear-gradient(160deg, rgba(216,180,254,0.28), rgba(255,255,255,0.82));
 }
-a.card.card-seeall::after { content: none; }
-.seeall-emoji { font-size: 2rem; }
-.seeall-title {
+.aband-seeall-emoji { font-size: 1.6rem; }
+.aband-seeall-text {
   font-family: var(--font-heading);
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--color-text-strong);
-}
-.seeall-cta {
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: 500;
   color: #7e22ce;
+}
+
+/* ── Mobile fallback: 3/4-column grids get too tight on narrow screens,
+   so flip them to the same horizontal-scroll behaviour as >4 albums. ── */
+@media (max-width: 560px) {
+  .album-band[data-count="3"],
+  .album-band[data-count="4"] {
+    display: flex;
+    gap: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.4rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .album-band[data-count="3"] .album-band-card,
+  .album-band[data-count="4"] .album-band-card {
+    flex: 0 0 130px;
+    scroll-snap-align: start;
+  }
+  .album-band[data-count="3"] .aband-cover,
+  .album-band[data-count="4"] .aband-cover { height: 90px; }
 }
