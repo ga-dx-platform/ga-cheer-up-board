@@ -17,7 +17,8 @@ const CAT = {
   idea:        { label: 'ไอเดีย',           emoji: '💡', cls: 'idea' },
   want_to_say: { label: 'อยากบอก',         emoji: '📢', cls: 'want_to_say' },
   help:        { label: 'ขอความช่วยเหลือ',   emoji: '🙋‍♀️', cls: 'help' },
-  others:      { label: 'อื่นๆ',             emoji: '🔮', cls: 'others' }
+  others:      { label: 'อื่นๆ',             emoji: '🔮', cls: 'others' },
+  album:       { label: 'อัลบั้มกิจกรรม',     emoji: '📸', cls: 'album' }
 };
 
 const ROTS = [0.6, -0.8, 0.4, -0.5, 0.7, -0.6, 0.5, -0.4, 0.8, -0.7, 0.3, -0.9];
@@ -942,30 +943,43 @@ function renderGrid(messages) {
   // Unobserve all cards before wiping DOM
   board.querySelectorAll('.card[data-observed]').forEach(c => _cardObserver.unobserve(c));
   board.innerHTML = '';
+
+  // Activity-gallery album cards (C) only appear in the default view —
+  // hidden whenever a category filter or a search query is active.
+  const showAlbums = activeFilter === 'all' && !q && feedAlbums.length > 1;
+  const items = buildFeedItems(filtered, showAlbums);
+
   const BATCH = 5;
-  let offset = 0;
+  let offset  = 0;
+  let postSeq = 0; // drives card rotation + only posts advance time dividers
   const gen = ++_renderGen;
   lastTimeGroup = null;
 
   function renderBatch() {
     if (gen !== _renderGen) return;
-    const slice = filtered.slice(offset, offset + BATCH);
+    const slice = items.slice(offset, offset + BATCH);
     const frag  = document.createDocumentFragment();
-    slice.forEach((msg, i) => {
-      if (activeFilter === 'all') {
-        const group = getTimeGroup(msg.created_at);
-        if (group !== lastTimeGroup) {
-          frag.appendChild(makeDividerEl(group));
-          lastTimeGroup = group;
-        }
-      }
+    slice.forEach(item => {
       const tmp = document.createElement('div');
-      tmp.innerHTML = renderCard(msg, offset + i, q).trim();
+      if (item.kind === 'post') {
+        if (activeFilter === 'all') {
+          const group = getTimeGroup(item.msg.created_at);
+          if (group !== lastTimeGroup) {
+            frag.appendChild(makeDividerEl(group));
+            lastTimeGroup = group;
+          }
+        }
+        tmp.innerHTML = renderCard(item.msg, postSeq++, q).trim();
+      } else if (item.kind === 'album') {
+        tmp.innerHTML = renderAlbumFeedCard(item.album).trim();
+      } else { // seeall
+        tmp.innerHTML = renderSeeAllCard().trim();
+      }
       frag.appendChild(tmp.firstElementChild);
     });
     board.appendChild(frag);
     offset += BATCH;
-    if (offset < filtered.length) {
+    if (offset < items.length) {
       requestAnimationFrame(renderBatch);
     } else {
       wireReactions();
@@ -978,6 +992,154 @@ function renderGrid(messages) {
 
 function renderBoard() {
   renderGrid(allMessages);
+}
+
+/* ══════════════════════════════════════════════════════════
+   GA ACTIVITY GALLERY — FEED INTEGRATION (display only)
+   A: one horizontal spotlight card under MOTW
+   C: album cards interleaved in the post grid (album #2 onward)
+   ══════════════════════════════════════════════════════════ */
+const GALLERY_BUCKET   = 'gallery';
+const FEED_ALBUM_MAX   = 6;   // max album cards mixed into the grid (C)
+const FEED_ALBUM_EVERY = 4;   // insert one album after every ~4 posts
+let feedAlbums = [];          // [{id,name,event_date,created_at,count,coverThumb,thumbs[]}]
+
+function albumThumbUrl(path) {
+  return sb.storage.from(GALLERY_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+function albumDate(d) {
+  if (!d) return '';
+  try { return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  catch { return ''; }
+}
+
+/* Fetch albums + a cover thumbnail (fallback: first photo of the album).
+   Silent on any failure / empty table — A and C simply stay hidden. */
+async function loadFeedAlbums() {
+  try {
+    const { data: albumRows, error: aErr } = await sb
+      .from('albums')
+      .select('id, name, event_date, created_at, cover_photo_id')
+      .order('created_at', { ascending: false });
+    if (aErr || !albumRows || albumRows.length === 0) { feedAlbums = []; return; }
+
+    const { data: photoRows } = await sb
+      .from('photos')
+      .select('id, album_id, thumb_path, sort_order, created_at')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+
+    const byAlbum = new Map();
+    (photoRows ?? []).forEach(p => {
+      if (!byAlbum.has(p.album_id)) byAlbum.set(p.album_id, []);
+      byAlbum.get(p.album_id).push(p);
+    });
+
+    feedAlbums = albumRows.map(a => {
+      const ps = byAlbum.get(a.id) ?? [];
+      let cover = a.cover_photo_id ? ps.find(p => p.id === a.cover_photo_id) : null;
+      if (!cover) cover = ps[0] ?? null;
+      return {
+        id:         a.id,
+        name:       a.name,
+        event_date: a.event_date,
+        created_at: a.created_at,
+        count:      ps.length,
+        coverThumb: cover ? cover.thumb_path : null,
+        thumbs:     ps.slice(0, 3).map(p => p.thumb_path),
+      };
+    });
+  } catch (err) {
+    console.warn('[Feed albums]', err);
+    feedAlbums = [];
+  }
+}
+
+/* ── A — latest album spotlight (horizontal, low card under MOTW) ── */
+function renderAlbumSpotlight() {
+  const sec = document.getElementById('feed-album-spotlight');
+  if (!sec) return;
+  if (!feedAlbums.length) { sec.hidden = true; sec.innerHTML = ''; return; }
+
+  const a = feedAlbums[0];
+  const thumbSrc = a.thumbs.length ? a.thumbs : (a.coverThumb ? [a.coverThumb] : []);
+  const thumbsHtml = thumbSrc.length
+    ? thumbSrc.slice(0, 3).map(t =>
+        `<img class="album-spot-thumb" src="${esc(albumThumbUrl(t))}" alt="" loading="lazy" decoding="async"
+              onerror="this.style.visibility='hidden'" />`).join('')
+    : `<span class="album-spot-thumb album-spot-thumb--empty" aria-hidden="true">📷</span>`;
+  const dateStr = a.event_date ? albumDate(a.event_date) : albumDate(a.created_at);
+
+  sec.hidden = false;
+  sec.innerHTML = `
+    <a class="card album-spotlight" href="gallery.html#album=${a.id}"
+       aria-label="อัลบั้มกิจกรรมล่าสุด: ${esc(a.name)} (${a.count} รูป)">
+      <span class="album-spot-thumbs" aria-hidden="true">${thumbsHtml}</span>
+      <span class="album-spot-body">
+        <span class="album-spot-tag">📸 อัลบั้มกิจกรรม</span>
+        <span class="album-spot-name">${esc(a.name)}</span>
+        <span class="album-spot-meta">${a.count} รูป${dateStr ? ` · ${dateStr}` : ''}</span>
+      </span>
+      <span class="album-spot-chevron" aria-hidden="true">›</span>
+    </a>`;
+}
+
+/* ── C — album card sized like a post card, mixed into the grid ── */
+function renderAlbumFeedCard(a) {
+  const cat = CAT.album;
+  const coverHtml = a.coverThumb
+    ? `<div class="card-image"><img src="${esc(albumThumbUrl(a.coverThumb))}" alt="" loading="lazy" decoding="async"
+           onerror="this.closest('.card-image').classList.add('card-image--album-empty');this.remove();" /></div>`
+    : `<div class="card-image card-image--album-empty" aria-hidden="true">📷</div>`;
+  const dateStr = a.event_date ? albumDate(a.event_date) : albumDate(a.created_at);
+  return `
+    <a class="card card-album" href="gallery.html#album=${a.id}" data-album-card
+       data-category="album" aria-label="อัลบั้มกิจกรรม: ${esc(a.name)} (${a.count} รูป)">
+      <div class="card-head">
+        <span class="card-avatar" aria-hidden="true">📸</span>
+        <span class="card-badge badge-album">${cat.emoji} ${cat.label}</span>
+      </div>
+      ${coverHtml}
+      <p class="card-msg card-album-name">${esc(a.name)}</p>
+      <div class="card-foot">
+        <div class="card-meta">
+          <span class="card-sender">🖼 ${a.count} รูป</span>
+          ${dateStr ? `<span class="card-time">${dateStr}</span>` : ''}
+        </div>
+        <span class="card-album-cta">เปิดอัลบั้ม →</span>
+      </div>
+    </a>`;
+}
+
+/* ── C — trailing "see all" card when more than FEED_ALBUM_MAX albums ── */
+function renderSeeAllCard() {
+  return `
+    <a class="card card-seeall" href="gallery.html" aria-label="ดูอัลบั้มกิจกรรมทั้งหมด">
+      <span class="seeall-emoji" aria-hidden="true">📸</span>
+      <span class="seeall-title">ดูอัลบั้มทั้งหมด</span>
+      <span class="seeall-cta" aria-hidden="true">ไปที่แกลเลอรี →</span>
+    </a>`;
+}
+
+/* Interleave post + album items for the grid. Albums only appear in the
+   default view (no category filter, no search) — see renderGrid. */
+function buildFeedItems(posts, showAlbums) {
+  if (!showAlbums) return posts.map(m => ({ kind: 'post', msg: m }));
+
+  const cAlbums = feedAlbums.slice(1, 1 + FEED_ALBUM_MAX); // album #2 onward (A shows #1)
+  const hasMore = feedAlbums.length - 1 > FEED_ALBUM_MAX;
+  const items = [];
+  let ai = 0;
+  posts.forEach((m, i) => {
+    items.push({ kind: 'post', msg: m });
+    if (ai < cAlbums.length && (i + 1) % FEED_ALBUM_EVERY === 0) {
+      items.push({ kind: 'album', album: cAlbums[ai++] });
+    }
+  });
+  while (ai < cAlbums.length) items.push({ kind: 'album', album: cAlbums[ai++] });
+  if (hasMore) items.push({ kind: 'seeall' });
+  return items;
 }
 
 function renderPinnedMessage() {
@@ -1112,6 +1274,8 @@ async function loadBoard() {
     sb.from('board_settings').select('is_locked').eq('id', 1).single(),
     // Lightweight all-posts fetch for seen-tracking baseline (id + comment count only)
     sb.from('cheer_up_messages').select('id, comments(count)').eq('is_visible', true),
+    // Activity-gallery albums for feed integration (sets feedAlbums; never throws)
+    loadFeedAlbums(),
   ]);
 
   applyMaintenanceMode(settingsData?.is_locked ?? false);
@@ -1172,6 +1336,7 @@ async function loadBoard() {
     digestSec.classList.add('hidden');
   }
 
+  renderAlbumSpotlight();   // A — latest album under MOTW (independent of filter/search)
   renderGrid(allMessages);
   wireReactions();
   observeCards();
@@ -2174,7 +2339,9 @@ document.getElementById('board')?.addEventListener('click', e => {
   if (adminBtn) { e.stopPropagation(); handleInlineAdminAction(adminBtn); return; }
   if (e.target.closest('.rxn-btn') || e.target.closest('.reactions')) return;
   const card = e.target.closest('.card');
-  if (card) openFocusMode(card);
+  if (!card) return;
+  if (card.tagName === 'A') return; // album / see-all cards are links — let them navigate
+  openFocusMode(card);
 });
 
 document.getElementById('motw-container')?.addEventListener('click', e => {

@@ -298,13 +298,39 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') lbStep(1);
 });
 
-/* ── breadcrumb back → album grid ── */
-document.getElementById('crumb-back').addEventListener('click', renderAlbumGrid);
+/* ── breadcrumb back → album grid (clear deep-link hash) ── */
+document.getElementById('crumb-back').addEventListener('click', () => {
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  renderAlbumGrid();
+});
+
+/* ══════════════════════════════════════════════════════════
+   DEEP LINK — open gallery.html#album=<album_id> straight into an album
+   ══════════════════════════════════════════════════════════ */
+function albumIdFromHash() {
+  const m = (location.hash || '').match(/album=([0-9a-fA-F-]+)/);
+  return m ? m[1] : null;
+}
+
+function openAlbumFromHash() {
+  const id = albumIdFromHash();
+  if (id && albums.some(a => a.id === id)) openAlbum(id);
+}
+
+// Respond to in-page hash changes (e.g. arriving from an index album card
+// while already on the gallery page).
+window.addEventListener('hashchange', () => {
+  const id = albumIdFromHash();
+  if (id) { if (albums.some(a => a.id === id)) openAlbum(id); }
+  else renderAlbumGrid();
+});
 
 /* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
 (async function init() {
   const ok = await checkViewPin();
-  if (ok) loadAlbums();
+  if (!ok) return;
+  await loadAlbums();
+  openAlbumFromHash();
 })();
