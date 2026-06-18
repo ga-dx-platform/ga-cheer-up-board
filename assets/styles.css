@@ -285,7 +285,7 @@ body::after {
 }
 
 .logo-text  { line-height:1.15; }
-.logo-title { font-size:var(--fs-lg); font-weight:700; color:#1a1435; letter-spacing:-.01em; }
+.logo-title { font-size:var(--fs-lg); font-weight:700; color:#1a1435; letter-spacing:-.01em; white-space:nowrap; }
 .logo-sub   {
   display: block;
   font-size: .72rem; font-weight: 400; color: #9d4edd;
@@ -1549,13 +1549,28 @@ mark.search-match {
 /* ── Responsive ──────────────────────────────────────────── */
 @media(max-width:640px) {
   #site-header  { top:0; width:100%; }
-  .header-inner { padding:.5rem .65rem .5rem 1.1rem; }
+  /* keep header on a single row, never wrap or overflow the viewport */
+  .header-inner { padding:.5rem .6rem; gap:.5rem; flex-wrap:nowrap; }
+  .logo-group   { min-width:0; gap:.5rem; }
+  .logo-text    { min-width:0; }
+  /* shrink title so the logo row fits on one line at ~375px */
+  .logo-title   { font-size:1rem; overflow:hidden; text-overflow:ellipsis; }
+  .topbar-actions { gap:.4rem; flex-shrink:0; }
+  /* icon-only buttons: hide text labels, keep just the glyph */
+  .btn-label    { display:none; }
+  /* square 44x44 touch targets */
+  .btn-ghost,
+  .btn-add      {
+    width:44px; min-width:44px; height:44px;
+    padding:0; gap:0;
+    justify-content:center;
+  }
+  .btn-ico      { font-size:1.1rem; line-height:1; }
   .main-wrap    { padding:var(--space-sm) .875rem 4rem; }
   .motw-card      { flex-direction:column-reverse; gap:1rem; padding:2.75rem 1.25rem 1.25rem; }
   .motw-left      { flex-direction:column; gap:.75rem; }
   .motw-image-col { width:100%; max-width:none; border-radius:12px; }
   .motw-footer    { flex-direction:column; align-items:flex-start; }
-  .btn-add      { font-size:var(--fs-xs); padding:.45rem .95rem; }
   .cat-tabs     { grid-template-columns:repeat(2,1fr); }
   /* 44px minimum touch targets */
   .rxn-btn      { min-height:44px; padding:.5rem .85rem; font-size:var(--fs-xs); }
@@ -2383,9 +2398,8 @@ mark.search-match {
 }
 .btn-ghost:active { transform: scale(0.96) translateY(0); }
 
-@media (max-width: 480px) {
-  .btn-ghost { font-size: var(--fs-xs); padding: .45rem .85rem; }
-}
+/* ≤640px the ghost button is already an icon-only 44x44 square (see header
+   responsive block) — no padding/font override needed here. */
 
 /* ══════════════════════════════════════════════════════════
    FEEDBACK MODAL
