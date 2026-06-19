@@ -385,7 +385,10 @@ function renderMotw(msg) {
               <span class="motw-sender">— ${esc(sender)}</span>
               <span class="motw-time">${thaiTime(msg.created_at)}</span>
             </div>
-            ${rxnHtml(msg.id, msg.reactions)}
+            <div class="motw-engagement">
+              ${rxnHtml(msg.id, msg.reactions)}
+              ${commentCounterHtml(msg)}
+            </div>
           </div>
         </div>
       </div>

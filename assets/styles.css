@@ -791,6 +791,13 @@ body::after {
   flex-wrap:wrap;
 }
 
+.motw-engagement {
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  flex-wrap:wrap;
+}
+
 .reactions { display:flex; gap:.3rem; flex-wrap:wrap; }
 
 .rxn-btn {
