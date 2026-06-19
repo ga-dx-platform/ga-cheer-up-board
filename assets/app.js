@@ -1008,13 +1008,19 @@ function albumDate(d) {
   catch { return ''; }
 }
 
+/* Soft view-count label for the feed band (display only — counting happens
+   on the gallery page when an album is actually opened). */
+function albumViewLabel(n) {
+  return `👁 ${Number(n) || 0} ครั้ง`;
+}
+
 /* Fetch albums + a cover thumbnail (fallback: first photo of the album).
    Silent on any failure / empty table — the band simply stays hidden. */
 async function loadFeedAlbums() {
   try {
     const { data: albumRows, error: aErr } = await sb
       .from('albums')
-      .select('id, name, event_date, created_at, cover_photo_id')
+      .select('id, name, event_date, created_at, cover_photo_id, view_count')
       .order('created_at', { ascending: false });
     if (aErr || !albumRows || albumRows.length === 0) { feedAlbums = []; return; }
 
@@ -1040,6 +1046,7 @@ async function loadFeedAlbums() {
         event_date: a.event_date,
         created_at: a.created_at,
         count:      ps.length,
+        view_count: a.view_count ?? 0,
         coverThumb: cover ? cover.thumb_path : null,
         thumbs:     ps.slice(0, 3).map(p => p.thumb_path),
       };
@@ -1072,7 +1079,7 @@ function albumRowCard(a) {
       <span class="aband-rowbody">
         <span class="aband-tag">📸 อัลบั้มกิจกรรม</span>
         <span class="aband-name">${esc(a.name)}</span>
-        <span class="aband-meta">${a.count} รูป${dateStr ? ` · ${dateStr}` : ''}</span>
+        <span class="aband-meta">${a.count} รูป${dateStr ? ` · ${dateStr}` : ''}<span class="aband-views"> · ${albumViewLabel(a.view_count)}</span></span>
       </span>
       <span class="aband-chevron" aria-hidden="true">›</span>
     </a>`;
@@ -1090,7 +1097,7 @@ function albumTileCard(a) {
       <span class="aband-tilebody">
         <span class="aband-tag">📸 อัลบั้มกิจกรรม</span>
         <span class="aband-name">${esc(a.name)}</span>
-        <span class="aband-count">${a.count} รูป</span>
+        <span class="aband-count">${a.count} รูป<span class="aband-views"> · ${albumViewLabel(a.view_count)}</span></span>
       </span>
     </a>`;
 }

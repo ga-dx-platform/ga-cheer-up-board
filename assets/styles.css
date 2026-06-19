@@ -2681,6 +2681,13 @@ mark.search-match {
   font-size: var(--fs-xs);
   color: var(--color-text-muted);
 }
+/* Soft view tally appended to the meta/count line — light grey, in-character
+   with the board rather than a competitive badge. */
+.aband-views {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
 
 /* ── Row card (1 album): thumbs · body · chevron ── */
 .aband-row {
