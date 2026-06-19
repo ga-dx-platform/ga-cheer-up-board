@@ -98,6 +98,16 @@
   background: var(--cat-peach); color: #fff; font-weight: 600;
   border-radius: 999px; padding: 1px 9px; font-size: var(--fs-2xs);
 }
+/* Soft, non-competitive view tally — light grey, in-character with the board. */
+.album-card-views {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  color: var(--color-text-muted); font-weight: 400; font-size: var(--fs-2xs);
+}
+
+/* View tally in the album header meta line (matches the muted meta tone). */
+.album-view-count {
+  color: var(--color-text-muted); font-weight: 400; white-space: nowrap;
+}
 
 /* ── Photo grid (thumbnails) ────────────────────────────── */
 .photo-grid {

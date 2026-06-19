@@ -10,6 +10,7 @@ const sb = supabase.createClient(
 
 const GALLERY_BUCKET = 'gallery';
 const PIN_SESSION_KEY = 'ga_gallery_pin_ok';
+const VIEWED_KEY      = 'gallery_viewed';   // localStorage: album_ids this device has opened
 
 /* ── tiny utils ─────────────────────────────────────────── */
 function esc(s) {
@@ -27,6 +28,59 @@ function thaiDate(d) {
 
 function publicUrl(path) {
   return sb.storage.from(GALLERY_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/* Soft view-count label — gentle, board-character, not a competitive badge. */
+function viewCountLabel(n) {
+  return `👁 ${Number(n) || 0} ครั้ง`;
+}
+
+/* ── per-device "already opened" memory (localStorage) ──────
+   Stores an array of album_ids so we count each album at most once
+   per device. Any storage error degrades silently to "not viewed". */
+function getViewedIds() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(VIEWED_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function hasViewed(id) {
+  return getViewedIds().includes(id);
+}
+function markViewed(id) {
+  try {
+    const arr = getViewedIds();
+    if (!arr.includes(id)) {
+      arr.push(id);
+      localStorage.setItem(VIEWED_KEY, JSON.stringify(arr));
+    }
+  } catch { /* storage full / disabled → ignore, never blocks viewing */ }
+}
+
+/* Count a real album open exactly once per device.
+   - already counted here → do nothing (the existing number just shows)
+   - otherwise → RPC increment_album_view, then optimistically update the
+     on-screen number from the value the RPC returns, and remember the id.
+   Fully guarded: a failed RPC never blocks opening the album. */
+async function countAlbumView(album) {
+  if (!album || hasViewed(album.id)) return;
+  try {
+    const { data, error } = await sb.rpc('increment_album_view', { p_album_id: album.id });
+    if (error) throw error;
+    const newCount = (typeof data === 'number')
+      ? data
+      : (Number(album.view_count) || 0) + 1;   // fallback if RPC returns void
+    album.view_count = newCount;                 // same ref as in `albums` → grid stays in sync
+    updateAlbumHeaderViews(newCount);
+    markViewed(album.id);                        // only remember after a successful count
+  } catch (err) {
+    console.warn('[Gallery] increment_album_view', err);
+  }
+}
+
+function updateAlbumHeaderViews(n) {
+  const el = document.getElementById('album-view-count');
+  if (el) el.textContent = viewCountLabel(n);
 }
 
 async function sha256Hex(str) {
@@ -93,7 +147,7 @@ async function loadAlbums() {
   try {
     const { data: albumRows, error: aErr } = await sb
       .from('albums')
-      .select('id, name, event_date, description, cover_photo_id, created_at')
+      .select('id, name, event_date, description, cover_photo_id, created_at, view_count')
       .order('created_at', { ascending: false });
     if (aErr) throw aErr;
 
@@ -159,6 +213,7 @@ function renderAlbumGrid() {
           <div class="album-card-meta">
             <span>${esc(dateStr)}</span>
             <span class="album-card-count">${a.count} รูป</span>
+            <span class="album-card-views">${viewCountLabel(a.view_count)}</span>
           </div>
         </div>
       </button>`;
@@ -201,10 +256,15 @@ async function openAlbum(albumId) {
     head.classList.remove('a-hidden');
     document.getElementById('album-title').textContent = album.name;
     const dateStr = album.event_date ? thaiDate(album.event_date) : thaiDate(album.created_at);
-    document.getElementById('album-meta').textContent = `${dateStr} · ${currentAlbumPhotos.length} รูป`;
+    document.getElementById('album-meta').innerHTML =
+      `${esc(dateStr)} · ${currentAlbumPhotos.length} รูป · ` +
+      `<span id="album-view-count" class="album-view-count">${viewCountLabel(album.view_count)}</span>`;
     document.getElementById('album-desc').textContent = album.description ?? '';
 
     renderPhotoGrid();
+
+    // Count this as a real album open (once per device); never blocks the view.
+    countAlbumView(album);
   } catch (err) {
     console.error('[Gallery] openAlbum', err);
     contentEl.innerHTML = `
